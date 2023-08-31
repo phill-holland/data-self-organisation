@@ -52,8 +52,8 @@ organisation::schema organisation::population::go(organisation::data &source, st
     bool result = false;
     int count = 0;
 
-    const int max = 3;
-    std::string outputs[max];
+    //const int max = 3;
+    //std::string outputs[max];
     
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)size) / 100.0f) * mutate_rate_in_percent;
@@ -141,14 +141,14 @@ organisation::schema organisation::population::go(organisation::data &source, st
         //total /= size;
         //total_depth /= size;
         //total_instructions /= size;
-
+/*
         std::cout << "Generation (" << count << ") Best=" << most << " (";
         for(int d = 0; d < max; ++d)
         {
             std::cout << outputs[d];
             if(d < max - 1) std::cout << ", ";
         }
-        
+  */      
         //std::cout << ") Avg=" << total;
         //std::cout << " AvgDep=" << total_depth << " AvgIns=" << total_instructions;
         //std::cout << " Ovr=" << overruns;
