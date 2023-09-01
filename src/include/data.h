@@ -23,6 +23,8 @@ namespace organisation
         int maximum() { return max; }
         
         std::string map(int value);
+        int map(std::string value);
+        
         std::string get(std::vector<int> &source);        
     };
 };

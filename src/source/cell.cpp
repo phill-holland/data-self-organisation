@@ -6,7 +6,7 @@ std::mt19937_64 organisation::cell::generator(std::random_device{}());
 
 void organisation::cell::clear()
 {
-    value = 0;
+    value = -1;
     in = 0;
     out = 0;
 }
@@ -23,7 +23,7 @@ void organisation::cell::mutate()
 {
     int j = (std::uniform_int_distribution<int>{0, 3})(generator);     
 
-    if(j == 0) value = 0;
+    if(j == 0) value = -1;
     else if (j == 1)
     {
         if(value > 1)
@@ -50,7 +50,7 @@ bool organisation::cell::is_input(vector source)
     int tz = source.z + 1;
 
 	int temp = (abs(tz) * (3 * 3)) + (abs(ty) * 3) + abs(tx);
-    return ((in && (1 << temp)) == (1 << temp));
+    return (1 << temp) == (in & (1 << temp));
 }
 
 std::vector<organisation::vector> organisation::cell::outputs()
@@ -59,7 +59,7 @@ std::vector<organisation::vector> organisation::cell::outputs()
 
     for(int index = 0; index < 27; ++index)
     {
-        if(out & (1 << index) == (1 << index))
+        if((out & (1 << index)) == (1 << index))
         {
             vector temp;
 
@@ -78,11 +78,20 @@ std::vector<organisation::vector> organisation::cell::outputs()
     return result;
 }
 
-organisation::cell organisation::cell::cross(cell &a, cell &b)
+void organisation::cell::set(int type, vector source)
 {
-    organisation::cell result;
+    int tx = source.x + 1;
+	int ty = source.y + 1;
+	int tz = source.z + 1;
 
-    return result;
+	if ((tx < 0) || (tx > 2)) return;
+	if ((ty < 0) || (ty > 2)) return;
+	if ((tz < 0) || (tz > 2)) return;
+
+
+	int result = (abs(tz) * (3L * 3L)) + (abs(ty) * 3L) + abs(tx);
+    if(type == 0) in = in | (1 << result);
+    else out = out | (1 << result);
 }
 
 int organisation::cell::get()

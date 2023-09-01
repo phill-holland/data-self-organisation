@@ -12,17 +12,18 @@
 namespace organisation
 {    
     class program
-    {
-        static const int WIDTH = 100;
-        static const int HEIGHT = 100;
-        static const int DEPTH = 100;
-
+    {        
         static std::mt19937_64 generator;
 
         cell *cells;
         int length;
 
         bool init;
+
+    public:
+        static const int WIDTH = 100;
+        static const int HEIGHT = 100;
+        static const int DEPTH = 100;
 
     public:
         program() { makeNull(); reset(); }
@@ -40,6 +41,9 @@ namespace organisation
         std::string run(int start, data &source);
 
         int count();
+
+        void set(int value, int x, int y, int z);
+        void set(vector source, int type, int x, int y, int z);
 
     public:
         void copy(const program &source);

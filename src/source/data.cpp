@@ -26,6 +26,18 @@ std::string organisation::data::map(int value)
     return result;
 }
         
+int organisation::data::map(std::string value)
+{
+    int result = 0;
+
+    if(forward.find(value) != forward.end())
+    {
+        result = forward[value];
+    }
+
+    return result;
+}
+
 std::string organisation::data::get(std::vector<int> &source)
 {
     std::string result;

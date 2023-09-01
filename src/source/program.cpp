@@ -63,12 +63,12 @@ std::string organisation::program::run(int start, data &source)
     const int MAX = 200;
 
     std::vector<std::tuple<vector,vector>> positions;
-    positions.push_back(std::tuple<vector,vector> (vector { x,y,z },vector {0,1,0}));
+    positions.push_back(std::tuple<vector,vector> (vector { x,y,z },vector {0,-1,0}));
 
     int counter = 0;
     while ((!(positions.empty()))&&(counter < MAX))
-    {
-        for(std::vector<std::tuple<vector,vector>>::iterator it = positions.begin(); it != positions.end(); ++it)
+    {        
+        while(!positions.empty())
         {
             std::tuple<vector,vector> temp = positions.back();
 
@@ -78,11 +78,14 @@ std::string organisation::program::run(int start, data &source)
             positions.pop_back();
 
             int index = (current.z * WIDTH * HEIGHT) + (current.y * WIDTH) + current.x;
-            if(cells[index].is_input(next))
+           
+           std::cout << current.x << " " << current.y << " " << current.z << "\r\n";
+            if(cells[index].is_input(next.inverse()))
             {
-                if(cells[index].value != 0)
+                if(!cells[index].is_empty())
                 {
-                    result.push_back(cells[index].value - 1);
+                    std::cout << "value " << cells[index].value << "\r\n\r\n";
+                    result.push_back(cells[index].value);
                     ++counter;
                 }
                 
@@ -117,6 +120,28 @@ int organisation::program::count()
     }
 
     return result;
+}
+
+void organisation::program::set(int value, int x, int y, int z)
+{
+    if ((x < 0)||(x >= WIDTH)) return;
+    if ((y < 0)||(y >= HEIGHT)) return;
+    if ((z < 0)||(z >= DEPTH)) return;
+
+    int index = (z * WIDTH * HEIGHT) + (y * WIDTH) + x;
+
+    cells[index].value = value;
+}
+
+void organisation::program::set(vector source, int type, int x, int y, int z)
+{
+    if ((x < 0)||(x >= WIDTH)) return;
+    if ((y < 0)||(y >= HEIGHT)) return;
+    if ((z < 0)||(z >= DEPTH)) return;
+
+    int index = (z * WIDTH * HEIGHT) + (y * WIDTH) + x;
+
+    cells[index].set(type, source);
 }
 
 void organisation::program::copy(const program &source)

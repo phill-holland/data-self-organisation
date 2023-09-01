@@ -25,9 +25,10 @@ namespace organisation
         bool is_input(vector source);
         std::vector<vector> outputs();
 
-    public:
-        static cell cross(cell &a, cell &b);
+        void set(int type, vector source);
 
+        bool is_empty() { return value < 0; }
+        
     protected:
         int get();
     };
