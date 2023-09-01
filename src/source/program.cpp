@@ -80,7 +80,8 @@ std::string organisation::program::run(int start, data &source)
             int index = (current.z * WIDTH * HEIGHT) + (current.y * WIDTH) + current.x;
            
            std::cout << current.x << " " << current.y << " " << current.z << "\r\n";
-            if(cells[index].is_input(next.inverse()))
+           vector input = next.normalise().inverse();
+            if(cells[index].is_input(input))
             {
                 if(!cells[index].is_empty())
                 {
@@ -89,7 +90,7 @@ std::string organisation::program::run(int start, data &source)
                     ++counter;
                 }
                 
-                std::vector<vector> outputs = cells[index].outputs();
+                std::vector<vector> outputs = cells[index].outputs(input);
                 for(std::vector<vector>::iterator ij = outputs.begin(); ij != outputs.end(); ++ij)
                 {
                     vector t = *ij;
@@ -116,7 +117,7 @@ int organisation::program::count()
 
     for(int i = 0; i < length; ++i)
     {
-        if(cells[i].value == 0) ++result;
+        if(cells[i].value > -1) ++result;
     }
 
     return result;
@@ -133,7 +134,7 @@ void organisation::program::set(int value, int x, int y, int z)
     cells[index].value = value;
 }
 
-void organisation::program::set(vector source, int type, int x, int y, int z)
+void organisation::program::set(vector input, vector output, int magnitude, int x, int y, int z)
 {
     if ((x < 0)||(x >= WIDTH)) return;
     if ((y < 0)||(y >= HEIGHT)) return;
@@ -141,7 +142,7 @@ void organisation::program::set(vector source, int type, int x, int y, int z)
 
     int index = (z * WIDTH * HEIGHT) + (y * WIDTH) + x;
 
-    cells[index].set(type, source);
+    cells[index].set(input, output, magnitude);
 }
 
 void organisation::program::copy(const program &source)
@@ -152,21 +153,32 @@ void organisation::program::copy(const program &source)
     }
 }
 
-void organisation::program::cross(program &a, program &b)
+void organisation::program::cross(program &a, program &b, int middle)
 {
 	int start_a = 0, length_a = 0;
 	int start_b = 0, length_b = 0;
 
-	start_a = (std::uniform_int_distribution<int>{0, (int)(a.length - 1)})(generator);
-	length_a = (std::uniform_int_distribution<int>{(int)(start_a + 1), a.length})(generator) - start_a;
+    if(middle < 0)
+    {
+        start_a = (std::uniform_int_distribution<int>{0, (int)(a.length - 1)})(generator);
+        length_a = (std::uniform_int_distribution<int>{(int)(start_a + 1), a.length})(generator) - start_a;
 
-	start_b = (std::uniform_int_distribution<int>{0, (int)(b.length - 1L)})(generator);
-	length_b = (std::uniform_int_distribution<int>{(int)(start_b + 1), b.length})(generator) - start_b;
+        start_b = (std::uniform_int_distribution<int>{0, (int)(b.length - 1L)})(generator);
+        length_b = (std::uniform_int_distribution<int>{(int)(start_b + 1), b.length})(generator) - start_b;
+    }
+    else
+    {
+        start_a = middle;
+        length_a = length - middle;
+
+        start_b = middle;
+        length_b = length - middle;
+    }
 
 	int index = 0;
 	for (int i = 0; i < start_a; ++i)
-	{
-		cells[index] = a.cells[i];
+	{		
+        cells[index] = a.cells[i];
 		++index;
 	}
 

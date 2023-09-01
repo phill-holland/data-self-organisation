@@ -21,9 +21,9 @@ namespace organisation
         bool init;
 
     public:
-        static const int WIDTH = 100;
-        static const int HEIGHT = 100;
-        static const int DEPTH = 100;
+        static const int WIDTH = 10;
+        static const int HEIGHT = 10;
+        static const int DEPTH = 10;
 
     public:
         program() { makeNull(); reset(); }
@@ -43,13 +43,13 @@ namespace organisation
         int count();
 
         void set(int value, int x, int y, int z);
-        void set(vector source, int type, int x, int y, int z);
+        void set(vector input, vector output, int magnitude, int x, int y, int z);
 
     public:
         void copy(const program &source);
 
     public:
-        void cross(program &a, program &b);
+        void cross(program &a, program &b, int middle = -1);
 
     protected:
         void makeNull();
