@@ -82,7 +82,7 @@ organisation::schema organisation::population::go(organisation::data &source, st
                 schema *s1 = best(offspring);
                 temp = *s1;
 
-                temp.mutate();
+                temp.mutate(source);
                 
                 int epoch = 0;
                 for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)

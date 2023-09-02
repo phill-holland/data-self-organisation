@@ -36,7 +36,7 @@ namespace organisation
     public:
         void clear();
         void generate(data &source);  
-        void mutate();
+        void mutate(data &source);
         
         std::string run(int start, data &source);
 
@@ -45,8 +45,11 @@ namespace organisation
         void set(int value, int x, int y, int z);
         void set(vector input, vector output, int magnitude, int x, int y, int z);
 
+        bool validate(data &source);
+
     public:
         void copy(const program &source);
+        bool equals(const program &source);
 
     public:
         void cross(program &a, program &b, int middle = -1);

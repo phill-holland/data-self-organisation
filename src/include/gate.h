@@ -45,6 +45,16 @@ namespace organisation
 
             return true;
         }
+
+        bool equals(const gates &source)
+        {
+            for(int i = 0; i < values.size(); ++i)
+            {
+                if(values[i].magnitude != source.values[i].magnitude) return false;
+            }
+
+            return true;
+        }
     };
 };
 

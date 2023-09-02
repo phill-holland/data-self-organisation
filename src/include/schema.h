@@ -45,7 +45,7 @@ namespace organisation
         
     public:        
         void cross(schema &destination, schema &value);
-        void mutate();
+        void mutate(data &source);
 
     public:
         std::string run(int epoch, std::string expected, data &source);           

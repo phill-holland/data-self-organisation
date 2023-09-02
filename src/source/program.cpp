@@ -43,11 +43,11 @@ void organisation::program::generate(data &source)
     }
 }
 
-void organisation::program::mutate()
+void organisation::program::mutate(data &source)
 {
     int j = (std::uniform_int_distribution<int>{0, length - 1})(generator);
 
-    cells[j].mutate();
+    cells[j].mutate(source.maximum());
 }
 
 std::string organisation::program::run(int start, data &source)
@@ -145,12 +145,39 @@ void organisation::program::set(vector input, vector output, int magnitude, int 
     cells[index].set(input, output, magnitude);
 }
 
+bool organisation::program::validate(data &source)
+{
+    if(count() <= 0) return false;
+
+    int gates = 0;
+    for(int i = 0; i < length; ++i)
+    {
+        std::tuple<bool,bool> temp = cells[i].validate(source.maximum());
+        if(!std::get<0>(temp)) return false;
+        if(std::get<1>(temp)) ++gates;
+    }
+
+    if(gates <= 0) return false;
+
+    return true;
+}
+
 void organisation::program::copy(const program &source)
 {
     for(int i = 0; i < length; ++i)
     {
         cells[i] = source.cells[i];
     }
+}
+
+bool organisation::program::equals(const program &source)
+{
+    for(int i = 0; i < length; ++i)
+    {
+        if(!cells[i].equals(source.cells[i])) return false;
+    }
+
+    return true;
 }
 
 void organisation::program::cross(program &a, program &b, int middle)

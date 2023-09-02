@@ -3,6 +3,7 @@
 #include <string>
 #include <random>
 #include <array>
+#include <tuple>
 
 #ifndef _ORGANISATION_CELL
 #define _ORGANISATION_CELL
@@ -26,7 +27,7 @@ namespace organisation
 
         void clear(); 
         void generate(int value);     
-        void mutate();   
+        void mutate(int max);   
 
         bool is_input(vector source);
         std::vector<vector> outputs(vector input);
@@ -34,6 +35,10 @@ namespace organisation
         void set(vector input, vector output, int magnitude);
 
         bool is_empty() { return value < 0; }
+
+        std::tuple<bool,bool> validate(int max);
+
+        bool equals(const cell &source);
 
     protected:
         int map(vector source);

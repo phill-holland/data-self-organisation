@@ -65,9 +65,9 @@ float organisation::schema::sum()
     return result / ((float)epochs);
 }
 
-void organisation::schema::mutate()
+void organisation::schema::mutate(data &source)
 {
-	prog.mutate();
+	prog.mutate(source);
 }
 
 void organisation::schema::cross(schema &destination, schema &value)

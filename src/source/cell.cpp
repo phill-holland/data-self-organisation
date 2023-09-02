@@ -34,17 +34,14 @@ void organisation::cell::generate(int value)
     }
 }
 
-void organisation::cell::mutate()
+void organisation::cell::mutate(int max)
 {
     int j = (std::uniform_int_distribution<int>{0, 2})(generator);     
 
     if(j == 0) value = -1;
     else if (j == 1)
     {
-        if(value > 1)
-        {
-            value = (std::uniform_int_distribution<int>{0, value - 1})(generator);     
-        } else value = 0;
+        value = (std::uniform_int_distribution<int>{0, max - 1})(generator);          
     }
     else if (j == 2)
     {
@@ -113,6 +110,46 @@ void organisation::cell::set(vector input, vector output, int magnitude)
     int s2 = map(output);
 
     routes[s1].values[s2].magnitude = magnitude;
+}
+
+std::tuple<bool,bool> organisation::cell::validate(int max)
+{
+    int in = 0;
+    for(int i = 0; i < routes.size(); ++i)
+    {
+        int out = 0;
+        for(int j = 0; j < routes[i].values.size(); ++j)
+        {
+            if(routes[i].values[j].magnitude > 0)
+            {
+                ++out;
+            }
+
+            if(routes[i].values[j].magnitude > MAGNITUDE)
+                return std::tuple<bool, bool>(false,in <= IN);
+        }
+
+        if(out > OUT) std::tuple<bool, bool>(false,in <= IN);
+
+        if(out > 0) ++in;
+    }
+
+    if((value < -1)||(value > max)) return std::tuple<bool, bool>(false,in <= IN);
+
+    return std::tuple<bool, bool>(true, in <= IN);
+}
+
+bool organisation::cell::equals(const cell &source)
+{
+    if(value != source.value) return false;
+    
+    for(int i = 0; i < source.routes.size(); ++i)
+    {
+        if(!routes[i].equals(source.routes[i])) return false;
+    }
+
+    return true;
+
 }
 
 int organisation::cell::map(vector source)
