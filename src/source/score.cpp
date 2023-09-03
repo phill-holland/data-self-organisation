@@ -26,7 +26,7 @@ void organisation::score::clear()
 }
 
 //bool scoring::general::compute(brain::score::scores &results, string comparison, string value, int score_offset)
-void organisation::score::compute(std::string expected, std::string value)
+bool organisation::score::compute(std::string expected, std::string value)
 {
 	auto _words = [](std::string source)
     {
@@ -118,7 +118,7 @@ void organisation::score::compute(std::string expected, std::string value)
 		return result;
 	};
 
-	//bool valid = true;
+	bool valid = true;
 	const int MAX_WORDS = 5;
 
     if(value.size() > 0)
@@ -141,8 +141,9 @@ void organisation::score::compute(std::string expected, std::string value)
 
 		//float len_score = ((d / ((float)max_str_len)) * -1.0f) + 1.0f;		
 		float len_score = 1.0f / fib[d];
-		//if(!results.set(len_score, results.size() - 1)) valid = false;
-		scores[length - 1] = len_score;
+		if(!set(len_score, length - 1)) valid = false;
+		//scores[length - 1] = len_score;
+
 		
         int index = 0;
 		for(auto &it : alphabet)
@@ -153,11 +154,11 @@ void organisation::score::compute(std::string expected, std::string value)
 			if(f1 >= f3) 
             {
 				float distance = _distance(f1, f3, 0.0f, max); 
-                //if(!results.set(distance, index + score_offset)) valid = false;
-				scores[index] = distance;
+                if(!set(distance, index)) valid = false;
+				//scores[index] = distance;
             }
-			else scores[index] = 0.1f;
-			//else if(!results.set(0.1f, index + score_offset)) valid = false;
+			//else scores[index] = 0.1f;
+			else if(!set(0.1f, index)) valid = false;
 
             ++index;
 		}
@@ -173,8 +174,8 @@ void organisation::score::compute(std::string expected, std::string value)
 			
 			if(f1 < f2) 
 			{
-				//if(!results.set(_distance(f1, f2, -1.0f, max),index + alphabet_len + score_offset)) valid = false;
-				scores[index + alphabet_len] = _distance(f1, f2, -1.0f, max);
+				if(!set(_distance(f1, f2, -1.0f, max),index + alphabet_len)) valid = false;
+				//scores[index + alphabet_len] = _distance(f1, f2, -1.0f, max);
 			}
 
             ++index;
@@ -186,12 +187,12 @@ void organisation::score::compute(std::string expected, std::string value)
 
 		if(f1 < f2) 
 		{
-			//if(!results.set(_distance(f1, f2, -1.0f, max),alphabet_len + alphabet_len - 1 + score_offset)) valid = false;
-			scores[alphabet_len + alphabet_len - 1] = _distance(f1, f2, -1.0f, max);
+			if(!set(_distance(f1, f2, -1.0f, max),alphabet_len + alphabet_len - 1)) valid = false;
+			//scores[alphabet_len + alphabet_len - 1] = _distance(f1, f2, -1.0f, max);
 		}
 	}
 
-	//return valid;
+	return valid;
 }
 /*
 void organisation::score::compute(std::string expected, std::string value)
@@ -318,9 +319,28 @@ float organisation::score::sum()
     return result / ((float)length);
 }
 
+bool organisation::score::set(float value, int index)
+{
+	if((index < 0)||(index >= length)) return false;
+
+	scores[index] = value;
+
+	return true;
+}
+
 float organisation::score::get(int index)
 {
 	if((index < 0)||(index >= length)) return 0.0f;
 
 	return scores[index];
+}
+
+void organisation::score::makeNull() 
+{ 
+	scores = NULL; 
+}
+
+void organisation::score::cleanup()
+{
+	if(scores != NULL) delete[] scores;
 }

@@ -8,14 +8,6 @@ namespace organisation
 {
     class score
     {
-    //public:
-        //const static int length = 13;
-
-        
-
-    //public:
-        //std::array<float, length> scores;
-        //std::vector<std::string> alphabet;
         float *scores;
         int length;
 
@@ -25,25 +17,22 @@ namespace organisation
         score(int length) { makeNull(); reset(length); }
         ~score() { cleanup(); }
 
-
         bool intialised() { return init; }
         void reset(int length);
 
         void clear();
-        void compute(std::string expected, std::string value);
+        bool compute(std::string expected, std::string value);
 
         float sum();
 
+        bool set(float value, int index);
         float get(int index);
 
         int size() { return length; }
 
     protected:
-        void makeNull() { scores = NULL; }
-        void cleanup()
-        {
-            if(scores != NULL) delete[] scores;
-        }
+        void makeNull();
+        void cleanup();
     };
 };
 

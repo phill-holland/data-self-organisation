@@ -12,8 +12,8 @@ namespace organisation
 {        
     class cell
     {    
-        static const int IN = 2;
-        static const int OUT = 2;
+        static const int IN = 4;
+        static const int OUT = 1;
         static const int MAGNITUDE = 10;
 
         static std::mt19937_64 generator;

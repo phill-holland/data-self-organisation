@@ -15,14 +15,13 @@ namespace organisation
     class schema
     {
         static std::mt19937_64 generator;
-
-        program prog;
-
+        
         int epochs;
 
         bool init;
 
     public:
+        program prog;
         score **scores;
 
     public:

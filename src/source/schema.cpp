@@ -47,7 +47,8 @@ bool organisation::schema::get(dominance::kdtree::kdpoint &destination, int mini
             ++counter;
         }        
 
-        destination.set(prog.count(), counter++);
+#warning prog count!
+        //destination.set(prog.count(), counter++);
     }
 
     return true;

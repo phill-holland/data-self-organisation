@@ -14,7 +14,7 @@ void organisation::population::reset(std::vector<std::string> expected, int size
     for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
     {
         std::vector<std::string> t = split(*it);
-        lengths.push_back(t.size() * 2);
+        lengths.push_back((t.size() * 2) + 1);
         dimensions += (t.size() * 2) + 1;
     }
 
@@ -60,16 +60,11 @@ organisation::schema organisation::population::go(organisation::data &source, st
 
     do
     {
-        //int total_depth = 0;
-        //int total_instructions = 0;
-        //int mutants = 0;
-        //int overruns = 0;
-
-        //float total = 0.0f;        
+        int mutants = 0;
+        float total = 0.0f;        
       
         for(int generation = 0; generation < size; ++generation)
         {        
-            //std::tuple<std::string, bool, int, int> output;
             std::vector<std::string> results;
             float sum = 0.0f;
 
@@ -90,11 +85,11 @@ organisation::schema organisation::population::go(organisation::data &source, st
                     results.push_back(temp.run(epoch, *it, source));
                     ++epoch;
                 }
-                //output = temp.run();
+
                 set(offspring, temp);
                 sum = temp.sum();
                 
-                //++mutants;                
+                ++mutants;                
             }
             else
             {
@@ -110,15 +105,11 @@ organisation::schema organisation::population::go(organisation::data &source, st
                     ++epoch;
                 }
 
-                //output = temp.run();
                 set(offspring, temp);
                 sum = temp.sum();                
             }
 
-            //total += sum;
-            //total_depth += std::get<2>(output);
-            //total_instructions += std::get<3>(output);
-            //if(std::get<1>(output)) ++overruns;
+            total += sum;
 
             if(sum > most)
             {
@@ -138,21 +129,19 @@ organisation::schema organisation::population::go(organisation::data &source, st
             if(results == expected) result = true;
         }
 
-        //total /= size;
-        //total_depth /= size;
-        //total_instructions /= size;
-/*
-        std::cout << "Generation (" << count << ") Best=" << most << " (";
+        total /= size;
+        
+
+        std::cout << "Generation (" << count << ") Best=" << most;
+        /*
         for(int d = 0; d < max; ++d)
         {
             std::cout << outputs[d];
             if(d < max - 1) std::cout << ", ";
         }
-  */      
-        //std::cout << ") Avg=" << total;
-        //std::cout << " AvgDep=" << total_depth << " AvgIns=" << total_instructions;
-        //std::cout << " Ovr=" << overruns;
-        //std::cout << " M=" << mutants << "\r\n";
+        */
+        std::cout << " Avg=" << total;                
+        std::cout << " M=" << mutants << "\r\n";
 
         if((iterations > 0)&&(count > iterations)) result = true;
 
@@ -170,18 +159,17 @@ organisation::schema organisation::population::top()
 {
     float s = 0.0f;
     int j = 0;
-
-    /*
+    
     for(int i = 0; i < size; ++i)
     {
-        if(data[i]->scores.sum() > s)
+        if(data[i]->sum() > s)
         {
             j = i;
-            s = data[i]->scores.sum();
+            s = data[i]->sum();
         }
 
     }
-*/
+
     return *data[j];
 }
 
@@ -222,20 +210,6 @@ organisation::schema *organisation::population::best(int j)
         data[best]->get(temp1, minimum, maximum);
         data[competition]->get(temp2, minimum, maximum);
 
-        /*        
-		for(int i = 0; i < dimensions; ++i)
-		{
-			float score1 = data[best]->scores.scores[i];
-			score1 = (score1 * ((float)maximum - minimum)) + minimum;
-
-			temp1.set((long)score1, i);
-
-			float score2 = data[competition]->scores.scores[i];
-			score2 = (score2 * ((float)maximum - minimum)) + minimum;
-
-			temp2.set((long)score2, i);
-		}
-		*/
 		float t2 = data[competition]->sum();
 
 		if(approximation->exists(temp1))
@@ -266,8 +240,6 @@ int organisation::population::worst()
 
 	std::uniform_int_distribution<int> rand{ 0L, size - 1 };
 
-    //const int dimensions = organisation::score::length;
-
 	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
 	dominance::kdtree::kdpoint origin(dimensions);
 
@@ -287,20 +259,6 @@ int organisation::population::worst()
         data[worst]->get(temp1, minimum, maximum);
         data[competition]->get(temp2, minimum, maximum);
 
-        /*
-		for(int i = 0; i < dimensions; ++i)
-		{
-			float score1 = data[worst]->scores.scores[i];
-			score1 = (score1 * ((float)maximum - minimum)) + minimum;
-
-			temp1.set((long)score1, i);
-
-			float score2 = data[competition]->scores.scores[i];
-			score2 = (score2 * ((float)maximum - minimum)) + minimum;
-
-			temp2.set((long)score2, i);
-		}
-        */
 		float t2 = data[competition]->sum();
 
 		if(approximation->exists(temp2))
@@ -340,20 +298,6 @@ bool organisation::population::set(int index, schema &source)
     data[index]->get(temp1, minimum, maximum);
     source.get(temp2, minimum, maximum);
 
-/*
-	for(long i = 0L; i < dimensions; ++i)
-	{
-		float score1 = data[index]->scores.scores[i];
-		score1 = (score1 * ((float)maximum - minimum)) + minimum;
-
-		temp1.set((long)score1, i);
-
-		float score2 = source.scores.scores[i];
-		score2 = (score2 * ((float)maximum - minimum)) + minimum;
-
-		temp2.set((long)score2, i);
-	}
-*/
 	if(!temp1.issame(minimum)) 
 	{
 		if(approximation->exists(temp2))

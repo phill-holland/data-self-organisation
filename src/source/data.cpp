@@ -42,9 +42,12 @@ std::string organisation::data::get(std::vector<int> &source)
 {
     std::string result;
 
-    for(std::vector<int>::iterator it = source.begin(); it != source.end(); ++it)
+    if(source.begin() != source.end()) 
+        result = map(*source.begin());
+
+    for(std::vector<int>::iterator it = source.begin() + 1; it != source.end(); ++it)
     {
-        result += map(*it) + std::string(" ");
+        result += std::string(" ") + map(*it);
     }
 
     return result;
