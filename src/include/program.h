@@ -1,5 +1,6 @@
 #include "cell.h"
 #include "data.h"
+#include "history.h"
 #include <string>
 #include <random>
 #include <vector>
@@ -38,7 +39,7 @@ namespace organisation
         void generate(data &source);  
         void mutate(data &source);
         
-        std::string run(int start, data &source);
+        std::string run(int start, data &source, history *destination = NULL);
 
         int count();
 

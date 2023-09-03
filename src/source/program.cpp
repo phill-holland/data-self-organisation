@@ -50,7 +50,7 @@ void organisation::program::mutate(data &source)
     cells[j].mutate(source.maximum());
 }
 
-std::string organisation::program::run(int start, data &source)
+std::string organisation::program::run(int start, data &source, history *destination)
 {
     std::vector<int> result;
 
@@ -79,13 +79,13 @@ std::string organisation::program::run(int start, data &source)
 
             int index = (current.z * WIDTH * HEIGHT) + (current.y * WIDTH) + current.x;
            
-           std::cout << current.x << " " << current.y << " " << current.z << "\r\n";
-           vector input = next.normalise().inverse();
+            vector input = next.normalise().inverse();
             if(cells[index].is_input(input))
             {
+                if(destination != NULL) destination->push(current, cells[index].value);
+
                 if(!cells[index].is_empty())
-                {
-                    std::cout << "value " << cells[index].value << "\r\n\r\n";
+                {                
                     result.push_back(cells[index].value);
                     ++counter;
                 }

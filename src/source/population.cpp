@@ -125,7 +125,6 @@ organisation::schema organisation::population::go(organisation::data &source, st
             }
 
             if(sum >= 0.9999f) result = true;    
-            //if(std::get<0>(output)==std::string("hello world!")) result = true;            
             if(results == expected) result = true;
         }
 
