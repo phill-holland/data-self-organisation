@@ -76,11 +76,11 @@ void organisation::schema::cross(schema &destination, schema &value)
     destination.prog.cross(prog, value.prog);
 }
 
-std::string organisation::schema::run(int epoch, std::string expected, data &source)
+std::string organisation::schema::run(int epoch, std::string expected, data &source, history *destination)
 {		
     if((epoch < 0) || (epoch >= epochs)) return std::string("");
 
-    std::string output = prog.run(epoch, source);
+    std::string output = prog.run(epoch, source, destination);
     scores[epoch]->compute(expected, output);
     
     return output;

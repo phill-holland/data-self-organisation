@@ -1,5 +1,6 @@
 #include "population.h"
 #include "data.h"
+#include "history.h"
 #include <iostream>
 #include <string.h>
 
@@ -45,16 +46,23 @@ void run()
     
     std::vector<std::string> expected = { "daisy daisy give me your answer do ." };
 
+    int epochs = expected.size();
+
     organisation::data data(strings);
     organisation::population p(expected, 2000);
-
     
     p.generate(data);
     organisation::schema best = p.go(data, expected, 1000);
 
-    //std::cout << best.output();
-    //std::tuple<std::string, bool, int, int> result = best.run();
-    //std::cout << std::get<0>(result);
+    for(int i = 0; i < epochs; ++i)
+    {
+        organisation::history history;
+
+        std::string output = best.run(i, expected[i], data, &history);
+        std::cout << "\r\n" << output << "\r\n";
+        std::cout << history.get(data);
+        
+    }
 }
 
 int main(int argc, char *argv[])

@@ -47,7 +47,7 @@ namespace organisation
         void mutate(data &source);
 
     public:
-        std::string run(int epoch, std::string expected, data &source);           
+        std::string run(int epoch, std::string expected, data &source, history *destination = NULL);           
 
     public:
         void copy(const schema &source);
