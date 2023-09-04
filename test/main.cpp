@@ -7,7 +7,7 @@
 
 TEST(BasicProgramExecution, BasicAssertions)
 {
-    GTEST_SKIP();
+    //GTEST_SKIP();
 
     auto split = [](std::string source)
     {
@@ -76,7 +76,7 @@ TEST(BasicProgramExecution, BasicAssertions)
 
 TEST(BasicProgramCross, BasicAssertions)
 {
-    GTEST_SKIP();
+    //GTEST_SKIP();
 
     auto split = [](std::string source)
     {
@@ -176,7 +176,7 @@ TEST(BasicProgramCross, BasicAssertions)
 
 TEST(BasicProgramExecutionWithMagnitude, BasicAssertions)
 {    
-    GTEST_SKIP();
+    //GTEST_SKIP();
 
     auto split = [](std::string source)
     {
@@ -245,7 +245,7 @@ TEST(BasicProgramExecutionWithMagnitude, BasicAssertions)
 
 TEST(BasicProgramGenerationAndMutation, BasicAssertions)
 {
-    GTEST_SKIP();
+    //GTEST_SKIP();
 
     auto split = [](std::string source)
     {

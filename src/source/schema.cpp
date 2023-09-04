@@ -71,9 +71,9 @@ void organisation::schema::mutate(data &source)
 	prog.mutate(source);
 }
 
-void organisation::schema::cross(schema &destination, schema &value)
+void organisation::schema::cross(schema *destination, schema *value)
 {    
-    destination.prog.cross(prog, value.prog);
+    destination->prog.cross(prog, value->prog);
 }
 
 std::string organisation::schema::run(int epoch, std::string expected, data &source, history *destination)
@@ -87,8 +87,16 @@ std::string organisation::schema::run(int epoch, std::string expected, data &sou
 }
 
 void organisation::schema::copy(const schema &source)
-{
-    prog = source.prog;    
+{    
+    prog.copy(source.prog);
+
+    int temp = epochs;
+    if(source.epochs < temp) temp = source.epochs;
+
+    for(int i = 0; i < temp; ++i)
+    {
+        scores[i]->copy(*source.scores[i]);    
+    }
 }
 
 void organisation::schema::makeNull()

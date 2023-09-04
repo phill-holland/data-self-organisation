@@ -43,7 +43,7 @@ namespace organisation
         float sum();
         
     public:        
-        void cross(schema &destination, schema &value);
+        void cross(schema *destination, schema *value);
         void mutate(data &source);
 
     public:

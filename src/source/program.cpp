@@ -60,7 +60,7 @@ std::string organisation::program::run(int start, data &source, history *destina
     int y = HEIGHT - 1;
     int z = DEPTH - 1;
 
-    const int MAX = 200;
+    const int MAX = 50;
 
     std::vector<std::tuple<vector,vector>> positions;
     positions.push_back(std::tuple<vector,vector> (vector { x,y,z },vector {0,-1,0}));
@@ -182,45 +182,48 @@ bool organisation::program::equals(const program &source)
 
 void organisation::program::cross(program &a, program &b, int middle)
 {
-	int start_a = 0, length_a = 0;
-	int start_b = 0, length_b = 0;
+    if((a.length != b.length)||(length != a.length)) return;
 
+    int a1 = 0, b1 = 0;
     if(middle < 0)
     {
-        start_a = (std::uniform_int_distribution<int>{0, (int)(a.length - 1)})(generator);
-        length_a = (std::uniform_int_distribution<int>{(int)(start_a + 1), a.length})(generator) - start_a;
+        while(a1 == b1)
+        {
+            a1 = (std::uniform_int_distribution<int>{0, (int)(length - 1)})(generator);
+            b1 = (std::uniform_int_distribution<int>{0, (int)(length - 1)})(generator);
+        };
 
-        start_b = (std::uniform_int_distribution<int>{0, (int)(b.length - 1L)})(generator);
-        length_b = (std::uniform_int_distribution<int>{(int)(start_b + 1), b.length})(generator) - start_b;
+        if(a1 > b1)
+        {
+            int temp = a1;
+            a1 = b1;
+            b1 = temp;
+        }
     }
     else
     {
-        start_a = middle;
-        length_a = length - middle;
-
-        start_b = middle;
-        length_b = length - middle;
+        a1 = middle;
+        b1 = length;
     }
 
-	int index = 0;
-	for (int i = 0; i < start_a; ++i)
-	{		
+    int index = 0;
+    for(int i = 0; i < a1; ++i)
+    {
         cells[index] = a.cells[i];
 		++index;
-	}
+    }
 
-	for (int i = 0; i < length_b; ++i)
-	{
-		cells[index] = b.cells[i + start_b];
-		++index;
-	}
+    for(int i = a1; i < b1; ++i)
+    {
+        cells[index] = b.cells[i];
+        ++index;
+    }
 
-	int offset = a.length - (start_a + length_a);
-	for (int i = 0; i < offset; ++i)
-	{
-		cells[index] = a.cells[i + start_a + length_a];
-		++index;
-	}
+    for(int i = b1; i < length; ++i)
+    {
+        cells[index] = a.cells[i];
+        ++index;
+    }    
 }
 
 

@@ -30,6 +30,9 @@ namespace organisation
 
         int size() { return length; }
 
+    public:
+        void copy(const score &source);
+        
     protected:
         void makeNull();
         void cleanup();

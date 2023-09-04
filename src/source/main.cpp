@@ -44,7 +44,7 @@ void run()
 
     auto strings = split(source);
     
-    std::vector<std::string> expected = { "daisy daisy give me your answer do ." };
+    std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };
 
     int epochs = expected.size();
 

@@ -52,9 +52,6 @@ organisation::schema organisation::population::go(organisation::data &source, st
     bool result = false;
     int count = 0;
 
-    //const int max = 3;
-    //std::string outputs[max];
-    
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)size) / 100.0f) * mutate_rate_in_percent;
 
@@ -75,7 +72,7 @@ organisation::schema organisation::population::go(organisation::data &source, st
             if(((float)t) <= mutation) 
             {
                 schema *s1 = best(offspring);
-                temp = *s1;
+                temp.copy(*s1);
 
                 temp.mutate(source);
                 
@@ -89,14 +86,14 @@ organisation::schema organisation::population::go(organisation::data &source, st
                 set(offspring, temp);
                 sum = temp.sum();
                 
-                ++mutants;                
+                ++mutants;                                
             }
             else
             {
-                schema s1 = *best(offspring);
-                schema s2 = *best(offspring);
+                schema *s1 = best(offspring);
+                schema *s2 = best(offspring);
                 
-                s1.cross(temp, s2);
+                s1->cross(&temp, s2);
 
                 int epoch = 0;
                 for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
@@ -115,13 +112,6 @@ organisation::schema organisation::population::go(organisation::data &source, st
             {
                 res = temp;
                 most = sum;
-/*
-                for(int f = 1; f < max; ++f)
-                {
-                    outputs[f] = outputs[f-1];
-                }
-                outputs[0] = std::get<0>(output);
-                */
             }
 
             if(sum >= 0.9999f) result = true;    
@@ -132,20 +122,10 @@ organisation::schema organisation::population::go(organisation::data &source, st
         
 
         std::cout << "Generation (" << count << ") Best=" << most;
-        /*
-        for(int d = 0; d < max; ++d)
-        {
-            std::cout << outputs[d];
-            if(d < max - 1) std::cout << ", ";
-        }
-        */
         std::cout << " Avg=" << total;                
         std::cout << " M=" << mutants << "\r\n";
 
         if((iterations > 0)&&(count > iterations)) result = true;
-
-        //int c = getch();
-        //if(c == 27) result = true;
 
         ++count;
 
@@ -170,18 +150,6 @@ organisation::schema organisation::population::top()
     }
 
     return *data[j];
-}
-
-std::string organisation::population::output()
-{
-    std::string result;
-
-    for(int i = 0; i < size; ++i)
-    {
-        //result += data[i]->output();
-    }
-
-    return result;
 }
 
 organisation::schema *organisation::population::best(int j)
@@ -310,7 +278,7 @@ bool organisation::population::set(int index, schema &source)
         result = true;
     }
 
-    *data[index] = source;
+    data[index]->copy(source);    
 
 	return result;
 }

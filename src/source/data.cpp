@@ -45,7 +45,7 @@ std::string organisation::data::get(std::vector<int> &source)
     if(source.begin() != source.end()) 
         result = map(*source.begin());
 
-    for(std::vector<int>::iterator it = source.begin() + 1; it != source.end(); ++it)
+    for(std::vector<int>::iterator it = source.begin() + 1; it < source.end(); ++it)
     {
         result += std::string(" ") + map(*it);
     }

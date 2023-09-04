@@ -36,9 +36,6 @@ namespace organisation
 
         schema top();
         
-    public:
-        std::string output();
-
     protected:
         schema *best(int j);
         int worst();
