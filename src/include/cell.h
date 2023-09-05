@@ -1,9 +1,11 @@
 #include "vector.h"
 #include "gate.h"
+#include "in.h"
 #include <string>
 #include <random>
 #include <array>
 #include <tuple>
+#include <unordered_map>
 
 #ifndef _ORGANISATION_CELL
 #define _ORGANISATION_CELL
@@ -12,15 +14,18 @@ namespace organisation
 {        
     class cell
     {    
-        static const int IN = 4;
-        static const int OUT = 1;
-        static const int MAGNITUDE = 10;
+        //static const int IN = 4;
+        //static const int OUT = 1;
+        //static const int MAGNITUDE = 2;
 
         static std::mt19937_64 generator;
 
+        in routes;
+        //std::unordered_map<int, organisation::gates> in_gates;
+        //std::array<organisation::gates, 27> routes;
+
     public:
-        int value;
-        std::array<organisation::gates, 27> routes;
+        int value;        
 
     public:
         cell() { clear(); }

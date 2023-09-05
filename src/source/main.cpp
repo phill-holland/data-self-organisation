@@ -7,12 +7,13 @@
 using namespace std;
 
 std::string source = R"(daisy daisy give me your answer do .
-I'm half crazy for the love of you .
+)";
+/*I'm half crazy for the love of you .
 it won't be a stylish marriage .
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
-)";
+)";*/
 
 void run()
 {     
@@ -44,7 +45,7 @@ void run()
 
     auto strings = split(source);
     
-    std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };
+    std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };
 
     int epochs = expected.size();
 
@@ -52,7 +53,7 @@ void run()
     organisation::population p(expected, 2000);
     
     p.generate(data);
-    organisation::schema best = p.go(data, expected, 1000);
+    organisation::schema best = p.go(data, expected, 100);
 
     for(int i = 0; i < epochs; ++i)
     {

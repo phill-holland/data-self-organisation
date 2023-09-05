@@ -1,7 +1,9 @@
 #include "vector.h"
 #include <string>
+#include <vector>
 #include <random>
 #include <array>
+#include <unordered_map>
 
 #ifndef _ORGANISATION_GATE
 #define _ORGANISATION_GATE
@@ -10,51 +12,52 @@ namespace organisation
 {        
     class gate
     {
+    public:        
+        static const int MAGNITUDE = 2;
+
     public:
         int magnitude;
 
     public:
         gate() { magnitude = -1; }
+        gate(int magnitude) { this->magnitude = magnitude; }
 
     public:
         void clear() { magnitude = -1; }
 
-        bool is_empty() { return magnitude < 0; }
+        bool is_empty() { return magnitude <= 0; }
     };
 
     class gates
     {
+        std::unordered_map<int, gate> data;
+
     public:
-        std::array<gate,27> values;
+        static const int IN = 4;
+        static const int OUT = 1;
 
     public:
         void clear()
         {
-            for(int i = 0; i < values.size(); ++i)
-            {
-                values[i].clear();
-            }
+           data.clear();
         }
 
         bool is_empty()
-        {
-            for(int i = 0; i < values.size(); ++i)
-            {
-                if(!values[i].is_empty()) return false;
-            }
-
-            return true;
+        {            
+            return data.size() <= 0;
         }
 
-        bool equals(const gates &source)
-        {
-            for(int i = 0; i < values.size(); ++i)
-            {
-                if(values[i].magnitude != source.values[i].magnitude) return false;
-            }
+        int size() { return data.size(); }
 
-            return true;
-        }
+        void set(int index, gate g);
+        gate get(int index);
+        std::vector<organisation::vector> get();
+        
+    public:
+        bool validate(int &count);
+        
+    public:
+        bool equals(const gates &source);        
     };
 };
 

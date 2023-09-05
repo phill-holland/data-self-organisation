@@ -7,31 +7,21 @@ std::mt19937_64 organisation::cell::generator(std::random_device{}());
 void organisation::cell::clear()
 {
     value = -1;
+    routes.clear();
+    //in_gates.clear();
+    /*
     for(int i = 0; i < routes.size(); ++i)
     {
         routes[i].clear();
-    }    
+    } */   
 }
 
 void organisation::cell::generate(int value)
 {
+    clear();
+
     this->value = value;
-
-    int in = (std::uniform_int_distribution<int>{0, IN})(generator);     
-
-    for(int i = 0; i < in; ++i)
-    {
-        int k = (std::uniform_int_distribution<int>{0, 26})(generator);         
-        int out = (std::uniform_int_distribution<int>{0, OUT})(generator);     
-        
-        for(int j = 0; j < out; ++j)
-        {
-            int magnitude = (std::uniform_int_distribution<int>{1, MAGNITUDE})(generator);
-            int m = (std::uniform_int_distribution<int>{0, 26})(generator);         
-
-            routes[k].values[m].magnitude = magnitude;
-        }
-    }
+    routes.generate();
 }
 
 void organisation::cell::mutate(int max)
@@ -45,15 +35,20 @@ void organisation::cell::mutate(int max)
     }
     else if (j == 2)
     {
+        routes.mutate();
+        /*
         int k = (std::uniform_int_distribution<int>{0, 26})(generator); 
         int m = (std::uniform_int_distribution<int>{0, 26})(generator); 
                 
-        if(routes[k].values[m].magnitude == -1) 
+        //if(routes[k].values[m].magnitude == -1) 
+        if(routes[k].get(m).magnitude == -1)
         {
             int magnitude = (std::uniform_int_distribution<int>{1, MAGNITUDE})(generator);
-            routes[k].values[m].magnitude = magnitude;
+            routes[k].set(m, gate(magnitude));
+            //routes[k].values[m].magnitude = magnitude;
         }
-        else routes[j].values[m].magnitude = -1;
+        else routes[j].set(m, gate(-1));//routes[j].values[m].magnitude = -1;
+        */
     }
 }
 
@@ -65,20 +60,25 @@ bool organisation::cell::is_input(vector source)
 
 	int temp = (abs(tz) * (3 * 3)) + (abs(ty) * 3) + abs(tx);
     
-    return !routes[temp].is_empty();
+    return !routes.is_empty(temp);
+    //return !routes[temp].is_empty();
 }
 
 std::vector<organisation::vector> organisation::cell::outputs(vector input)
 {
-    std::vector<organisation::vector> result;
+    //std::vector<organisation::vector> result;
 
     int in = map(input);
+    return routes.outputs(in);
+    /*
     organisation::gates *source = &routes[in];
     for(int index = 0; index < 27; ++index)
     {
-        if(!source->values[index].is_empty())
+        //if(!source->values[index].is_empty())
+        if(!source->get(index).is_empty())
         {
-            int magnitude = source->values[index].magnitude;
+            //int magnitude = source->values[index].magnitude;
+            int magnitude = source->get(index).magnitude;
 
             vector temp;
 
@@ -100,8 +100,8 @@ std::vector<organisation::vector> organisation::cell::outputs(vector input)
             }
         }
     }
-
-    return result;
+    */
+    //return result;
 }
 
 void organisation::cell::set(vector input, vector output, int magnitude)
@@ -109,23 +109,37 @@ void organisation::cell::set(vector input, vector output, int magnitude)
     int s1 = map(input);
     int s2 = map(output);
 
-    routes[s1].values[s2].magnitude = magnitude;
+    routes.set(s1, s2, gate(magnitude));
+    //routes[s1].set(s2, gate(magnitude));
+    //routes[s1].values[s2].magnitude = magnitude;
 }
 
 std::tuple<bool,bool> organisation::cell::validate(int max)
 {
     int in = 0;
+
+    if(!routes.validate(in)) return std::tuple<bool, bool>(false,in <= gates::IN);
+    if((value < -1)||(value > max)) return std::tuple<bool, bool>(false,in <= gates::IN);
+
+    return std::tuple<bool, bool>(true, in <= gates::IN);
+
+    /*
+    int in = 0;
     for(int i = 0; i < routes.size(); ++i)
     {
         int out = 0;
-        for(int j = 0; j < routes[i].values.size(); ++j)
+        std::vector<gate> gates = routes[i].get();
+        //for(int j = 0; j < routes[i].values.size(); ++j)
+        for(std::vector<gate>::iterator it = gates.begin(); it < gates.end(); ++it)
         {
-            if(routes[i].values[j].magnitude > 0)
-            {
+            //if(routes[i].values[j].magnitude > 0)
+            //if(routes[i]
+            //{
                 ++out;
-            }
+            //}
 
-            if(routes[i].values[j].magnitude > MAGNITUDE)
+            //if(routes[i].values[j].magnitude > MAGNITUDE)
+            if(it->magnitude > MAGNITUDE)
                 return std::tuple<bool, bool>(false,in <= IN);
         }
 
@@ -137,16 +151,20 @@ std::tuple<bool,bool> organisation::cell::validate(int max)
     if((value < -1)||(value > max)) return std::tuple<bool, bool>(false,in <= IN);
 
     return std::tuple<bool, bool>(true, in <= IN);
+    */
 }
 
 bool organisation::cell::equals(const cell &source)
 {
     if(value != source.value) return false;
     
+    return routes.equals(source.routes);
+    /*
     for(int i = 0; i < source.routes.size(); ++i)
     {
         if(!routes[i].equals(source.routes[i])) return false;
     }
+    */
 
     return true;
 

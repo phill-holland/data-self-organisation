@@ -22,9 +22,9 @@ namespace organisation
         bool init;
 
     public:
-        static const int WIDTH = 10;
-        static const int HEIGHT = 10;
-        static const int DEPTH = 10;
+        static const int WIDTH = 5;
+        static const int HEIGHT = 5;
+        static const int DEPTH = 5;
 
     public:
         program() { makeNull(); reset(); }

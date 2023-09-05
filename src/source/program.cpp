@@ -34,12 +34,12 @@ void organisation::program::generate(data &source)
 
     for(int i = 0; i < length; ++i)
     {
-        int j = (std::uniform_int_distribution<int>{0, 1})(generator);
-        if(j == 1)
-        {
+        //int j = (std::uniform_int_distribution<int>{0, 1})(generator);
+        //if(j == 1)
+        //{
             int k = (std::uniform_int_distribution<int>{1, source.maximum()})(generator);
             cells[i].generate(k);
-        }
+        //}
     }
 }
 
@@ -60,7 +60,7 @@ std::string organisation::program::run(int start, data &source, history *destina
     int y = HEIGHT - 1;
     int z = DEPTH - 1;
 
-    const int MAX = 50;
+    const int MAX = 20;
 
     std::vector<std::tuple<vector,vector>> positions;
     positions.push_back(std::tuple<vector,vector> (vector { x,y,z },vector {0,-1,0}));
@@ -147,7 +147,8 @@ void organisation::program::set(vector input, vector output, int magnitude, int 
 
 bool organisation::program::validate(data &source)
 {
-    if(count() <= 0) return false;
+    if(count() <= 0) 
+        return false;
 
     int gates = 0;
     for(int i = 0; i < length; ++i)
@@ -157,7 +158,8 @@ bool organisation::program::validate(data &source)
         if(std::get<1>(temp)) ++gates;
     }
 
-    if(gates <= 0) return false;
+    if(gates <= 0) 
+        return false;
 
     return true;
 }

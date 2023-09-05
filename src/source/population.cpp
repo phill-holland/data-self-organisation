@@ -110,7 +110,7 @@ organisation::schema organisation::population::go(organisation::data &source, st
 
             if(sum > most)
             {
-                res = temp;
+                res.copy(temp);
                 most = sum;
             }
 
