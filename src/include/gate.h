@@ -33,8 +33,8 @@ namespace organisation
         std::unordered_map<int, gate> data;
 
     public:
-        static const int IN = 4;
-        static const int OUT = 1;
+        static const int IN = 15;//27;//4;
+        static const int OUT = 3;
 
     public:
         void clear()

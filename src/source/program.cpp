@@ -60,7 +60,11 @@ std::string organisation::program::run(int start, data &source, history *destina
     int y = HEIGHT - 1;
     int z = DEPTH - 1;
 
-    const int MAX = 20;
+    x = (WIDTH / 2) - start;
+    y = (HEIGHT / 2);
+    z = (DEPTH / 2);
+    
+    const int MAX = 100;
 
     std::vector<std::tuple<vector,vector>> positions;
     positions.push_back(std::tuple<vector,vector> (vector { x,y,z },vector {0,-1,0}));
@@ -68,44 +72,42 @@ std::string organisation::program::run(int start, data &source, history *destina
     int counter = 0;
     while ((!(positions.empty()))&&(counter < MAX))
     {        
-        while(!positions.empty())
+        std::tuple<vector,vector> temp = positions.back();
+
+        vector current = std::get<0>(temp);
+        vector next = std::get<1>(temp);
+
+        positions.pop_back();
+
+        int index = (current.z * WIDTH * HEIGHT) + (current.y * WIDTH) + current.x;
+        
+        vector input = next.normalise().inverse();
+        if(cells[index].is_input(input))
         {
-            std::tuple<vector,vector> temp = positions.back();
+            if(destination != NULL) destination->push(current, cells[index].value);
 
-            vector current = std::get<0>(temp);
-            vector next = std::get<1>(temp);
-
-            positions.pop_back();
-
-            int index = (current.z * WIDTH * HEIGHT) + (current.y * WIDTH) + current.x;
-           
-            vector input = next.normalise().inverse();
-            if(cells[index].is_input(input))
+            if(!cells[index].is_empty())
+            {                
+                result.push_back(cells[index].value);
+            }
+            
+            std::vector<vector> outputs = cells[index].outputs(input);
+            for(std::vector<vector>::iterator ij = outputs.begin(); ij != outputs.end(); ++ij)
             {
-                if(destination != NULL) destination->push(current, cells[index].value);
+                vector t = *ij;
+                vector position = { current.x + t.x, current.y + t.y, current.z + t.z };
 
-                if(!cells[index].is_empty())
-                {                
-                    result.push_back(cells[index].value);
-                    ++counter;
-                }
-                
-                std::vector<vector> outputs = cells[index].outputs(input);
-                for(std::vector<vector>::iterator ij = outputs.begin(); ij != outputs.end(); ++ij)
+                if((position.x >= 0)&&(position.y >= 0)&&(position.z >= 0))
                 {
-                    vector t = *ij;
-                    vector position = { current.x + t.x, current.y + t.y, current.z + t.z };
-
-                    if((position.x >= 0)&&(position.y >= 0)&&(position.z >= 0))
+                    if((position.x < WIDTH)&&(position.y < HEIGHT)&&(position.z < DEPTH))
                     {
-                        if((position.x < WIDTH)&&(position.y < HEIGHT)&&(position.z < DEPTH))
-                        {
-                            positions.push_back(std::tuple<vector,vector>(position, t));
-                        }
+                        positions.push_back(std::tuple<vector,vector>(position, t));
                     }
                 }
             }
         }
+
+        ++counter;
     };
     
     return source.get(result);
