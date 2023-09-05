@@ -42,7 +42,6 @@ namespace organisation
 
     protected:
         bool set(int index, schema &source);
-        std::vector<std::string> split(std::string source);
         
     protected:
         void makeNull();

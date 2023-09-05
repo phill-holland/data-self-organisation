@@ -1,6 +1,7 @@
 #include "population.h"
 #include "data.h"
 #include "history.h"
+#include "general.h"
 #include <iostream>
 #include <string.h>
 
@@ -17,40 +18,14 @@ of a bicycle built for two .
 
 void run()
 {     
-    auto split = [](std::string source)
-    {
-        std::vector<std::string> result;
-        std::string temp; 
-
-        for(auto &ch: source)
-        {
-            if((ch != ' ')&&(ch != 10)&&(ch != 13))
-            {
-                temp += ch;
-            }
-            else
-            {
-                if(temp.size() > 0)
-                {
-                    result.push_back(temp);
-                    temp.clear();
-                }
-            }
-        }
-
-        if(temp.size() > 0) result.push_back(temp);
-        
-        return result;
-    };
-
-    auto strings = split(source);
+    auto strings = organisation::split(source);
     
     std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };
 
     int epochs = expected.size();
 
     organisation::data data(strings);
-    organisation::population p(expected, 5000);
+    organisation::population p(expected, 10000);
     
     p.generate(data);
     organisation::schema best = p.go(data, expected, 100);

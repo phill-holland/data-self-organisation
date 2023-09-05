@@ -4,42 +4,17 @@
 #include "data.h"
 #include "vector.h"
 #include "schema.h"
+#include "general.h"
 
 TEST(BasicProgramExecution, BasicAssertions)
 {
    //GTEST_SKIP();
 
-    auto split = [](std::string source)
-    {
-        std::vector<std::string> result;
-        std::string temp; 
-
-        for(auto &ch: source)
-        {
-            if((ch != ' ')&&(ch != 10)&&(ch != 13))
-            {
-                temp += ch;
-            }
-            else
-            {
-                if(temp.size() > 0)
-                {
-                    result.push_back(temp);
-                    temp.clear();
-                }
-            }
-        }
-
-        if(temp.size() > 0) result.push_back(temp);
-        
-        return result;
-    };
-
     organisation::program p;
 
-    std::vector<std::string> expected = split("daisy daisy give me your answer do .");
+    std::vector<std::string> expected = organisation::split("daisy daisy give me your answer do .");
     
-    std::vector<std::string> strings = split("daisy daisy give me your answer do .");
+    std::vector<std::string> strings = organisation::split("daisy daisy give me your answer do .");
     organisation::data d(strings);
 
     organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
@@ -68,7 +43,7 @@ TEST(BasicProgramExecution, BasicAssertions)
         z += out1.z;
     }
 
-    std::vector<std::string> outputs = split(p.run(0, d));
+    std::vector<std::string> outputs = organisation::split(p.run(0, d));
 
     EXPECT_EQ(p.count(), 8);
     EXPECT_EQ(outputs, expected);        
@@ -78,37 +53,11 @@ TEST(BasicProgramCross, BasicAssertions)
 {
    //GTEST_SKIP();
 
-    auto split = [](std::string source)
-    {
-        std::vector<std::string> result;
-        std::string temp; 
-
-        for(auto &ch: source)
-        {
-            if((ch != ' ')&&(ch != 10)&&(ch != 13))
-            {
-                temp += ch;
-            }
-            else
-            {
-                if(temp.size() > 0)
-                {
-                    result.push_back(temp);
-                    temp.clear();
-                }
-            }
-        }
-
-        if(temp.size() > 0) result.push_back(temp);
-        
-        return result;
-    };
-
     organisation::program p1, p2;
 
-    std::vector<std::string> expected = split("daisy daisy give me your answer do . I'm half crazy for the love of you .");
+    std::vector<std::string> expected = organisation::split("daisy daisy give me your answer do . I'm half crazy for the love of you .");
     
-    std::vector<std::string> strings1 = split("daisy daisy give me your answer do .");
+    std::vector<std::string> strings1 = organisation::split("daisy daisy give me your answer do .");
     organisation::data d(expected);
 
     organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
@@ -140,7 +89,7 @@ TEST(BasicProgramCross, BasicAssertions)
     // ***
     int offset = (z * (organisation::program::WIDTH * organisation::program::HEIGHT)) + (organisation::program::WIDTH * y) + x;
 
-    std::vector<std::string> strings2 = split("I'm half crazy for the love of you .");
+    std::vector<std::string> strings2 = organisation::split("I'm half crazy for the love of you .");
 
     organisation::vector back = { 0, 0, -1 };
     organisation::vector forward = { 0, 0, 1 };
@@ -167,7 +116,7 @@ TEST(BasicProgramCross, BasicAssertions)
     organisation::program result;
     result.cross(p2, p1, offset + 1);
 
-    std::vector<std::string> outputs = split(result.run(0, d));
+    std::vector<std::string> outputs = organisation::split(result.run(0, d));
 
     EXPECT_EQ(result.count(), 17);
     EXPECT_EQ(outputs, expected);    
@@ -178,37 +127,11 @@ TEST(BasicProgramExecutionWithMagnitude, BasicAssertions)
 {    
     //GTEST_SKIP();
 
-    auto split = [](std::string source)
-    {
-        std::vector<std::string> result;
-        std::string temp; 
-
-        for(auto &ch: source)
-        {
-            if((ch != ' ')&&(ch != 10)&&(ch != 13))
-            {
-                temp += ch;
-            }
-            else
-            {
-                if(temp.size() > 0)
-                {
-                    result.push_back(temp);
-                    temp.clear();
-                }
-            }
-        }
-
-        if(temp.size() > 0) result.push_back(temp);
-        
-        return result;
-    };
-
     organisation::program p;
 
-    std::vector<std::string> expected = split("daisy daisy give me");
+    std::vector<std::string> expected = organisation::split("daisy daisy give me");
     
-    std::vector<std::string> strings = split("daisy daisy give me");
+    std::vector<std::string> strings = organisation::split("daisy daisy give me");
     organisation::data d(strings);
 
     organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
@@ -237,7 +160,7 @@ TEST(BasicProgramExecutionWithMagnitude, BasicAssertions)
         z += (out1.z * magnitude);
     }
 
-    std::vector<std::string> outputs = split(p.run(0, d));
+    std::vector<std::string> outputs = organisation::split(p.run(0, d));
 
     EXPECT_EQ(p.count(), 4);
     EXPECT_EQ(outputs, expected);        
@@ -246,32 +169,6 @@ TEST(BasicProgramExecutionWithMagnitude, BasicAssertions)
 TEST(BasicProgramGenerationAndMutation, BasicAssertions)
 {
     //GTEST_SKIP();
-
-    auto split = [](std::string source)
-    {
-        std::vector<std::string> result;
-        std::string temp; 
-
-        for(auto &ch: source)
-        {
-            if((ch != ' ')&&(ch != 10)&&(ch != 13))
-            {
-                temp += ch;
-            }
-            else
-            {
-                if(temp.size() > 0)
-                {
-                    result.push_back(temp);
-                    temp.clear();
-                }
-            }
-        }
-
-        if(temp.size() > 0) result.push_back(temp);
-        
-        return result;
-    };
 
 std::string source = R"(daisy daisy give me your answer do .
 I'm half crazy for the love of you .
@@ -283,7 +180,7 @@ of a bicycle built for two .
 
     organisation::program p1, p2;
         
-    std::vector<std::string> strings = split(source);
+    std::vector<std::string> strings = organisation::split(source);
     organisation::data d(strings);
 
     p1.generate(d);
@@ -304,32 +201,6 @@ TEST(BasicProgramScores, BasicAssertions)
 {
     //GTEST_SKIP();
 
-    auto split = [](std::string source)
-    {
-        std::vector<std::string> result;
-        std::string temp; 
-
-        for(auto &ch: source)
-        {
-            if((ch != ' ')&&(ch != 10)&&(ch != 13))
-            {
-                temp += ch;
-            }
-            else
-            {
-                if(temp.size() > 0)
-                {
-                    result.push_back(temp);
-                    temp.clear();
-                }
-            }
-        }
-
-        if(temp.size() > 0) result.push_back(temp);
-        
-        return result;
-    };
-
 std::string source = R"(daisy daisy give me your answer do .
 but you'll look sweet upon the seat .
 )";
@@ -337,14 +208,14 @@ but you'll look sweet upon the seat .
     std::string expected1 = "daisy daisy give me your answer do .";
     std::string expected2 = "but you'll look sweet upon the seat .";
 
-    std::vector<std::string> s1 = split(expected1);
-    std::vector<std::string> s2 = split(expected2);
+    std::vector<std::string> s1 = organisation::split(expected1);
+    std::vector<std::string> s2 = organisation::split(expected2);
 
     std::vector<int> lengths = { (int)(s1.size() * 2) + 1, (int)(s2.size() * 2) + 1 };
 
     organisation::schema schema(lengths);
 
-    std::vector<std::string> strings = split(source);
+    std::vector<std::string> strings = organisation::split(source);
     organisation::data d(strings);
 
     organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };

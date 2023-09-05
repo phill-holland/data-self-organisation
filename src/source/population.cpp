@@ -1,4 +1,5 @@
 #include "population.h"
+#include "general.h"
 #include <iostream>
 #include <fcntl.h>
 
@@ -282,32 +283,6 @@ bool organisation::population::set(int index, schema &source)
 
 	return result;
 }
-
-std::vector<std::string> organisation::population::split(std::string source) 
-{     
-    std::vector<std::string> result;
-    std::string temp; 
-
-    for(auto &ch: source)
-    {
-        if((ch != ' ')&&(ch != 10)&&(ch != 13))
-        {
-            temp += ch;
-        }
-        else
-        {
-            if(temp.size() > 0)
-            {
-                result.push_back(temp);
-                temp.clear();
-            }
-        }
-    }
-
-    if(temp.size() > 0) result.push_back(temp);
-    
-    return result;    
-} 
 
 void organisation::population::makeNull() 
 { 
