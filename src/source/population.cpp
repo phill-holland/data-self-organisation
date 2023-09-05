@@ -37,6 +37,14 @@ void organisation::population::reset(std::vector<std::string> expected, int size
     init = true;
 }
 
+void organisation::population::clear()
+{
+    for(int i = 0; i < size; ++i)
+    {
+        data[i]->clear();
+    }
+}
+
 void organisation::population::generate(organisation::data &source)
 {
     for(int i = 0; i < size; ++i)
@@ -45,13 +53,13 @@ void organisation::population::generate(organisation::data &source)
     }
 }
 
-organisation::schema organisation::population::go(organisation::data &source, std::vector<std::string> expected, int iterations)
+organisation::schema organisation::population::go(organisation::data &source, std::vector<std::string> expected, int &count, int iterations)
 {
     schema res(lengths);
     float most = 0.0f;
 
     bool result = false;
-    int count = 0;
+    count = 0;
 
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)size) / 100.0f) * mutate_rate_in_percent;

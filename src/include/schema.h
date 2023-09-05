@@ -29,7 +29,7 @@ namespace organisation
         ~schema() { cleanup(); }
 
     public:
-        void clear() { prog.clear(); }
+        void clear();
         
         bool initalised() { return init; }
         void reset(std::vector<int> lengths);

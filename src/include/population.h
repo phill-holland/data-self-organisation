@@ -31,8 +31,10 @@ namespace organisation
         bool initalised() { return init; }
         void reset(std::vector<std::string> expected, int size);
 
+        void clear();
+        
         void generate(organisation::data &source);
-        organisation::schema go(organisation::data &source, std::vector<std::string> expected, int iterations = 0);
+        organisation::schema go(organisation::data &source, std::vector<std::string> expected, int &count, int iterations = 0);
 
         schema top();
         

@@ -16,6 +16,8 @@ namespace organisation
     public:
         void push(vector source, int value);
         std::string get(data &source);
+
+        void append(std::string filename, data &source);
     };
 };
 

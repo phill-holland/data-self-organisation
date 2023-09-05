@@ -27,6 +27,12 @@ void organisation::schema::reset(std::vector<int> lengths)
     init = true;
 }
 
+void organisation::schema::clear()
+{
+    prog.clear();
+    for(int i = 0; i < epochs; ++i) scores[i]->clear();
+}
+
 void organisation::schema::generate(data &source)
 {
     prog.clear();

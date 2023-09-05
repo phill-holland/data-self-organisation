@@ -1,4 +1,5 @@
 #include "history.h"
+#include <fstream>
 
 void organisation::history::push(vector source, int value)
 {
@@ -27,4 +28,16 @@ std::string organisation::history::get(data &source)
     }
 
     return result;
+}
+
+void organisation::history::append(std::string filename, data &source)
+{
+    std::fstream output(filename, std::fstream::out | std::fstream::app | std::fstream::binary);
+
+    if(output.is_open())
+    {
+        std::string buffer = get(source);
+        output.write(buffer.c_str(), buffer.size());
+        output.close();
+    }
 }
