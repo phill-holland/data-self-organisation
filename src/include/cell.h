@@ -14,15 +14,9 @@ namespace organisation
 {        
     class cell
     {    
-        //static const int IN = 4;
-        //static const int OUT = 1;
-        //static const int MAGNITUDE = 2;
-
         static std::mt19937_64 generator;
 
         in routes;
-        //std::unordered_map<int, organisation::gates> in_gates;
-        //std::array<organisation::gates, 27> routes;
 
     public:
         int value;        

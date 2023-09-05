@@ -16,19 +16,6 @@ organisation::gate organisation::gates::get(int index)
     return gate();
 }
 
-/*
-std::vector<gate> get()
-{
-    std::vector<gate> result;
-
-    for(auto &it: data)
-    {
-        result.push_back(it.second);
-    }
-
-    return result;
-}
-*/
 std::vector<organisation::vector> organisation::gates::get()
 {
     std::vector<organisation::vector> result;
@@ -91,12 +78,4 @@ bool organisation::gates::equals(const gates &source)
     }
 
     return true;
-    /*
-    for(int i = 0; i < values.size(); ++i)
-    {
-        if(values[i].magnitude != source.values[i].magnitude) return false;
-    }
-
-    return true;
-    */
 }

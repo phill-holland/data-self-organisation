@@ -50,7 +50,7 @@ void run()
     int epochs = expected.size();
 
     organisation::data data(strings);
-    organisation::population p(expected, 2000);
+    organisation::population p(expected, 5000);
     
     p.generate(data);
     organisation::schema best = p.go(data, expected, 100);
