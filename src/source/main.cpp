@@ -7,8 +7,8 @@
 
 using namespace std;
 
-std::string source = R"(daisy daisy give me your answer do .
-I'm half crazy for the love of you .)";
+std::string source = R"(daisy daisy give me your answer do .)";
+/*I'm half crazy for the love of you .)";
 /*it won't be a stylish marriage .
 I can't afford a carriage .
 but you'll look sweet upon the seat .
@@ -19,12 +19,12 @@ void run(int rerun = 1)
 {     
     auto strings = organisation::split(source);
     
-    std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };
+    std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };
 
     int epochs = expected.size();
 
     organisation::data data(strings);
-    organisation::population p(expected, 3000);//2000);//1000);
+    organisation::population p(expected, 1000);//3000);//2000);//1000);
     
     const int iterations = 300;
 
