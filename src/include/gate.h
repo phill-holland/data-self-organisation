@@ -34,7 +34,7 @@ namespace organisation
 
     public:
         static const int IN = 15;
-        static const int OUT = 3;
+        static const int OUT = 10;//6;//3;
 
     public:
         gates() { }

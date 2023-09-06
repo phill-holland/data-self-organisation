@@ -87,104 +87,50 @@ organisation::schema organisation::population::go(organisation::data &source, st
 
     do
     {
-        int mutants = 0;
         float total = 0.0f;        
       
-        for(int generation = 0; generation < size; generation += threads)//++generation)
+        for(int generation = 0; generation < size; generation += threads)
         {        
-            //std::vector<std::future<std::vector<std::string>>> results;
-            std::vector<std::vector<std::string>> results;
-            //float sum = 0.0f;
+            std::vector<std::future<std::tuple<std::vector<std::string>,schema*>>> results;
 
             for(int i = 0; i < threads; ++i)
             {
-                //auto result = std::async(&organisation::population::run, this, intermediate[i], &source, expected, mutation);
-                auto result = run(intermediate[i], &source, expected, mutation);
+                auto result = std::async(&organisation::population::run, this, intermediate[i], &source, expected, mutation);
                 results.push_back(std::move(result));
             }
 
-            int i = 0;
-            //for (std::vector<std::future<std::vector<std::string>>>::iterator it = results.begin(); it != results.end(); ++it)
-            for (std::vector<std::vector<std::string>>::iterator it = results.begin(); it != results.end(); ++it)
+            for (std::vector<std::future<std::tuple<std::vector<std::string>,schema*>>>::iterator it = results.begin(); it != results.end(); ++it)
             {
-                std::vector<std::string> output = *it;//it->get();
+                it->wait();
+            }
+
+            for (std::vector<std::future<std::tuple<std::vector<std::string>,schema*>>>::iterator it = results.begin(); it != results.end(); ++it)
+            {
+                std::tuple<std::vector<std::string>,schema*> outputs = it->get();
+
+                std::vector<std::string> output = std::get<0>(outputs);
+                schema *dest = std::get<1>(outputs);
+        
                 int offspring = worst();
-                set(offspring, *intermediate[i]);
-                float sum = intermediate[i]->sum();
+                set(offspring, *dest);
+                float sum = dest->sum();
                 total += sum;
 
                 if(sum > most)
                 {
-                    res.copy(*intermediate[i]);
+                    res.copy(*dest);
                     most = sum;
                 }
 
                 if(sum >= 0.9999f) result = true;    
-                if(output == expected) result = true;
-                ++i;
+                if(output == expected) result = true;             
             }
-            //int offspring = worst();            
-            //schema temp(lengths);
-
-/*
-            int t = (std::uniform_int_distribution<int>{0, size - 1})(generator);
-            if(((float)t) <= mutation) 
-            {
-                schema *s1 = best();
-                temp.copy(*s1);
-
-                temp.mutate(source);
-                
-                int epoch = 0;
-                for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
-                {
-                    results.push_back(temp.run(epoch, *it, source));
-                    ++epoch;
-                }
-
-                set(offspring, temp);
-                sum = temp.sum();
-                
-                ++mutants;                                
-            }
-            else
-            {
-                schema *s1 = best();
-                schema *s2 = best();
-                
-                s1->cross(&temp, s2);
-
-                int epoch = 0;
-                for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
-                {
-                    results.push_back(temp.run(epoch, *it, source));
-                    ++epoch;
-                }
-
-                set(offspring, temp);
-                sum = temp.sum();                
-            }
-            */
-            //total += sum;
-/*
-            if(sum > most)
-            {
-                res.copy(temp);
-                most = sum;
-            }
-
-            if(sum >= 0.9999f) result = true;    
-            if(results == expected) result = true;
-            */
         }
 
-        total /= threads;
         total /= size;
         
-
         std::cout << "Generation (" << count << ") Best=" << most;
-        std::cout << " Avg=" << total;                
-        std::cout << " M=" << mutants << "\r\n";
+        std::cout << " Avg=" << total << "\r\n";
 
         if((iterations > 0)&&(count > iterations)) result = true;
 
@@ -195,8 +141,8 @@ organisation::schema organisation::population::go(organisation::data &source, st
     return res;
 }
 
-std::vector<std::string> organisation::population::run(schema *destination, organisation::data *source, std::vector<std::string> expected, const float mutation)
-{
+std::tuple<std::vector<std::string>,organisation::schema*> organisation::population::run(schema *destination, organisation::data *source, std::vector<std::string> expected, const float mutation)
+{    
     std::vector<std::string> results;
     
     int t = (std::uniform_int_distribution<int>{0, size - 1})(generator);
@@ -205,16 +151,9 @@ std::vector<std::string> organisation::population::run(schema *destination, orga
 
     if(((float)t) <= mutation) 
     {
-        /*
-        std::cout << "startMM\r\n";
         schema *s1 = best();
 
-        {
-            threading::semaphore lock(token);
-            destination->copy(*s1);
-        }
-
-std::cout << "endMM\r\n";
+        destination->copy(*s1);
         destination->mutate(*source);
         
         int epoch = 0;
@@ -223,36 +162,23 @@ std::cout << "endMM\r\n";
             results.push_back(destination->run(epoch, *it, *source));
             ++epoch;
         }
-*/
-        //set(offspring, temp);
-        //sum = temp.sum();
-        
-        //++mutants;                                
     }
     else
     {
-       // std::cout << "start\r\n";
         schema *s1 = best();
         schema *s2 = best();
+             
+        s1->cross(destination, s2);
         
-        //{
-          //  threading::semaphore lock(token);
-            s1->cross(destination, s2);
-        //}
-
-//std::cout << "end\r\n";
         int epoch = 0;
         for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
         {
             results.push_back(destination->run(epoch, *it, *source));
             ++epoch;
         }
-
-        //set(offspring, temp);
-        //sum = temp.sum();                
     }
 
-    return results;
+    return std::tuple<std::vector<std::string>,schema*>(results,destination);
 }
 
 organisation::schema organisation::population::top()
@@ -318,7 +244,7 @@ organisation::schema *organisation::population::best()
 			score = t2;
 		}
 	}
-//std::cout << "best " << best << "\r\n";
+
 	return data[best];
 }
 

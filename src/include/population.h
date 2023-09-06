@@ -12,7 +12,7 @@ namespace organisation
     class population
     {
         static const int minimum = 100, maximum = 10000;
-        static const int threads = 6;
+        static const int threads = 12;
 
         static std::mt19937_64 generator;
 
@@ -24,8 +24,6 @@ namespace organisation
         int dimensions;
 
         std::vector<int> lengths;
-
-        //threading::semaphore::token token;
 
         bool init;
 
@@ -44,7 +42,7 @@ namespace organisation
         schema top();
                 
     protected:
-        std::vector<std::string> run(schema *destination, organisation::data *source, std::vector<std::string> expected, const float mutation);
+        std::tuple<std::vector<std::string>,schema*> run(schema *destination, organisation::data *source, std::vector<std::string> expected, const float mutation);
         schema *best();
         int worst();
 

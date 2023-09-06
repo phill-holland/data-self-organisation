@@ -84,5 +84,4 @@ void organisation::gates::copy(const gates &source)
 {
     clear();
     data = source.data;
-    //data.insert(source.data.begin(), source.data.end());
 }
