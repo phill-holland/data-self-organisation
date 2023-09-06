@@ -24,7 +24,7 @@ void run(int rerun = 1)
     int epochs = expected.size();
 
     organisation::data data(strings);
-    organisation::population p(expected, 3000);//2000);//1000);
+    organisation::population p(expected, 1000);//5000//3000);//2000);//1000);
     
     const int iterations = 300;
 
@@ -42,10 +42,11 @@ void run(int rerun = 1)
             organisation::history history;
 
             std::string output = best.run(i, expected[i], data, &history);
+            float sum = best.sum();
             std::cout << "\r\n" << output << "\r\n";
             std::cout << history.get(data);
 
-            if(actual <= iterations) 
+            if((actual <= iterations) || (sum > 0.95f))
             {
                 std::string filename("output");
                 filename += std::to_string(i);
