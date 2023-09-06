@@ -56,7 +56,8 @@ void organisation::population::generate(organisation::data &source)
 organisation::schema organisation::population::go(organisation::data &source, std::vector<std::string> expected, int &count, int iterations)
 {
     schema res(lengths);
-    float most = 0.0f;
+    float most = 0.0f, previous = 0.0f;
+    int most_count = 0;
 
     bool result = false;
     count = 0;
@@ -120,21 +121,31 @@ organisation::schema organisation::population::go(organisation::data &source, st
             if(sum > most)
             {
                 res.copy(temp);
-                most = sum;
+                most = sum;                
             }
 
             if(sum >= 0.9999f) result = true;    
             if(results == expected) result = true;
+            
         }
 
         total /= size;
-        
+
+        int a = (int)(previous * 1000000.0f);
+        int b = (int)(most * 1000000.0f);
+
+        if(a == b) most_count++;
+        else most_count = 0;
+
+        previous = most;
 
         std::cout << "Generation (" << count << ") Best=" << most;
-        std::cout << " Avg=" << total;                
+        std::cout << " Avg=" << total;         
+        std::cout << " MC=" << most_count;
         std::cout << " M=" << mutants << "\r\n";
 
         if((iterations > 0)&&(count > iterations)) result = true;
+        if(most_count > 20) { count = iterations + 1; result = true; }
 
         ++count;
 
