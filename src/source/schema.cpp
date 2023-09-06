@@ -78,7 +78,8 @@ void organisation::schema::mutate(data &source)
 }
 
 void organisation::schema::cross(schema *destination, schema *value)
-{    
+{   
+    //threading::semaphore lock_a(token), lock_b(value->token); 
     destination->prog.cross(prog, value->prog);
 }
 
@@ -92,8 +93,9 @@ std::string organisation::schema::run(int epoch, std::string expected, data &sou
     return output;
 }
 
-void organisation::schema::copy(const schema &source)
+void organisation::schema::copy(schema &source)
 {    
+    //threading::semaphore lock_a(token), lock_b(source.token); 
     prog.copy(source.prog);
 
     int temp = epochs;

@@ -64,7 +64,7 @@ std::string organisation::program::run(int start, data &source, history *destina
     y = (HEIGHT / 2);
     z = (DEPTH / 2);
     
-    const int MAX = 100;
+    const int MAX = 50;//100;
 
     std::vector<std::tuple<vector,vector>> positions;
     positions.push_back(std::tuple<vector,vector> (vector { x,y,z },vector {0,-1,0}));
@@ -213,23 +213,22 @@ void organisation::program::cross(program &a, program &b, int middle)
     int index = 0;
     for(int i = 0; i < a1; ++i)
     {
-        cells[index] = a.cells[i];
+        cells[index].copy(a.cells[i]);
 		++index;
     }
 
     for(int i = a1; i < b1; ++i)
     {
-        cells[index] = b.cells[i];
+        cells[index].copy(b.cells[i]);
         ++index;
     }
 
     for(int i = b1; i < length; ++i)
     {
-        cells[index] = a.cells[i];
+        cells[index].copy(a.cells[i]);
         ++index;
     }    
 }
-
 
 void organisation::program::makeNull()
 {

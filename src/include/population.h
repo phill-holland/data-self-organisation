@@ -1,6 +1,7 @@
 #include "schema.h"
 #include "kdtree.h"
 #include "data.h"
+#include "semaphore.h"
 #include <random>
 
 #ifndef _ORGANISATION_POPULATION
@@ -11,16 +12,20 @@ namespace organisation
     class population
     {
         static const int minimum = 100, maximum = 10000;
+        static const int threads = 6;
+
         static std::mt19937_64 generator;
 
         dominance::kdtree::kdtree *approximation;
 
-        schema **data;
+        schema **data, **intermediate;
         int size;
 
         int dimensions;
 
         std::vector<int> lengths;
+
+        //threading::semaphore::token token;
 
         bool init;
 
@@ -37,9 +42,10 @@ namespace organisation
         organisation::schema go(organisation::data &source, std::vector<std::string> expected, int &count, int iterations = 0);
 
         schema top();
-        
+                
     protected:
-        schema *best(int j);
+        std::vector<std::string> run(schema *destination, organisation::data *source, std::vector<std::string> expected, const float mutation);
+        schema *best();
         int worst();
 
     protected:

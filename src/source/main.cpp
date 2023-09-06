@@ -8,8 +8,8 @@
 using namespace std;
 
 std::string source = R"(daisy daisy give me your answer do .)";
-/*I'm half crazy for the love of you .)";
-/*it won't be a stylish marriage .
+/*I'm half crazy for the love of you .
+it won't be a stylish marriage .
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
@@ -45,14 +45,21 @@ void run(int rerun = 1)
             std::cout << "\r\n" << output << "\r\n";
             std::cout << history.get(data);
 
-            if(actual <= iterations) history.append("output.csv", data);
+            if(actual <= iterations) 
+            {
+                std::string filename("output");
+                filename += std::to_string(i);
+                filename += std::string(".csv");
+
+                history.append(filename, data);
+            }
         }        
     }
 }
 
 int main(int argc, char *argv[])
 {  
-    run();
+    run(200);
 
     return 0;
 }

@@ -38,7 +38,8 @@ namespace organisation
         std::tuple<bool,bool> validate(int max);
 
         bool equals(const cell &source);
-
+        void copy(const cell &source);
+        
     protected:
         int map(vector source);
     };

@@ -2,6 +2,7 @@
 #include "data.h"
 #include "score.h"
 #include "kdpoint.h"
+#include "semaphore.h"
 #include <string>
 #include <random>
 #include <vector>
@@ -16,6 +17,8 @@ namespace organisation
     {
         static std::mt19937_64 generator;
         
+        //threading::semaphore::token token;
+
         int epochs;
 
         bool init;
@@ -50,7 +53,7 @@ namespace organisation
         std::string run(int epoch, std::string expected, data &source, history *destination = NULL);           
 
     public:
-        void copy(const schema &source);
+        void copy(schema &source);
 
     protected:
         void makeNull();

@@ -2,6 +2,9 @@
 #include "general.h"
 #include <iostream>
 #include <fcntl.h>
+#include <future>
+#include <algorithm>
+#include <signal.h>
 
 std::mt19937_64 organisation::population::generator(std::random_device{}());
 
@@ -34,6 +37,19 @@ void organisation::population::reset(std::vector<std::string> expected, int size
         if(data[i] == NULL) return;
     }
 
+    // ***
+
+    intermediate = new organisation::schema*[threads];
+    if(intermediate == NULL) return;
+
+    for(int i = 0; i < threads; ++i) { intermediate[i] = NULL; }
+
+    for(int i = 0; i < threads; ++i) 
+    { 
+        intermediate[i] = new organisation::schema(lengths);
+        if(intermediate[i] == NULL) return;
+    }
+
     init = true;
 }
 
@@ -42,6 +58,11 @@ void organisation::population::clear()
     for(int i = 0; i < size; ++i)
     {
         data[i]->clear();
+    }
+
+    for(int i = 0; i < threads; ++i)
+    {
+        intermediate[i]->clear();
     }
 }
 
@@ -69,18 +90,47 @@ organisation::schema organisation::population::go(organisation::data &source, st
         int mutants = 0;
         float total = 0.0f;        
       
-        for(int generation = 0; generation < size; ++generation)
+        for(int generation = 0; generation < size; generation += threads)//++generation)
         {        
-            std::vector<std::string> results;
-            float sum = 0.0f;
+            //std::vector<std::future<std::vector<std::string>>> results;
+            std::vector<std::vector<std::string>> results;
+            //float sum = 0.0f;
 
-            int offspring = worst();            
-            schema temp(lengths);
+            for(int i = 0; i < threads; ++i)
+            {
+                //auto result = std::async(&organisation::population::run, this, intermediate[i], &source, expected, mutation);
+                auto result = run(intermediate[i], &source, expected, mutation);
+                results.push_back(std::move(result));
+            }
 
+            int i = 0;
+            //for (std::vector<std::future<std::vector<std::string>>>::iterator it = results.begin(); it != results.end(); ++it)
+            for (std::vector<std::vector<std::string>>::iterator it = results.begin(); it != results.end(); ++it)
+            {
+                std::vector<std::string> output = *it;//it->get();
+                int offspring = worst();
+                set(offspring, *intermediate[i]);
+                float sum = intermediate[i]->sum();
+                total += sum;
+
+                if(sum > most)
+                {
+                    res.copy(*intermediate[i]);
+                    most = sum;
+                }
+
+                if(sum >= 0.9999f) result = true;    
+                if(output == expected) result = true;
+                ++i;
+            }
+            //int offspring = worst();            
+            //schema temp(lengths);
+
+/*
             int t = (std::uniform_int_distribution<int>{0, size - 1})(generator);
             if(((float)t) <= mutation) 
             {
-                schema *s1 = best(offspring);
+                schema *s1 = best();
                 temp.copy(*s1);
 
                 temp.mutate(source);
@@ -99,8 +149,8 @@ organisation::schema organisation::population::go(organisation::data &source, st
             }
             else
             {
-                schema *s1 = best(offspring);
-                schema *s2 = best(offspring);
+                schema *s1 = best();
+                schema *s2 = best();
                 
                 s1->cross(&temp, s2);
 
@@ -114,9 +164,9 @@ organisation::schema organisation::population::go(organisation::data &source, st
                 set(offspring, temp);
                 sum = temp.sum();                
             }
-
-            total += sum;
-
+            */
+            //total += sum;
+/*
             if(sum > most)
             {
                 res.copy(temp);
@@ -125,8 +175,10 @@ organisation::schema organisation::population::go(organisation::data &source, st
 
             if(sum >= 0.9999f) result = true;    
             if(results == expected) result = true;
+            */
         }
 
+        total /= threads;
         total /= size;
         
 
@@ -141,6 +193,66 @@ organisation::schema organisation::population::go(organisation::data &source, st
     } while(!result);
 
     return res;
+}
+
+std::vector<std::string> organisation::population::run(schema *destination, organisation::data *source, std::vector<std::string> expected, const float mutation)
+{
+    std::vector<std::string> results;
+    
+    int t = (std::uniform_int_distribution<int>{0, size - 1})(generator);
+
+    destination->clear();
+
+    if(((float)t) <= mutation) 
+    {
+        /*
+        std::cout << "startMM\r\n";
+        schema *s1 = best();
+
+        {
+            threading::semaphore lock(token);
+            destination->copy(*s1);
+        }
+
+std::cout << "endMM\r\n";
+        destination->mutate(*source);
+        
+        int epoch = 0;
+        for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
+        {
+            results.push_back(destination->run(epoch, *it, *source));
+            ++epoch;
+        }
+*/
+        //set(offspring, temp);
+        //sum = temp.sum();
+        
+        //++mutants;                                
+    }
+    else
+    {
+       // std::cout << "start\r\n";
+        schema *s1 = best();
+        schema *s2 = best();
+        
+        //{
+          //  threading::semaphore lock(token);
+            s1->cross(destination, s2);
+        //}
+
+//std::cout << "end\r\n";
+        int epoch = 0;
+        for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
+        {
+            results.push_back(destination->run(epoch, *it, *source));
+            ++epoch;
+        }
+
+        //set(offspring, temp);
+        //sum = temp.sum();                
+    }
+
+    return results;
 }
 
 organisation::schema organisation::population::top()
@@ -161,7 +273,7 @@ organisation::schema organisation::population::top()
     return *data[j];
 }
 
-organisation::schema *organisation::population::best(int j)
+organisation::schema *organisation::population::best()
 {
     const int samples = 10;
 
@@ -206,7 +318,7 @@ organisation::schema *organisation::population::best(int j)
 			score = t2;
 		}
 	}
-
+//std::cout << "best " << best << "\r\n";
 	return data[best];
 }
 
@@ -296,10 +408,21 @@ void organisation::population::makeNull()
 { 
     approximation = NULL;
     data = NULL; 
+    intermediate = NULL;
 }
 
 void organisation::population::cleanup() 
 { 
+    if(intermediate != NULL)
+    {
+        for(int i = size - 1; i >= 0; i--)
+        {
+            if(intermediate[i] != NULL) delete intermediate[i];
+        }
+
+        delete[] intermediate;
+    }
+
     if(data != NULL)
     {
         for(int i = size - 1; i >= 0; i--)

@@ -39,7 +39,8 @@ namespace organisation
         bool validate(int &in);
         
     public:
-        bool equals(const in &source);        
+        bool equals(const in &source);   
+        void copy(const in &source);     
     };
 };
 

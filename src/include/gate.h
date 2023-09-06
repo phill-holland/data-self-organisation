@@ -33,31 +33,30 @@ namespace organisation
         std::unordered_map<int, gate> data;
 
     public:
-        static const int IN = 15;//27;//4;
+        static const int IN = 15;
         static const int OUT = 3;
 
     public:
-        void clear()
-        {
-           data.clear();
-        }
+        gates() { }
+        gates(const gates &source) { copy(source); }
 
-        bool is_empty()
-        {            
-            return data.size() <= 0;
-        }
+        void clear() { data.clear(); }
+
+        bool is_empty() { return data.size() <= 0; }
 
         int size() { return data.size(); }
 
         void set(int index, gate g);
         gate get(int index);
+
         std::vector<organisation::vector> get();
         
     public:
         bool validate(int &count);
         
     public:
-        bool equals(const gates &source);        
+        bool equals(const gates &source);  
+        void copy(const gates &source);      
     };
 };
 

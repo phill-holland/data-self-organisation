@@ -79,3 +79,10 @@ bool organisation::gates::equals(const gates &source)
 
     return true;
 }
+
+void organisation::gates::copy(const gates &source)
+{
+    clear();
+    data = source.data;
+    //data.insert(source.data.begin(), source.data.end());
+}

@@ -78,6 +78,14 @@ bool organisation::cell::equals(const cell &source)
 
 }
 
+void organisation::cell::copy(const cell &source)
+{
+    clear();
+
+    value = source.value;
+    routes.copy(source.routes);
+}
+
 int organisation::cell::map(vector source)
 {
     int tx = source.x + 1;
