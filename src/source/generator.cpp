@@ -6,12 +6,21 @@ void organisation::generator::background(core::threading::thread *bt)
 {
 	sleep(50);
 
-    schema temp = get();	
-    if(!pop->outgoing.set(temp)) sleep(100);
+    //for(int i = 0; i < 10; ++i)
+    //{
+        schema temp = get();	
+        if(!pop->outgoing.set(temp)) 
+            sleep(100);
+    //}
 }
 
 organisation::schema organisation::generator::get()
-{    
+{   
+    organisation::schema result;
+    if(!pop->get(result))
+        std::cout << "moo\r\n";
+    return result; 
+    /*
     organisation::schema result;
 
     const float mutate_rate_in_percent = 20.0f;
@@ -21,10 +30,9 @@ organisation::schema organisation::generator::get()
 
 	threading::semaphore lock(pop->token);
 
-/*
     if(((float)t) <= mutation) 
     {
-        schema *s1 = pop->best();
+        schema *s1 = pop.best();
 
         result.copy(*s1);
         result.mutate(pop->mappings);            
@@ -36,6 +44,7 @@ organisation::schema organisation::generator::get()
              
         s1->cross(&result, s2);
     }
-*/
+
     return result;
+    */
 }

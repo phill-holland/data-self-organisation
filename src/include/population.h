@@ -6,6 +6,7 @@
 #include "semaphore.h"
 #include "generator.h"
 #include "collector.h"
+#include "schemas.h"
 #include <random>
 #include <atomic>
 
@@ -32,7 +33,11 @@ namespace organisation
         dominance::kdtree::kdtree *approximation;
 
         //schema **data, **intermediate;
-        schema **left, **right;
+        //schema **left, **right;
+        //std::atomic<int> *locks;
+
+        organisation::schemas *schemas;
+
         int size;
 
         int dimensions;
@@ -51,14 +56,14 @@ namespace organisation
 	    //void background(core::threading::thread *bt);
 
     public:
-        population(organisation::data &source, std::vector<std::string> expected, int size) 
+        population(organisation::data source, std::vector<std::string> expected, int size) 
         : generating(this), collecting(this)
-            { makeNull(); reset(mappings, expected, size); }
+            { makeNull(); reset(source, expected, size); }
 
         ~population() { cleanup(); }
 
         bool initalised() { return init; }
-        void reset(organisation::data &source, std::vector<std::string> expected, int size);
+        void reset(organisation::data source, std::vector<std::string> expected, int size);
 
         void clear();
                 
@@ -72,20 +77,24 @@ namespace organisation
             //generating.start(); 
         }
 
-    protected:
-        schema get(schema **source);
-        void generate(schema **source);
+    void generate();
 
     protected:
-        std::tuple<std::vector<std::string>,schema*> run(schema *destination, schema **source, std::vector<std::string> expected, const float mutation);
-        void back(schema **destination, schema **source, int thread);
-
-        schema *best(schema **source);
-        int worst(schema **source, int start, int end);
-        //int worst();
+        bool get(schema &destination);
+        
 
     protected:
-        bool set(schema **destination, schema *source, int index);
+        std::tuple<std::vector<std::string>,float> run(std::vector<std::string> expected, const float mutation);
+        //void back(schema **destination, schema **source, int thread);
+
+        bool best(schema &destination);
+        //int worst(schema **source, int start, int end);
+        int worst(schema &destination);
+
+    protected:
+        int pull(schema &destination);
+
+        bool set(schema &source);
         
     protected:
         void makeNull();

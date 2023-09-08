@@ -22,7 +22,7 @@ void organisation::population::background(core::threading::thread *bt)
     //std::cout << "set end\r\n";
 }
 */
-void organisation::population::reset(organisation::data &source, std::vector<std::string> expected, int size)
+void organisation::population::reset(organisation::data source, std::vector<std::string> expected, int size)
 {
     init = false; cleanup();
     this->size = size;
@@ -42,57 +42,22 @@ void organisation::population::reset(organisation::data &source, std::vector<std
 	if (approximation == NULL) return;
 	if (!approximation->initalised()) return;
 
-    left = new organisation::schema*[size];
-    if(left == NULL) return;
-
-    for(int i = 0; i < size; ++i) { left[i] = NULL; }
-
-    for(int i = 0; i < size; ++i) 
-    { 
-        left[i] = new organisation::schema();
-        if(left[i] == NULL) return;
-    }
-
-    // ***
-
-    right = new organisation::schema*[size];
-    if(right == NULL) return;
-
-    for(int i = 0; i < size; ++i) { right[i] = NULL; }
-
-    for(int i = 0; i < size; ++i) 
-    { 
-        right[i] = new organisation::schema();
-        if(right[i] == NULL) return;
-    }
+    schemas = new organisation::schemas(size);
+    if (schemas == NULL) return;
+    if (!schemas->initalised()) return;
 
     init = true;
 }
 
 void organisation::population::clear()
 {
-    for(int i = 0; i < size; ++i)
-    {
-        left[i]->clear();
-        right[i]->clear();
-    }
-
-    #warning KDTREE needs clearing here
-
-    /*
-    for(int i = 0; i < threads; ++i)
-    {
-        intermediate[i]->clear();
-    }
-    */
+    schemas->clear();
+    #warning need to clear kdtree
 }
 
-void organisation::population::generate(schema **source)
+void organisation::population::generate()
 {
-    for(int i = 0; i < size; ++i)
-    {
-        source[i]->generate(mappings);
-    }
+    schemas->generate(mappings);
 }
 
 organisation::schema organisation::population::go(std::vector<std::string> expected, int &count, int iterations)
@@ -106,8 +71,8 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)size) / 100.0f) * mutate_rate_in_percent;
 
-    schema **source = left, **destination = right;
-    generate(source);
+    //schema **source = left, **destination = right;
+    //generate();
 
     do
     {
@@ -115,7 +80,7 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
       
         for(int generation = 0; generation < size; generation += threads)
         {        
-            std::vector<std::future<std::tuple<std::vector<std::string>,schema*>>> results;
+            std::vector<std::future<std::tuple<std::vector<std::string>,float>>> results;
 
             int m = threads;
             if(generation + threads >= size) 
@@ -124,7 +89,7 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
             {
              //std::cout << "start " << intermediate[i] << "\r\n";   
                 //std::cout << (i + generation) << "\r\n";
-                auto result = std::async(&organisation::population::run, this, destination[generation + i], source, expected, mutation);
+                auto result = std::async(&organisation::population::run, this, expected, mutation);
                 results.push_back(std::move(result));
             }
 
@@ -136,12 +101,13 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
             */
             
 
-            for (std::vector<std::future<std::tuple<std::vector<std::string>,schema*>>>::iterator it = results.begin(); it != results.end(); ++it)
+            for (std::vector<std::future<std::tuple<std::vector<std::string>,float>>>::iterator it = results.begin(); it != results.end(); ++it)
             {
-                std::tuple<std::vector<std::string>,schema*> outputs = it->get();
+                std::tuple<std::vector<std::string>,float> outputs = it->get();
 
                 std::vector<std::string> output = std::get<0>(outputs);
-                schema *dest = std::get<1>(outputs);
+                float sum = std::get<1>(outputs);
+                //schema *dest = std::get<1>(outputs);
                 
                 //int offspring = worst();
                 //set(offspring, *dest);
@@ -154,12 +120,12 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
         
                 int offspring = worst();
                 set(offspring, *dest);*/
-                float sum = dest->sum();
+                //float sum = dest->sum();
                 total += sum;
 
                 if(sum > most)
                 {
-                    res.copy(*dest);
+                    //res.copy(*dest);
                     most = sum;
                 }
 
@@ -169,7 +135,7 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
             }
 
 
-            int blocks_len = size / threads;
+           // int blocks_len = size / threads;
             // find worst within start,end of thread block, in source
             // find best within destination (throughout whole)
             // overwrite worst with best
@@ -185,14 +151,14 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
         //int m = threads;
         //if(generation + threads >= size) 
             //m = size - generation;
-        for(int i = 0; i < threads; ++i)
-        {
+      //  for(int i = 0; i < threads; ++i)
+        //{
         //std::cout << "start " << intermediate[i] << "\r\n";   
             //std::cout << (i + generation) << "\r\n";
             //auto result = std::async(&organisation::population::run, this, destination[generation + i], source, expected, mutation);
             //results.push_back(std::move(result));
-            auto result = std::async(&organisation::population::back, this, source, destination, i);
-        }
+          //  auto result = std::async(&organisation::population::back, this, source, destination, i);
+        //}
 
         //schema **tt = source;
         //source = destination;
@@ -215,22 +181,27 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
     return res;
 }
 
-std::tuple<std::vector<std::string>,organisation::schema*> organisation::population::run(schema *destination, schema **source, std::vector<std::string> expected, const float mutation)
+std::tuple<std::vector<std::string>,float> organisation::population::run(std::vector<std::string> expected, const float mutation)
 {    
     std::vector<std::string> results;
 
 //organisation::schema temp;
 //temp = get(source);
     //if(outgoing.get(*destination))
-    *destination = get(source);
+    //*destination = get(source);
     //destination->scores.clear();
     //destination->clear();
     //*destination[generation + i] = get(source);
     //{
+        organisation::schema destination;
+        if(!get(destination)) return std::tuple<std::vector<std::string>,float>(results,0.0f);        
+        //while(!outgoing.get(destination)) { };
+        //return std::tuple<std::vector<std::string>,float>(results,0.0f);
+
         int epoch = 0;
         for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
         {
-            results.push_back(destination->run(epoch, *it, mappings));
+            results.push_back(destination.run(epoch, *it, mappings));
             //results.push_back(temp.run(epoch, *it, *source));
             ++epoch;
         }
@@ -239,7 +210,9 @@ std::tuple<std::vector<std::string>,organisation::schema*> organisation::populat
   //  if(destination->sum() < temp.sum())
     //    *destination = temp;
 
-    return std::tuple<std::vector<std::string>,schema*>(results,destination);
+    set(destination);
+
+    return std::tuple<std::vector<std::string>,float>(results,destination.sum());
 /*    
     int t = (std::uniform_int_distribution<int>{0, size - 1})(generator);
 
@@ -277,7 +250,7 @@ std::tuple<std::vector<std::string>,organisation::schema*> organisation::populat
     return std::tuple<std::vector<std::string>,schema*>(results,destination);
     */
 }
-
+/*
 void organisation::population::back(schema **destination, schema **source, int thread)
 {
     
@@ -294,7 +267,7 @@ void organisation::population::back(schema **destination, schema **source, int t
             destination[w]->copy(*b);
     }
 }
-
+*/
 organisation::schema organisation::population::top()
 {
     /*
@@ -313,13 +286,12 @@ organisation::schema organisation::population::top()
 
     return *data[j];
     */
-   return *left[0];
+   //return *left[0];
+   return organisation::schema();
 }
 
-organisation::schema organisation::population::get(schema **source)
+bool organisation::population::get(schema &destination)
 {
-    organisation::schema result;
-
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)size) / 100.0f) * mutate_rate_in_percent;
 
@@ -327,34 +299,31 @@ organisation::schema organisation::population::get(schema **source)
 
     if(((float)t) <= mutation) 
     {
-        schema *s1 = best(source);
+        schema s1;
+        if(!best(s1)) return false;
 
-        result.copy(*s1);
-        result.mutate(mappings);            
+        destination.copy(s1);
+        destination.mutate(mappings);            
     }
     else
     {
-        schema *s1 = best(source);
-        schema *s2 = best(source);
-             
-        s1->cross(&result, s2);
+        schema s1,s2;
+
+        if(!best(s1)) return false;
+        if(!best(s2)) return false;
+                     
+        s1.cross(&destination, &s2);
     }
 
-    return result;
+    return true;
 }
 
+/*
 organisation::schema *organisation::population::best(schema **source)
 {
     const int samples = 10;
 
 	std::uniform_int_distribution<int> rand{ 0, size - 1 };
-
-	//dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	//dominance::kdtree::kdpoint origin(dimensions);
-
-	//temp1.set(0L);
-	//temp2.set(0L);
-	//origin.set(0L);
 
     long competition;
 
@@ -370,32 +339,7 @@ organisation::schema *organisation::population::best(schema **source)
         {
             best = competition;
             score = t2;
-        }
-
-        /*
-        source[best]->get(temp1, minimum, maximum);
-        source[competition]->get(temp2, minimum, maximum);
-
-		float t2 = source[competition]->sum();
-
-		if(approximation->exists(temp1))
-		{
-			if(approximation->inside(temp1, &origin, &temp2))
-			{
-				score = t2;
-			}
-			else
-			{
-				best = competition;
-				score = t2;
-			}
-		}
-        else if(t2 > score)
-		{
-			best = competition;
-			score = t2;
-		}
-        */
+        }        
 	}
 
 	return source[best];
@@ -429,41 +373,17 @@ int organisation::population::worst(schema **source, int start, int end)
 			worst = competition;
 			score = t2;
 		}
-/*
-        data[worst]->get(temp1, minimum, maximum);
-        data[competition]->get(temp2, minimum, maximum);
-
-		float t2 = data[competition]->sum();
-
-		if(approximation->exists(temp2))
-		{
-			if(approximation->inside(temp2, &origin, &temp1))
-			{
-				score = t2;
-			}
-			else 
-			{
-				worst = competition;
-				score = t2;
-			}
-		}
-		else if(t2 < score)
-		{
-			worst = competition;
-			score = t2;
-		}
-        */
 	}
 
 	return worst;
 }
+*/
 
-/*
-organisation::schema *organisation::population::best(schema **source)
+bool organisation::population::best(organisation::schema &destination)
 {
     const int samples = 10;
 
-	std::uniform_int_distribution<int> rand{ 0, size - 1 };
+	//std::uniform_int_distribution<int> rand{ 0, size - 1 };
 
 	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
 	dominance::kdtree::kdpoint origin(dimensions);
@@ -472,19 +392,29 @@ organisation::schema *organisation::population::best(schema **source)
 	temp2.set(0L);
 	origin.set(0L);
 
-    long competition;
+    //long competition;
 
-    long best = rand(generator);
-	float score = source[best]->sum();
+    //long best = rand(generator);    
+    /*
+    organisation::schema best, competition;
+    int escape = 0;
+    while((!schemas->get(best, rand(generator)))&&(++escape<15)) { }
+    if(escape>=15) return false;
+    */
+   organisation::schema competition;
+   if(pull(destination)<0) return false;
+
+	float score = destination.sum();//source[best]->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
-		competition = rand(generator);
+		//competition = rand(generator);
+        if(pull(competition)<0) return false;
 
-        source[best]->get(temp1, minimum, maximum);
-        source[competition]->get(temp2, minimum, maximum);
+        destination.get(temp1, minimum, maximum);
+        competition.get(temp2, minimum, maximum);
 
-		float t2 = source[competition]->sum();
+		float t2 = competition.sum();
 
 		if(approximation->exists(temp1))
 		{
@@ -494,26 +424,35 @@ organisation::schema *organisation::population::best(schema **source)
 			}
 			else
 			{
-				best = competition;
+				destination = competition;
 				score = t2;
 			}
 		}
         else if(t2 > score)
 		{
-			best = competition;
+			destination = competition;
 			score = t2;
 		}
 	}
 
-	return source[best];
+    return true;
+	//return source[best];
 }
-*/
-/*
-int organisation::population::worst()
+
+int organisation::population::pull(organisation::schema &destination)
+{
+    std::uniform_int_distribution<int> rand{ 0, size - 1 };
+    int escape = 0, index = rand(generator);
+    while((!schemas->get(destination, index))&&(++escape<15)) { index = rand(generator); }
+    if(escape>=15) return -1;
+    return index;
+}
+
+int organisation::population::worst(schema &destination)
 {
     const int samples = 10;
 
-	std::uniform_int_distribution<int> rand{ 0L, size - 1 };
+	//std::uniform_int_distribution<int> rand{ 0L, size - 1 };
 
 	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
 	dominance::kdtree::kdpoint origin(dimensions);
@@ -522,19 +461,27 @@ int organisation::population::worst()
 	temp2.set(0L);
 	origin.set(0L);
 
-    int competition;
+    int result = -1;
 
-    int worst = rand(generator);
-	float score = data[worst]->sum();
+    //int competition;
+    int temp;
+    //int worst = rand(generator);
+    organisation::schema competition;
+    result = pull(destination);
+    if(result < 0) return -1;
+
+	float score = destination.sum();//data[worst]->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
-		competition = rand(generator);
+		//competition = rand(generator);
+        temp = pull(destination);
+        if(temp < 0) return -1;
 
-        data[worst]->get(temp1, minimum, maximum);
-        data[competition]->get(temp2, minimum, maximum);
+        destination.get(temp1, minimum, maximum);
+        competition.get(temp2, minimum, maximum);
 
-		float t2 = data[competition]->sum();
+		float t2 = competition.sum();
 
 		if(approximation->exists(temp2))
 		{
@@ -544,35 +491,42 @@ int organisation::population::worst()
 			}
 			else 
 			{
-				worst = competition;
+				destination = competition;
+                result = temp;
 				score = t2;
 			}
 		}
 		else if(t2 < score)
 		{
-			worst = competition;
+			destination = competition;
+            result = temp;
 			score = t2;
 		}
 	}
 
-	return worst;
+    return result;
+    //return true;
+	//return worst;
 }
-*/
 
-bool organisation::population::set(schema **destination, schema *source, int index)
-{
+bool organisation::population::set(schema &source)//int index)
+{    
+    organisation::schema destination;
+    int index = worst(destination);
+
+    if(index < 0) return false;
+	if(source.sum() < destination.sum()) return false;
+
     std::uniform_real_distribution<float> dist{ 0.0f, 1.0f };
     bool result = false;
-
-	if(source->sum() < destination[index]->sum()) return false;
-    
+   
 	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
 
 	temp1.set(0L);
 	temp2.set(0L);
 
-    destination[index]->get(temp1, minimum, maximum);
-    source->get(temp2, minimum, maximum);
+    destination.get(temp1, minimum, maximum);
+    source.get(temp2, minimum, maximum);
 
 	if(!temp1.issame(minimum)) 
 	{
@@ -587,7 +541,8 @@ bool organisation::population::set(schema **destination, schema *source, int ind
         result = true;
     }
 
-    destination[index]->copy(*source);    
+    //destination[index]->copy(*source);    
+    if(!schemas->set(source, index)) return false;
 
 	return result;
 }
@@ -595,31 +550,11 @@ bool organisation::population::set(schema **destination, schema *source, int ind
 void organisation::population::makeNull() 
 { 
     approximation = NULL;
-    left = NULL; 
-    right = NULL;
+    schemas = NULL;
 }
 
 void organisation::population::cleanup() 
 { 
-    if(right != NULL)
-    {
-        for(int i = size - 1; i >= 0; i--)
-        {
-            if(right[i] != NULL) delete right[i];
-        }
-
-        delete[] right;
-    }
-
-    if(left != NULL)
-    {
-        for(int i = size - 1; i >= 0; i--)
-        {
-            if(left[i] != NULL) delete left[i];
-        }
-
-        delete[] left;
-    }
-
+    if(schemas != NULL) delete schemas;
     if(approximation != NULL) delete approximation;    
 }

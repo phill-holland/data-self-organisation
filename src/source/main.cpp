@@ -36,7 +36,7 @@ void run(int rerun = 1)
         int actual = 0;
 
         p.clear();
-        //p.generate(data);
+        p.generate();
         p.start();
 
         organisation::schema best = p.go(expected, actual, iterations);

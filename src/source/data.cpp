@@ -52,3 +52,20 @@ std::string organisation::data::get(std::vector<int> &source)
 
     return result;
 }
+
+void organisation::data::copy(const data &source)
+{
+    clear();
+
+    for(auto &f: source.forward)
+    {
+        forward[f.first] = f.second;
+    }
+
+    for(auto &r: source.reverse)
+    {
+        reverse[r.first] = r.second;
+    }
+
+    max = source.max;
+}

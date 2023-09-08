@@ -70,7 +70,8 @@ bool organisation::schema::get(dominance::kdtree::kdpoint &destination, int mini
 float organisation::schema::sum()
 {
     float result = 0.0f;
-    if(scores.size() <= 0) return 0.0f;
+    if(scores.size() <= 0) 
+        return 0.0f;
     //for(int i = 0; i < ep; ++i)
     //for(std::vector<score>::iterator it = scores.begin(); it < scores.end(); ++it)
     for(auto &it: scores)
