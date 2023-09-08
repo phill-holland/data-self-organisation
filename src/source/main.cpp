@@ -5,10 +5,13 @@
 #include <iostream>
 #include <string.h>
 
+#include "fifo.h"
+#include "schema.h"
+
 using namespace std;
 
-std::string source = R"(daisy daisy give me your answer do .
-I'm half crazy for the love of you .)";
+std::string source = R"(daisy daisy give me your answer do .)";
+/*I'm half crazy for the love of you .)";
 /*it won't be a stylish marriage .
 I can't afford a carriage .
 but you'll look sweet upon the seat .
@@ -19,12 +22,12 @@ void run(int rerun = 1)
 {     
     auto strings = organisation::split(source);
     
-    std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };
+    std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };
 
     int epochs = expected.size();
 
     organisation::data data(strings);
-    organisation::population p(expected, 4000);//3000);//2000);//1000);
+    organisation::population p(data, expected, 1000);//3000);//2000);//1000);
     
     const int iterations = 300;
 
@@ -33,9 +36,10 @@ void run(int rerun = 1)
         int actual = 0;
 
         p.clear();
-        p.generate(data);
+        //p.generate(data);
+        p.start();
 
-        organisation::schema best = p.go(data, expected, actual, iterations);
+        organisation::schema best = p.go(expected, actual, iterations);
 
         for(int i = 0; i < epochs; ++i)
         {
@@ -60,6 +64,18 @@ void run(int rerun = 1)
 int main(int argc, char *argv[])
 {  
     run(200);
+/*
+core::queue::fifo<organisation::schema,10L> fifo;
 
+organisation::schema *temp = new organisation::schema();
+
+fifo.set(*temp);
+
+organisation::schema *moo = new organisation::schema();
+fifo.get(*moo);
+
+delete moo;
+delete temp;
+*/
     return 0;
 }

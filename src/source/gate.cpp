@@ -83,5 +83,9 @@ bool organisation::gates::equals(const gates &source)
 void organisation::gates::copy(const gates &source)
 {
     clear();
-    data = source.data;
+    for(auto &a: source.data)
+    {
+        data[a.first] = gate(a.second.magnitude);
+    }
+    //data = source.data;
 }

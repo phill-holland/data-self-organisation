@@ -6,14 +6,16 @@
 
 std::mt19937_64 organisation::program::generator(std::random_device{}());
 
-void organisation::program::reset()
+void organisation::program::reset(int w, int h, int d)
 {
     init = false; cleanup();
 
-    length = WIDTH * HEIGHT * DEPTH;
+    width = w; height = h; depth = d;
+    length = width * height * depth;
 
-    cells = new cell[length];
-    if(cells == NULL) return;
+    cells.resize(length);
+    //cells = new cell[length];
+    //if(cells == NULL) return;
 
     clear();
 
@@ -34,12 +36,8 @@ void organisation::program::generate(data &source)
 
     for(int i = 0; i < length; ++i)
     {
-        //int j = (std::uniform_int_distribution<int>{0, 1})(generator);
-        //if(j == 1)
-        //{
-            int k = (std::uniform_int_distribution<int>{1, source.maximum()})(generator);
-            cells[i].generate(k);
-        //}
+        int k = (std::uniform_int_distribution<int>{1, source.maximum()})(generator);
+        cells[i].generate(k);
     }
 }
 
@@ -54,16 +52,14 @@ std::string organisation::program::run(int start, data &source, history *destina
 {
     std::vector<int> result;
 
-    int x = WIDTH - 1 - start;
-    if(x < 0) return std::string("");
+    int x = (width / 2) - start;
+    int y = (height / 2);
+    int z = (depth / 2);
     
-    int y = HEIGHT - 1;
-    int z = DEPTH - 1;
+    //int x = width - 1 - start;
+    //int y = height - 1;
+    //int z = depth - 1;
 
-    x = (WIDTH / 2) - start;
-    y = (HEIGHT / 2);
-    z = (DEPTH / 2);
-    
     const int MAX = 20;
 
     std::vector<std::tuple<vector,vector>> positions;
@@ -79,7 +75,7 @@ std::string organisation::program::run(int start, data &source, history *destina
 
         positions.pop_back();
 
-        int index = (current.z * WIDTH * HEIGHT) + (current.y * WIDTH) + current.x;
+        int index = (current.z * width * height) + (current.y * width) + current.x;
         
         vector input = next.normalise().inverse();
         if(cells[index].is_input(input))
@@ -99,7 +95,7 @@ std::string organisation::program::run(int start, data &source, history *destina
 
                 if((position.x >= 0)&&(position.y >= 0)&&(position.z >= 0))
                 {
-                    if((position.x < WIDTH)&&(position.y < HEIGHT)&&(position.z < DEPTH))
+                    if((position.x < width)&&(position.y < height)&&(position.z < depth))
                     {
                         positions.push_back(std::tuple<vector,vector>(position, t));
                     }
@@ -127,22 +123,22 @@ int organisation::program::count()
 
 void organisation::program::set(int value, int x, int y, int z)
 {
-    if ((x < 0)||(x >= WIDTH)) return;
-    if ((y < 0)||(y >= HEIGHT)) return;
-    if ((z < 0)||(z >= DEPTH)) return;
+    if ((x < 0)||(x >= width)) return;
+    if ((y < 0)||(y >= height)) return;
+    if ((z < 0)||(z >= depth)) return;
 
-    int index = (z * WIDTH * HEIGHT) + (y * WIDTH) + x;
+    int index = (z * width * height) + (y * width) + x;
 
     cells[index].value = value;
 }
 
 void organisation::program::set(vector input, vector output, int magnitude, int x, int y, int z)
 {
-    if ((x < 0)||(x >= WIDTH)) return;
-    if ((y < 0)||(y >= HEIGHT)) return;
-    if ((z < 0)||(z >= DEPTH)) return;
+    if ((x < 0)||(x >= width)) return;
+    if ((y < 0)||(y >= height)) return;
+    if ((z < 0)||(z >= depth)) return;
 
-    int index = (z * WIDTH * HEIGHT) + (y * WIDTH) + x;
+    int index = (z * width * height) + (y * width) + x;
 
     cells[index].set(input, output, magnitude);
 }
@@ -168,10 +164,13 @@ bool organisation::program::validate(data &source)
 
 void organisation::program::copy(const program &source)
 {
-    for(int i = 0; i < length; ++i)
-    {
-        cells[i].copy(source.cells[i]);
-    }
+    //reset(source.width, source.height, source.depth);
+    //cells = source.cells;
+    cells.assign(source.cells.begin(), source.cells.end());
+    width = source.width;
+    height = source.height;
+    depth = source.depth;
+    length = source.length;
 }
 
 bool organisation::program::equals(const program &source)
@@ -232,10 +231,10 @@ void organisation::program::cross(program &a, program &b, int middle)
 
 void organisation::program::makeNull()
 {
-    cells = NULL;
+    //cells = NULL;
 }
 
 void organisation::program::cleanup()
 {
-    if (cells != NULL) delete[] cells;
+    //if (cells != NULL) delete[] cells;
 }

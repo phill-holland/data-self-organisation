@@ -105,5 +105,9 @@ bool organisation::in::equals(const in &source)
 void organisation::in::copy(const in &source)
 {
     clear();
-    gates = source.gates;
+    //gates = source.gates;
+    for(auto &a: source.gates)
+    {
+        gates[a.first].copy(a.second);
+    }
 }

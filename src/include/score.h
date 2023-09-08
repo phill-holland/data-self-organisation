@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #ifndef _ORGANISATION_SCORE
 #define _ORGANISATION_SCORE
@@ -8,17 +9,17 @@ namespace organisation
 {
     class score
     {
-        float *scores;
-        int length;
-
+        //std::vector<float> scores;
+        std::unordered_map<int,float> scores;
         bool init;
 
     public:
-        score(int length) { makeNull(); reset(length); }
+        score() { makeNull(); reset(); }
+        score(const score &source) { copy(source); }
         ~score() { cleanup(); }
 
         bool intialised() { return init; }
-        void reset(int length);
+        void reset();
 
         void clear();
         bool compute(std::string expected, std::string value);
@@ -28,7 +29,7 @@ namespace organisation
         bool set(float value, int index);
         float get(int index);
 
-        int size() { return length; }
+        int size() { return scores.size(); }
 
     public:
         void copy(const score &source);

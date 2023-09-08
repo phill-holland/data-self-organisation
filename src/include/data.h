@@ -15,6 +15,7 @@ namespace organisation
         int max;
 
     public:
+        data() { } 
         data(std::vector<std::string> &source) { reset(source); }
 
     public:

@@ -7,6 +7,7 @@
 #include <random>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 
 #ifndef _ORGANISATION_SCHEMA
 #define _ORGANISATION_SCHEMA
@@ -19,23 +20,27 @@ namespace organisation
         
         //threading::semaphore::token token;
 
-        int epochs;
+        //int epochs;
 
         bool init;
 
     public:
         program prog;
-        score **scores;
+        std::unordered_map<int, score> scores;
+        //score **scores;
+        //std::vector<score> scores;
+
 
     public:
-        schema(std::vector<int> lengths) { makeNull(); reset(lengths); }        
+        schema() { makeNull(); reset(); }        
+        schema(const schema &source) { copy(source); }
         ~schema() { cleanup(); }
 
     public:
         void clear();
         
         bool initalised() { return init; }
-        void reset(std::vector<int> lengths);
+        void reset();
         
         void generate(data &source);
     
@@ -53,7 +58,7 @@ namespace organisation
         std::string run(int epoch, std::string expected, data &source, history *destination = NULL);           
 
     public:
-        void copy(schema &source);
+        void copy(const schema &source);
 
     protected:
         void makeNull();

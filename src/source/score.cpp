@@ -3,15 +3,10 @@
 #include <tuple>
 #include <sstream>
 
-void organisation::score::reset(int length)
+void organisation::score::reset()
 {
 	init = false; cleanup();
 	
-	this->length = length;
-
-	scores = new float[length];
-	if(scores == NULL) return;
-
 	clear();
 
 	init = true;
@@ -19,14 +14,15 @@ void organisation::score::reset(int length)
 
 void organisation::score::clear()
 {
-    for(int i = 0; i < length; ++i)
-    {
-        scores[i] = 0.0f;
-    }
+	scores.clear();
 }
 
 bool organisation::score::compute(std::string expected, std::string value)
 {
+	//#warning here
+	// ***
+	//return true;
+	// ***
 	auto _words = [](std::string source)
     {
         std::stringstream stream(source);  
@@ -117,6 +113,9 @@ bool organisation::score::compute(std::string expected, std::string value)
 		return result;
 	};
 
+	int score_len = (_words(expected) * 2) + 1;
+	//scores.resize(score_len);
+
 	bool valid = true;
 	const int MAX_WORDS = 5;
 
@@ -138,7 +137,8 @@ bool organisation::score::compute(std::string expected, std::string value)
 		if(d > max_str_len) d = max_str_len;
 
 		float len_score = 1.0f / fib[d];
-		if(!set(len_score, length - 1)) valid = false;
+		if(!set(len_score, score_len - 1)) valid = false;
+		//scores.push_back(len_score);
 		
         int index = 0;
 		for(auto &it : alphabet)
@@ -150,8 +150,10 @@ bool organisation::score::compute(std::string expected, std::string value)
             {
 				float distance = _distance(f1, f3, 0.0f, max); 
                 if(!set(distance, index)) valid = false;
+				//scores.push_back(distance);
             }
 			else if(!set(0.1f, index)) valid = false;
+			//else scores.push_back(0.1f);
 
             ++index;
 		}
@@ -168,7 +170,9 @@ bool organisation::score::compute(std::string expected, std::string value)
 			if(f1 < f2) 
 			{
 				if(!set(_distance(f1, f2, -1.0f, max),index + alphabet_len)) valid = false;
+				//scores.push_back(_distance(f1, f2, -1.0f, max));
 			}
+			else set(0.0f, index+alphabet_len);
 
             ++index;
 		}
@@ -180,28 +184,35 @@ bool organisation::score::compute(std::string expected, std::string value)
 		if(f1 < f2) 
 		{
 			if(!set(_distance(f1, f2, -1.0f, max),alphabet_len + alphabet_len - 1)) valid = false;
+			//scores.push_back(_distance(f1, f2, -1.0f, max));
 		}
+		else set(0.0f,alphabet_len + alphabet_len - 1);
 	}
 
 	return valid;
 }
 
 float organisation::score::sum()
-{
-    float result = 0.0f;
+{    
+	if(scores.size() <= 0) return 0.0f;
+	float result = 0.0f;
 
-    for(int i = 0; i < length; ++i)
+	//std::cout << "moo " << scores.size() << "\r\n";
+	//for(std::vector<float>::iterator it = scores.begin(); it < scores.end(); ++it)
+	for(auto &b :scores)
     {
-        result += scores[i];
+		result += b.second;
     }
     
-    return result / ((float)length);
+    return result / ((float)scores.size());
 }
 
 bool organisation::score::set(float value, int index)
 {
-	if((index < 0)||(index >= length)) return false;
+	if(index < 0) return false;
+	//if(index > scores.size()) scores.resize(index);
 
+//std::cout << "scores " << index <<  " " << value << "\r\n";
 	scores[index] = value;
 
 	return true;
@@ -209,28 +220,27 @@ bool organisation::score::set(float value, int index)
 
 float organisation::score::get(int index)
 {
-	if((index < 0)||(index >= length)) return 0.0f;
+	if((index < 0)||(index >= scores.size())) return 0.0f;
 
 	return scores[index];
 }
 
 void organisation::score::copy(const score &source)
 {
-	int temp = length;
-	if(source.length < temp) temp = source.length;
-
-	for(int i = 0; i < temp; ++i)
-	{
-		scores[i] = source.scores[i];
-	}
+	//scores = source.scores;
+	clear();
+	for(auto &a: source.scores)
+    {
+        scores[a.first] = a.second;
+    }
 }
 
 void organisation::score::makeNull() 
 { 
-	scores = NULL; 
+
 }
 
 void organisation::score::cleanup()
 {
-	if(scores != NULL) delete[] scores;
+
 }

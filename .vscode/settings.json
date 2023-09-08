@@ -71,6 +71,7 @@
         "csignal": "cpp",
         "bitset": "cpp",
         "charconv": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "complex": "cpp"
     }
 }

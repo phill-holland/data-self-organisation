@@ -1,53 +1,91 @@
 #include "schema.h"
 #include "kdtree.h"
 #include "data.h"
+#include "thread.h"
+#include "fifo.h"
 #include "semaphore.h"
+#include "generator.h"
+#include "collector.h"
 #include <random>
+#include <atomic>
 
 #ifndef _ORGANISATION_POPULATION
 #define _ORGANISATION_POPULATION
 
 namespace organisation
 {
-    class population
+    class population// : public core::threading::thread
     {
+        friend class generator;
+        friend class collector;
+
         static const int minimum = 100, maximum = 10000;
         static const int threads = 12;
 
         static std::mt19937_64 generator;
 
+        const static int queues = 200;
+
+        core::queue::fifo<schema, queues> outgoing;
+        core::queue::fifo<schema, queues> incoming;
+
         dominance::kdtree::kdtree *approximation;
 
-        schema **data, **intermediate;
+        //schema **data, **intermediate;
+        schema **left, **right;
         int size;
 
         int dimensions;
 
-        std::vector<int> lengths;
+        organisation::data mappings;
+        //std::vector<int> lengths;
+
+        organisation::generator generating;
+        organisation::collector collecting;
+
+        threading::semaphore::token token;
 
         bool init;
 
+    //public:
+	    //void background(core::threading::thread *bt);
+
     public:
-        population(std::vector<std::string> expected, int size) { makeNull(); reset(expected, size); }
+        population(organisation::data &source, std::vector<std::string> expected, int size) 
+        : generating(this), collecting(this)
+            { makeNull(); reset(mappings, expected, size); }
+
         ~population() { cleanup(); }
 
         bool initalised() { return init; }
-        void reset(std::vector<std::string> expected, int size);
+        void reset(organisation::data &source, std::vector<std::string> expected, int size);
 
         void clear();
-        
-        void generate(organisation::data &source);
-        organisation::schema go(organisation::data &source, std::vector<std::string> expected, int &count, int iterations = 0);
+                
+        organisation::schema go(std::vector<std::string> expected, int &count, int iterations = 0);
 
         schema top();
-                
-    protected:
-        std::tuple<std::vector<std::string>,schema*> run(schema *destination, organisation::data *source, std::vector<std::string> expected, const float mutation);
-        schema *best();
-        int worst();
+
+        void start() 
+        { 
+            //collecting.start();
+            //generating.start(); 
+        }
 
     protected:
-        bool set(int index, schema &source);
+        schema get(schema **source);
+        void generate(schema **source);
+
+    protected:
+        std::tuple<std::vector<std::string>,schema*> run(schema *destination, schema **source, std::vector<std::string> expected, const float mutation);
+        void back(schema **destination, schema **source, int thread);
+
+        schema *best(schema **source);
+        int worst(schema **source, int start, int end);
+        //int worst();
+
+    protected:
+        bool set(schema **destination, schema *source, int index);
         
     protected:
         void makeNull();

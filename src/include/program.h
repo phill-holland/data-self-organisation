@@ -16,7 +16,10 @@ namespace organisation
     {        
         static std::mt19937_64 generator;
 
-        cell *cells;
+        int width, height, depth;
+
+        //cell *cells;
+        std::vector<cell> cells;
         int length;
 
         bool init;
@@ -27,12 +30,12 @@ namespace organisation
         static const int DEPTH = 5;
 
     public:
-        program() { makeNull(); reset(); }
+        program(int w = WIDTH, int h = HEIGHT, int d = DEPTH) { makeNull(); reset(w,h,d); }
         program(const program &source) { copy(source); }
         ~program() { cleanup(); }
 
         bool intialised() { return init; }
-        void reset();
+        void reset(int w, int h, int d);
 
     public:
         void clear();
