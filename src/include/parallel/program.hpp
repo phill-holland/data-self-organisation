@@ -9,21 +9,24 @@ namespace organisation
 {    
     namespace parallel
     {
-        class dimensions
+        class parameters
         {
             int length;
 
         public:
-            int width,height,depth;
-
+            int width, height, depth;
+            int in, out;
         public:
-            dimensions(int w = 0, int h = 0, int d = 0) 
+            parameters(int _width = 5, int _height = 5, int _depth = 5, int _in = 3, int _out = 3) 
             {
-                width = w;
-                height = h;
-                depth = d;
+                width = _width;
+                height = _height;
+                depth = _depth;
+                
+                in = _in;
+                out = _out;
 
-                length = width * height * depth;
+                length = _width * _height * _depth;
             }            
 
             int size() { return length; }
@@ -34,20 +37,42 @@ namespace organisation
             ::parallel::device *dev;
 
             int *deviceValues;
-            int *deviceGates;
+            int *deviceInGates;
+            int *deviceOutGates;
             int *deviceClient;
+
+            int *deviceOutput;
+            int *deviceOutputEndPtr;
+
+            sycl::float4 *deviceReadPositionsA;
+            sycl::float4 *deviceReadPositionsB;
+            int *deviceReadPositionsEndPtr;
+            // need to duplicate EndPtr buffer to A and B too!
+
+            //int *deviceHasReadPosition;
+            //int *hostHasOutput;
+
+            parameters params;
+
+            int clients;
+            int length;
 
         private:
             bool init;
 
         public:
-            program(::parallel::device &dev, dimensions dim, int clients) { makeNull(); reset(dev, dim, clients); }
+            program(::parallel::device &dev, parameters settings, int clients) { makeNull(); reset(dev, settings, clients); }
             ~program() { cleanup(); }
 
             bool initalised() { return init; }
-            void reset(::parallel::device &dev, dimensions dim, int clients);
+            void reset(::parallel::device &dev, parameters settings, int clients);
 
-            void run(::parallel::queue *q = NULL);
+            void clear(::parallel::queue *q = NULL);
+
+            void run(std::vector<sycl::float4> positions, ::parallel::queue *q = NULL);
+
+// need pinned memory below
+// void copy_batch(std::vector<native::program> programs);
 
         protected:
             void makeNull();

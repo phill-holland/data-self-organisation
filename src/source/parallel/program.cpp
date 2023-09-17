@@ -1,78 +1,218 @@
 #include "parallel/program.hpp"
 
-void organisation::parallel::program::reset(::parallel::device &dev, dimensions dim, int clients)
+void organisation::parallel::program::reset(::parallel::device &dev, parameters settings, int clients)
 {
     init = false; cleanup();
 
     this->dev = &dev;
+    this->params = settings;
 
     sycl::queue q = ::parallel::queue(dev).get();
 
-    int length = dim.size() * clients;
+    this->clients = clients;
+    this->length = settings.size() * clients;
 
     deviceValues = sycl::malloc_device<int>(length, q);
     if(deviceValues == NULL) return;
     
-    deviceGates = sycl::malloc_device<int>(length, q);
-    if(deviceGates == NULL) return;
+    deviceInGates = sycl::malloc_device<int>(clients * settings.in, q);
+    if(deviceInGates == NULL) return;
+
+    deviceOutGates = sycl::malloc_device<int>(clients * settings.in * settings.out, q);
+    if(deviceOutGates == NULL) return;
 
     deviceClient = sycl::malloc_device<int>(length, q);
     if(deviceClient == NULL) return;
 
-    init =true;
+    deviceOutput = sycl::malloc_device<int>(length, q);
+    if(deviceOutput == NULL) return;
+
+    deviceOutputEndPtr = sycl::malloc_device<int>(clients, q);
+    if(deviceOutputEndPtr == NULL) return;
+
+    deviceReadPositionsA = sycl::malloc_device<sycl::float4>(length, q);
+    if(deviceReadPositionsA == NULL) return;
+
+    deviceReadPositionsB = sycl::malloc_device<sycl::float4>(length, q);
+    if(deviceReadPositionsB == NULL) return;
+
+    deviceReadPositionsEndPtr = sycl::malloc_device<int>(clients, q);
+    if(deviceReadPositionsEndPtr == NULL) return;
+
+    init = true;
 }
 
-void organisation::parallel::program::run(::parallel::queue *q)
+void organisation::parallel::program::clear(::parallel::queue *q)
 {
-    /*
-        sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
-    sycl::range num_items{(size_t)global.length};
+    sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
+    //sycl::range num_items{(size_t)length};
 
-    qt.memset(deviceInsertWritePtr, 0, sizeof(int)).wait();
+    qt.memset(deviceValues, 0, sizeof(int) * length);
+    qt.memset(deviceOutput, 0, sizeof(int) * length);
+    qt.memset(deviceOutputEndPtr, 0, sizeof(int) * clients);
+    qt.memset(deviceReadPositionsA, 0, sizeof(sycl::float4) * length);
+    qt.memset(deviceReadPositionsB, 0, sizeof(sycl::float4) * length);
+    qt.memset(deviceReadPositionsEndPtr, 0, sizeof(int) * clients).wait();
+
+
+    // clear deviceValues
+    // clear deviceReadPositions
+    // clear devicereadPositionsEndPtr
+}
+
+void organisation::parallel::program::run(std::vector<sycl::float4> positions, ::parallel::queue *q)
+{
+    // positions.w == inital set needs to be to vector encoding index number (from source intput vector)
+    // gates copied into system, empty ones need to be -1
+    // include new single int device memory, for counting number of outputs
+
+// copy function
+// creates N amount of programs, in pinned memory, copy in chunks from source
+
+    // positions, in order of client index
+    // deviceReads per client, (length * client)
+    // stores current read position, per loop
+    // devicereadEndPtr = atomic structure, stores the end pointer per client 
+        
+    sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
+    sycl::range num_items{(size_t)length};
+
+    sycl::float4 *source = deviceReadPositionsA;
+    sycl::float4 *destination = deviceReadPositionsB;
+
+    qt.memcpy(source, positions.data(), sizeof(sycl::float4) * clients).wait();
+// then fill readPositionsEndPtr to 1 as well!!!!
+
+// loop here -- until nothing in destination buffer (another single int atomic buffer??)
+
+    qt.memset(destination, 0, sizeof(sycl::float4) * length).wait();
+    qt.memset(deviceReadPositionsEndPtr, 0 , sizeof(int) * clients).wait();
+
+// swap buffer at end of loop (inside loop)
 
     qt.submit([&](auto &h) 
     {        
-        auto _position = devicePosition;
-        auto _nextDirection = deviceNextDirection;
-        auto _nextHalfPosition = deviceNextHalfPosition;
-        auto _directionIndices = deviceDirectionIndices;
-        auto _movementIndices = deviceMovementIndices;
-        auto _lifetime = deviceLifetime;
-        auto _age = deviceAge;
-        auto _dataHash = deviceDataHash;
-        auto _cost = deviceCost;
-        auto _collisionDirectionState = deviceCollisionDirectionState;
-        auto _readBuffer = deviceReadBuffer;
+        auto _values = deviceValues;
+        auto _inGates = deviceInGates;
+        auto _outGates = deviceOutGates;
         auto _client = deviceClient;
+        auto _output = deviceOutput;
+        auto _outputEndPtr = deviceOutputEndPtr;
+        auto _readPositionsSource = source;
+        auto _readPositionsDest = destination;
+        auto _readPositionsEndPtr = deviceReadPositionsEndPtr;
         
+        auto _width = params.width;
+        auto _height = params.height;
+        auto _depth = params.depth;
+
+        auto _in = params.in;
+        auto _out = params.out;
+// READ_POSITION.W IS THE IN GATE INDEX
+// EMPTY GATES IN OUT MARKED AS -1
         h.parallel_for(num_items, [=](auto i) 
-        { 
-            _position[i] = { 0.0f, 0.0f, 0.0f, 0.0f };
-            _nextDirection[i] = { 0.0f, 0.0f, 0.0f, 0.0f };
-            _nextHalfPosition[i] = { 0.0f, 0.0f, 0.0f, 0.0f };
-            
-            _directionIndices[i] = 0;
-            _movementIndices[i] = 0;
-            _lifetime[i] = 0;
+        {
+            if((_readPositionsSource[i].x() != 0)||(_readPositionsSource[i].y() != 0)||(_readPositionsSource[i].z()!= 0))
+            {                 
+                sycl::float4 current = _readPositionsSource[i];               
+                int client = _client[i];
 
-            _age[i] = 0;
-            _dataHash[i] = 0;
-            _cost[i] = 0;
+                cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
+                            sycl::memory_scope::device, 
+                            sycl::access::address_space::ext_intel_global_device_space> ar(_outputEndPtr[client]);
 
-            _collisionDirectionState[i] = { 0, 0 };
-            _readBuffer[i] = { 0, 0, 0, 0 };
+                int index = ((current.z() * _width * _height) + (current.y() * _width) + current.x()) * client;
 
-            _client[i] = { 0, 0, 0, 0 };
+                int value = _values[index];
+                if(value >= 0) _output[ar.fetch_add(1)] = value;
+
+                int inIndex = (_in * client);
+                for(int x = 0; x < _in; ++x)
+                {
+                    if(_inGates[inIndex + x] == current.w())
+                    {
+                        for(int y = 0; y < _out; ++y)
+                        {                            
+                            int outIndex = (_in * y) +  x;
+                            if(_outGates[outIndex] >= 0)
+                            {
+                                int r = index % 9;//div(index, 9);
+                                float z1 = (float)((index / 9) - 1);//(float)r.quot - 1L;
+
+                                int j = r % 3;//div(r.rem, 3);
+                                float y1 = (float)((r / 3) - 1);//(float)j.quot - 1L;
+                                float x1 = (float)(j - 1);//(float)j.rem - 1L;
+
+                                float z2 = z1 + current.z();
+                                float y2 = y1 + current.y();
+                                float x2 = x1 + current.x();
+
+                                if((x1 >= 0)&&(x1 < _width)&&(y1 >= 0)&&(y1 < _height)&&(z1 >=0)&&(z1 < _depth))
+                                {
+                                    cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
+                                    sycl::memory_scope::device, 
+                                    sycl::access::address_space::ext_intel_global_device_space> br(_readPositionsEndPtr[client]);
+
+                                    int tx = roundf(-z1) + 1;
+                                    int ty = roundf(-y1) + 1;
+                                    int tz = roundf(-z1) + 1;
+
+                                    //if ((tx < 0L) || (tx > 2)) return 0L;
+                                    //if ((ty < 0L) || (ty > 2)) return 0L;
+                                    //if ((tz < 0) || (tz > 2)) return 0L;
+//div_t moo = sycl::div(1,2);
+                                    float w = (float)((sycl::abs(tz) * (3 * 3)) + (sycl::abs(ty) * 3) + sycl::abs(tx));
+                                    _readPositionsDest[br.fetch_add(1)] = { z2,y2,x2,w };
+
+                                    // insert new position in output read buffer
+                                    // inverse vector, and then reencode to single value for position.w
+                                }
+                                //w = 0.0f;
+
+                                
+                            }
+                        }
+                    }
+                }
+                //int out_index 
+                // if value != 0 output
+                // find out gates
+                // generate new readPositions
+            }
+
+            // need to dump out new read positions into another tempArray ..??
+            /*
+            cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
+                            sycl::memory_scope::device, 
+                            sycl::access::address_space::ext_intel_global_device_space> ar(_insertWritePtr[0]);
+                            */
+
         });
     }).wait();
+
+
+/*
+                    cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
+                                              sycl::memory_scope::device, 
+                                              sycl::access::address_space::ext_intel_global_device_space> ar(_insertWritePtr[0]);
+                                                                  
+                    ar.fetch_add(1);
 */
 }
 
 void organisation::parallel::program::makeNull()
 {
     deviceValues = NULL;
-    deviceGates = NULL;
+    deviceInGates = NULL;
+    deviceOutGates = NULL;
     deviceClient = NULL;
+
+    deviceOutput = NULL;
+    deviceOutputEndPtr = NULL;
+
+    deviceReadPositionsA = NULL;
+    deviceReadPositionsB = NULL;
+    deviceReadPositionsEndPtr = NULL;    
 }
 
 void organisation::parallel::program::cleanup()
@@ -81,8 +221,16 @@ void organisation::parallel::program::cleanup()
     {   
         sycl::queue q = ::parallel::queue(*dev).get();
 
+        if (deviceReadPositionsEndPtr != NULL) sycl::free(deviceReadPositionsEndPtr, q);
+        if (deviceReadPositionsA != NULL) sycl::free(deviceReadPositionsA, q);
+        if (deviceReadPositionsB != NULL) sycl::free(deviceReadPositionsB, q);
+
+        if (deviceOutputEndPtr != NULL) sycl::free(deviceOutputEndPtr, q);
+        if (deviceOutput != NULL) sycl::free(deviceOutput, q);
+                
         if (deviceClient != NULL) sycl::free(deviceClient, q);
-        if (deviceGates != NULL) sycl::free(deviceGates, q);
+        if (deviceOutGates != NULL) sycl::free(deviceOutGates, q);
+        if (deviceInGates != NULL) sycl::free(deviceInGates, q);
         if (deviceValues != NULL) sycl::free(deviceValues, q);
     }
 }
