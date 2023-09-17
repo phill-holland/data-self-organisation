@@ -1,4 +1,4 @@
-#include "thread.h"
+#include "threading/thread.h"
 
 std::chrono::milliseconds core::threading::thread::milliseconds = std::chrono::milliseconds(100);
 

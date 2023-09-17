@@ -1,9 +1,9 @@
 #include <atomic>
 
-#ifndef _THREADING_SEMAPHORE
-#define _THREADING_SEMAPHORE
+#ifndef _CORE_THREADING_SEMAPHORE
+#define _CORE_THREADING_SEMAPHORE
 
-namespace threading
+namespace core::threading
 {
     class semaphore
     {

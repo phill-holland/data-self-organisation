@@ -60,11 +60,15 @@ bool organisation::schemas::get(schema &destination, int index)
     }
 
     return true;
+
+    //destination.copy(*data[index]);
+    //return true;
 }
 
 bool organisation::schemas::set(schema &source, int index)
 {
     if((index < 0)||(index >= length)) return false;
+  
     if(locks[index] == 1) return false;
 
     int a = locks[index].load();
@@ -78,6 +82,9 @@ bool organisation::schemas::set(schema &source, int index)
     }
     
     return true;
+
+    //data[index]->copy(source);
+    //return true;
 }
 
 bool organisation::schemas::generate(organisation::data &source)

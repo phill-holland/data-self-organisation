@@ -7,21 +7,7 @@
 #include <signal.h>
 
 std::mt19937_64 organisation::population::generator(std::random_device{}());
-/*
-void organisation::population::background(core::threading::thread *bt)
-{
-	sleep(1);
 
-    schema temp = get();
-    //std::cout << "set " << outgoing.entries() << "\r\n";
-    if(!outgoing.set(temp)) 
-    {
-        //std::cout << "full\r\n";
-        sleep(10);
-    }
-    //std::cout << "set end\r\n";
-}
-*/
 void organisation::population::reset(organisation::data source, std::vector<std::string> expected, int size)
 {
     init = false; cleanup();
@@ -78,7 +64,7 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
     {
         float total = 0.0f;        
       
-        for(int generation = 0; generation < size; generation += threads)
+        for(int generation = 0; generation < size; ++generation)//generation += threads)
         {        
             std::vector<std::future<std::tuple<std::vector<std::string>,float>>> results;
 
@@ -93,12 +79,6 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
                 results.push_back(std::move(result));
             }
 
-            /*
-            for (std::vector<std::future<std::tuple<std::vector<std::string>,schema*>>>::iterator it = results.begin(); it != results.end(); ++it)
-            {
-                it->wait();
-            }
-            */
             
 
             for (std::vector<std::future<std::tuple<std::vector<std::string>,float>>>::iterator it = results.begin(); it != results.end(); ++it)
@@ -107,20 +87,7 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
 
                 std::vector<std::string> output = std::get<0>(outputs);
                 float sum = std::get<1>(outputs);
-                //schema *dest = std::get<1>(outputs);
                 
-                //int offspring = worst();
-                //set(offspring, *dest);
-                //incoming.set(*dest);
-                
-                //std::cout << "end " << dest << "\r\n";
-/*
-                std::vector<std::string> output = std::get<0>(outputs);
-                schema *dest = std::get<1>(outputs);
-        
-                int offspring = worst();
-                set(offspring, *dest);*/
-                //float sum = dest->sum();
                 total += sum;
 
                 if(sum > most)
@@ -132,38 +99,10 @@ organisation::schema organisation::population::go(std::vector<std::string> expec
                 if(sum >= 0.9999f) result = true;    
                 if(output == expected) result = true;   
                           
-            }
-
-
-           // int blocks_len = size / threads;
-            // find worst within start,end of thread block, in source
-            // find best within destination (throughout whole)
-            // overwrite worst with best
-
-            //int block_len = 
-/*
-            while(incoming.entries()>0)
-            {
-                sleep(2);
-            }*/
+            }      
         }
 
-        //int m = threads;
-        //if(generation + threads >= size) 
-            //m = size - generation;
-      //  for(int i = 0; i < threads; ++i)
-        //{
-        //std::cout << "start " << intermediate[i] << "\r\n";   
-            //std::cout << (i + generation) << "\r\n";
-            //auto result = std::async(&organisation::population::run, this, destination[generation + i], source, expected, mutation);
-            //results.push_back(std::move(result));
-          //  auto result = std::async(&organisation::population::back, this, source, destination, i);
-        //}
-
-        //schema **tt = source;
-        //source = destination;
-        //destination = tt;
-
+        
         total /= size;
         
         std::cout << "Generation (" << count << ") Best=" << most;
@@ -185,70 +124,19 @@ std::tuple<std::vector<std::string>,float> organisation::population::run(std::ve
 {    
     std::vector<std::string> results;
 
-//organisation::schema temp;
-//temp = get(source);
-    //if(outgoing.get(*destination))
-    //*destination = get(source);
-    //destination->scores.clear();
-    //destination->clear();
-    //*destination[generation + i] = get(source);
-    //{
         organisation::schema destination;
         if(!get(destination)) return std::tuple<std::vector<std::string>,float>(results,0.0f);        
-        //while(!outgoing.get(destination)) { };
-        //return std::tuple<std::vector<std::string>,float>(results,0.0f);
 
         int epoch = 0;
         for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
         {
             results.push_back(destination.run(epoch, *it, mappings));
-            //results.push_back(temp.run(epoch, *it, *source));
             ++epoch;
         }
-    //}
-
-  //  if(destination->sum() < temp.sum())
-    //    *destination = temp;
 
     set(destination);
 
     return std::tuple<std::vector<std::string>,float>(results,destination.sum());
-/*    
-    int t = (std::uniform_int_distribution<int>{0, size - 1})(generator);
-
-    destination->clear();
-
-    if(((float)t) <= mutation) 
-    {
-        schema *s1 = best();
-
-        destination->copy(*s1);
-        destination->mutate(*source);
-        
-        int epoch = 0;
-        for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
-        {
-            results.push_back(destination->run(epoch, *it, *source));
-            ++epoch;
-        }
-    }
-    else
-    {
-        schema *s1 = best();
-        schema *s2 = best();
-             
-        s1->cross(destination, s2);
-        
-        int epoch = 0;
-        for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
-        {
-            results.push_back(destination->run(epoch, *it, *source));
-            ++epoch;
-        }
-    }
-
-    return std::tuple<std::vector<std::string>,schema*>(results,destination);
-    */
 }
 /*
 void organisation::population::back(schema **destination, schema **source, int thread)
@@ -392,15 +280,6 @@ bool organisation::population::best(organisation::schema &destination)
 	temp2.set(0L);
 	origin.set(0L);
 
-    //long competition;
-
-    //long best = rand(generator);    
-    /*
-    organisation::schema best, competition;
-    int escape = 0;
-    while((!schemas->get(best, rand(generator)))&&(++escape<15)) { }
-    if(escape>=15) return false;
-    */
    organisation::schema competition;
    if(pull(destination)<0) return false;
 

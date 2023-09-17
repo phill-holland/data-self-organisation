@@ -1,9 +1,9 @@
+#include "threading/thread.h"
+#include "threading/semaphore.h"
 #include "schema.h"
 #include "kdtree.h"
 #include "data.h"
-#include "thread.h"
 #include "fifo.h"
-#include "semaphore.h"
 #include "generator.h"
 #include "collector.h"
 #include "schemas.h"
@@ -21,7 +21,7 @@ namespace organisation
         friend class collector;
 
         static const int minimum = 100, maximum = 10000;
-        static const int threads = 12;
+        static const int threads = 6;
 
         static std::mt19937_64 generator;
 
@@ -48,7 +48,7 @@ namespace organisation
         organisation::generator generating;
         organisation::collector collecting;
 
-        threading::semaphore::token token;
+        core::threading::semaphore::token token;
 
         bool init;
 
