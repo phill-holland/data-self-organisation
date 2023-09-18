@@ -32,6 +32,12 @@ namespace organisation
             int size() { return length; }
         };
 
+        class output
+        {
+        public:
+            std::vector<int> values;
+        };
+        
         class program
         {
             ::parallel::device *dev;
@@ -39,14 +45,21 @@ namespace organisation
             int *deviceValues;
             int *deviceInGates;
             int *deviceOutGates;
-            int *deviceClient;
+            //int *deviceClient;
 
             int *deviceOutput;
             int *deviceOutputEndPtr;
 
+            int *hostOutput;
+            int *hostOutputEndPtr;
+
             sycl::float4 *deviceReadPositionsA;
             sycl::float4 *deviceReadPositionsB;
             int *deviceReadPositionsEndPtr;
+
+            int *hostSourceReadPositions;
+            int *deviceSourceReadPositions;
+
             // need to duplicate EndPtr buffer to A and B too!
 
             //int *deviceHasReadPosition;
@@ -58,6 +71,7 @@ namespace organisation
             int length;
 
         private:
+            const static int ITERATIONS = 20;
             bool init;
 
         public:
@@ -69,10 +83,14 @@ namespace organisation
 
             void clear(::parallel::queue *q = NULL);
 
-            void run(std::vector<sycl::float4> positions, ::parallel::queue *q = NULL);
+            void run(::parallel::queue *q = NULL);        
+            void set(std::vector<sycl::float4> positions, ::parallel::queue *q = NULL);
+            std::vector<output> get(::parallel::queue *q = NULL);
+
 
 // need pinned memory below
 // void copy_batch(std::vector<native::program> programs);
+            
 
         protected:
             void makeNull();
