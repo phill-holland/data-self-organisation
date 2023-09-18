@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.20)
 
 project(data-self-organisation)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g")
 
 set(DPCPP_HOME "/home/phill/sycl_workspace")
 set(CMAKE_CXX_COMPILER "${DPCPP_HOME}/llvm/build/bin/clang++")
 
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 

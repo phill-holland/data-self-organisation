@@ -7,6 +7,11 @@
 
 #include "fifo.h"
 #include "schema.h"
+#include "vector.h"
+
+#include "parallel/device.hpp"
+#include "parallel/queue.hpp"
+#include "parallel/program.hpp"
 
 using namespace std;
 
@@ -61,9 +66,119 @@ void run(int rerun = 1)
     }
 }
 
+bool BasicProgramExecution()
+{
+    const int width = 20, height = 20, depth = 20;
+    organisation::program p(width, height, depth);
+
+    std::vector<std::string> expected = organisation::split("daisy daisy give me your answer do .");
+    
+    std::vector<std::string> strings = organisation::split("daisy daisy give me your answer do .");
+    organisation::data d(strings);
+
+    organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
+    organisation::vector down = { 0,-1,0 } ,right = { -1,0,0 };
+
+    std::vector<organisation::vector> in = { up, up, left, up, left, up, left, up };
+    std::vector<organisation::vector> out = { down, right, down, right, down, right, down, right };
+
+    int x = (width / 2);
+    int y = (height / 2);
+    int z = (depth / 2);
+
+    int magnitude = 1;
+
+    for(int i = 0; i < strings.size(); ++i)
+    {
+        int value = d.map(strings[i]);
+        
+        organisation::vector out1 = out[i];
+
+        p.set(in[i], out1, magnitude, x, y, z);
+        p.set(value, x, y, z);
+
+        x += out1.x;
+        y += out1.y;
+        z += out1.z;
+    }
+
+    std::vector<std::string> outputs = organisation::split(p.run(0, d));
+
+    if (p.count() != 8) return false;
+    if (outputs != expected) return false;
+
+    return true;
+}
+
+bool BasicProgramExecutionParallel()
+{
+    const int width = 20, height = 20, depth = 20;
+    organisation::program p(width, height, depth);
+
+    std::vector<std::string> expected = organisation::split("daisy daisy give me your answer do .");
+    
+    std::vector<std::string> strings = organisation::split("daisy daisy give me your answer do .");
+    organisation::data d(strings);
+
+    organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
+    organisation::vector down = { 0,-1,0 } ,right = { -1,0,0 };
+
+    std::vector<organisation::vector> in = { up, up, left, up, left, up, left, up };
+    std::vector<organisation::vector> out = { down, right, down, right, down, right, down, right };
+
+    int x = (width / 2);
+    int y = (height / 2);
+    int z = (depth / 2);
+
+    int magnitude = 1;
+
+    for(int i = 0; i < strings.size(); ++i)
+    {
+        int value = d.map(strings[i]);
+        
+        organisation::vector out1 = out[i];
+
+        p.set(in[i], out1, magnitude, x, y, z);
+        p.set(value, x, y, z);
+
+        x += out1.x;
+        y += out1.y;
+        z += out1.z;
+    }
+
+    //std::vector<std::string> outputs = organisation::split(p.run(0, d));
+
+    //if (p.count() != 8) return false;
+    //if (outputs != expected) return false;
+
+    std::vector<std::string> devices = ::parallel::device::enumerate();
+    for(std::vector<std::string>::iterator it = devices.begin(); it < devices.end(); ++it)
+    {
+        std::cout << *it << "\r\n";
+    }
+	::parallel::device *dev = new ::parallel::device(0);
+	::parallel::queue *q = new parallel::queue(*dev);
+
+    
+    organisation::parallel::parameters parameters(width, height, depth);
+    organisation::parallel::program p_program(*dev, parameters, 1);
+
+    std::vector<organisation::program> source = { p };
+    p_program.copy(source, q);
+
+    organisation::vector w {0,-1,0};
+    std::vector<sycl::float4> positions = { { x,y,z,w.encode() } };
+
+    //std::cout << x << "," << y << "," << z << "," << w.encode() << "\r\n";
+    p_program.set(positions, q);
+
+    return true;
+}
+
 int main(int argc, char *argv[])
 {  
-    run(200);
+    BasicProgramExecutionParallel();
+    //run(200);
 /*
 core::queue::fifo<organisation::schema,10L> fifo;
 

@@ -99,6 +99,10 @@ namespace organisation
         public:
             void copy(std::vector<::organisation::program> source, ::parallel::queue *q = NULL);
             
+        public:
+            void outputarb(int *source, int length);
+            void outputarb(sycl::float4 *source, int length);
+
         protected:
             void makeNull();
             void cleanup();

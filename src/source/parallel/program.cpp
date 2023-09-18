@@ -22,13 +22,13 @@ void organisation::parallel::program::reset(::parallel::device &dev, parameters 
     if(deviceOutGates == NULL) return;
 
 
-    hostValues = sycl::malloc_device<int>(settings.size() * HOST_BUFFER, q);
+    hostValues = sycl::malloc_host<int>(settings.size() * HOST_BUFFER, q);
     if(hostValues == NULL) return;
     
-    hostInGates = sycl::malloc_device<int>(HOST_BUFFER * settings.in, q);
+    hostInGates = sycl::malloc_host<int>(HOST_BUFFER * settings.in, q);
     if(hostInGates == NULL) return;
 
-    hostOutGates = sycl::malloc_device<int>(HOST_BUFFER * settings.in * settings.out, q);
+    hostOutGates = sycl::malloc_host<int>(HOST_BUFFER * settings.in * settings.out, q);
     if(hostOutGates == NULL) return;
 
 
@@ -294,6 +294,7 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
 
         for(int i = 0; i < length; ++i)
         {
+            //hostValues[0] = 1;
             hostValues[(index * length) + i] = it->cells.at(i).value;
 
             std::vector<int> in = it->cells.at(i).pull();
@@ -342,6 +343,71 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
     {
         // copy from host to device
     }
+}
+
+void organisation::parallel::program::outputarb(int *source, int length)
+{
+	int *temp = new int[length];
+	if (temp == NULL) return;
+
+    sycl::queue q = ::parallel::queue(*dev).get();
+
+    q.memcpy(temp, source, sizeof(int) * length).wait();
+
+    std::string result("");
+	for (int i = 0; i < length; ++i)
+	{
+		if (temp[i] != 0)
+		{
+			result += std::string("[");
+			result += std::to_string(i);//string::fromInt(i));
+			result += std::string("]");
+			result += std::to_string(temp[i]);//string::fromInt(temp[i]));
+			result += std::string(",");
+		}
+	}
+	result += std::string("\r\n");
+	
+    std::cout << result;
+
+	delete[] temp;
+}
+
+void organisation::parallel::program::outputarb(sycl::float4 *source, int length)
+{
+    sycl::float4 *temp = new sycl::float4[length];
+    if (temp == NULL) return;
+
+    sycl::queue q = ::parallel::queue(*dev).get();
+
+    q.memcpy(temp, source, sizeof(sycl::float4) * length).wait();
+
+    std::string result("");
+	for (int i = 0; i < length; ++i)
+	{
+        int ix = (int)(temp[i].x() * 100.0f);
+        int iy = (int)(temp[i].y() * 100.0f);
+        int iz = (int)(temp[i].z() * 100.0f);
+
+        if ((ix != 0) || (iy != 0) || (iz != 0))
+        {
+			result += std::string("[");
+			result += std::to_string(i);//string::fromInt(i));
+			result += std::string("]");
+			result += std::to_string(temp[i].x());//std::string::fromFloat(temp[i].x()));
+			result += std::string(",");
+			result += std::to_string(temp[i].y());
+			result += std::string(",");
+			result += std::to_string(temp[i].z());
+			result += std::string(",");
+		}
+	}
+	result += std::string("\r\n");
+	
+    
+    std::cout << result;
+
+	delete[] temp;
 }
 
 

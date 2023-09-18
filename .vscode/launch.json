@@ -8,10 +8,10 @@
             "name": "g++ build and debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/src/data-self-organisation",
+            "program": "${workspaceRoot}/build/data-self-organisation",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
+            "environment": [{"name": "LD_LIBRARY_PATH", "value": "/home/phill/sycl_workspace/llvm/build/lib"}],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
@@ -43,6 +43,34 @@
             ],
             "preLaunchTask": "make",
             "miDebuggerPath": "/usr/bin/gdb"
-        }
+        },
+        {
+            "name": "(gdb-oneapi) learning Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "preLaunchTask": "make",
+            "postDebugTask": "",
+            "program": "${workspaceRoot}/build/data-self-organisation",
+            "args": [ "test", "0" ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [{"name": "LD_LIBRARY_PATH", "value": "/home/phill/sycl_workspace/llvm/build/lib"}],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb-oneapi",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Disable target async",
+                    "text": "set target-async off",
+                    "ignoreFailures": true
+                }
+            ]
+
+        },
     ]
 }
