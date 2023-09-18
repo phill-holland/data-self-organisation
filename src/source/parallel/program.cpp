@@ -21,8 +21,16 @@ void organisation::parallel::program::reset(::parallel::device &dev, parameters 
     deviceOutGates = sycl::malloc_device<int>(clients * settings.in * settings.out, q);
     if(deviceOutGates == NULL) return;
 
-    //deviceClient = sycl::malloc_device<int>(length, q);
-    //if(deviceClient == NULL) return;
+
+    hostValues = sycl::malloc_device<int>(settings.size() * HOST_BUFFER, q);
+    if(hostValues == NULL) return;
+    
+    hostInGates = sycl::malloc_device<int>(HOST_BUFFER * settings.in, q);
+    if(hostInGates == NULL) return;
+
+    hostOutGates = sycl::malloc_device<int>(HOST_BUFFER * settings.in * settings.out, q);
+    if(hostOutGates == NULL) return;
+
 
     deviceOutput = sycl::malloc_device<int>(length, q);
     if(deviceOutput == NULL) return;
@@ -59,11 +67,11 @@ void organisation::parallel::program::clear(::parallel::queue *q)
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
     //sycl::range num_items{(size_t)length};
 
-    qt.memset(deviceValues, 0, sizeof(int) * length);
-    qt.memset(deviceOutput, 0, sizeof(int) * length);
-    qt.memset(deviceOutputEndPtr, 0, sizeof(int) * clients);
-    qt.memset(deviceReadPositionsA, 0, sizeof(sycl::float4) * length);
-    qt.memset(deviceReadPositionsB, 0, sizeof(sycl::float4) * length);
+    qt.memset(deviceValues, 0, sizeof(int) * length).wait();
+    qt.memset(deviceOutput, 0, sizeof(int) * length).wait();
+    qt.memset(deviceOutputEndPtr, 0, sizeof(int) * clients).wait();
+    qt.memset(deviceReadPositionsA, 0, sizeof(sycl::float4) * length).wait();
+    qt.memset(deviceReadPositionsB, 0, sizeof(sycl::float4) * length).wait();
     qt.memset(deviceReadPositionsEndPtr, 0, sizeof(int) * clients).wait();
 
 
@@ -126,6 +134,8 @@ void organisation::parallel::program::run(::parallel::queue *q)
             auto _out = params.out;
 
             auto _length = length;
+
+//sycl::stream out(1024, 256, h);
 
     // READ_POSITION.W IS THE IN GATE INDEX
     // EMPTY GATES IN OUT MARKED AS -1
@@ -248,7 +258,7 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
     std::vector<output> results(clients);
 
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
-    sycl::range num_items{(size_t)clients};
+    //sycl::range num_items{(size_t)clients};
 
     qt.memcpy(hostOutput, deviceOutput, sizeof(int) * length).wait();
     qt.memcpy(hostOutputEndPtr, deviceOutputEndPtr, sizeof(int) * clients).wait();
@@ -269,12 +279,81 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
     return results;
 }
 
+void organisation::parallel::program::copy(std::vector<::organisation::program> source, ::parallel::queue *q)
+{
+    sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
+    sycl::range num_items{(size_t)clients};
+
+    int dest_index = 0;
+    int index = 0;
+    for(std::vector<::organisation::program>::iterator it = source.begin(); it < source.end(); ++it)
+    {
+        int length = it->length;
+        if(length != params.size()) 
+            break;
+
+        for(int i = 0; i < length; ++i)
+        {
+            hostValues[(index * length) + i] = it->cells.at(i).value;
+
+            std::vector<int> in = it->cells.at(i).pull();
+            int in_idx = 0;
+            for(std::vector<int>::iterator jt = in.begin(); jt < in.end(); ++jt)
+            {
+                if(in_idx < params.in)
+                {
+                    hostInGates[in_idx + (index * params.in)] = *jt;
+
+                    std::vector<int> out = it->cells.at(i).pull(*jt);
+                    int out_idx = 0;
+                    for(std::vector<int>::iterator ot = out.begin(); ot < out.end(); ++ot)
+                    {
+                        if(out_idx < params.out)
+                        {
+                            int s = in_idx + (out_idx * params.in) + (index * params.in * params.out);
+                            hostOutGates[s] = *ot;
+
+                            // need new device magnitude buffer, of params.in * params.out * clients
+                        }
+
+                        ++out_idx;
+                    }
+                }
+                ++in_idx;
+            }
+        }
+
+        ++index;
+        if(index >= HOST_BUFFER)
+        {
+            // copy from host to device
+
+            qt.memcpy(&deviceValues[dest_index * length], hostValues, sizeof(int) * length * index).wait();
+            qt.memcpy(&deviceInGates[dest_index * length], hostInGates, sizeof(int) * params.in * clients * index).wait();
+            qt.memcpy(&deviceOutGates[dest_index * length], hostOutGates, sizeof(int) * params.in * params.out * clients * index).wait();
+            
+
+            dest_index += index;
+            index = 0;            
+        }
+    }
+
+    if(index > 0)
+    {
+        // copy from host to device
+    }
+}
+
+
 void organisation::parallel::program::makeNull()
 {
     deviceValues = NULL;
     deviceInGates = NULL;
     deviceOutGates = NULL;
-    //deviceClient = NULL;
+    
+    hostValues = NULL;
+    hostInGates = NULL;
+    hostOutGates = NULL;
 
     deviceOutput = NULL;
     deviceOutputEndPtr = NULL;
@@ -308,8 +387,11 @@ void organisation::parallel::program::cleanup()
 
         if (deviceOutputEndPtr != NULL) sycl::free(deviceOutputEndPtr, q);
         if (deviceOutput != NULL) sycl::free(deviceOutput, q);
-                
-       // if (deviceClient != NULL) sycl::free(deviceClient, q);
+
+        if (hostOutGates != NULL) sycl::free(hostOutGates, q);
+        if (hostInGates != NULL) sycl::free(hostInGates, q);
+        if (hostValues != NULL) sycl::free(hostValues, q);
+
         if (deviceOutGates != NULL) sycl::free(deviceOutGates, q);
         if (deviceInGates != NULL) sycl::free(deviceInGates, q);
         if (deviceValues != NULL) sycl::free(deviceValues, q);

@@ -1,6 +1,7 @@
 #include <CL/sycl.hpp>
 #include "parallel/device.hpp"
 #include "parallel/queue.hpp"
+#include "program.h"
 
 #ifndef _PARALLEL_PROGRAM
 #define _PARALLEL_PROGRAM
@@ -11,13 +12,21 @@ namespace organisation
     {
         class parameters
         {
+            const static int WIDTH = 5;
+            const static int HEIGHT = 5;
+            const static int DEPTH = 5;
+
+            const static int IN = 3;
+            const static int OUT = 3;
+
             int length;
 
         public:
             int width, height, depth;
             int in, out;
         public:
-            parameters(int _width = 5, int _height = 5, int _depth = 5, int _in = 3, int _out = 3) 
+            parameters(int _width = WIDTH, int _height = HEIGHT, int _depth = DEPTH, 
+                       int _in = IN, int _out = OUT) 
             {
                 width = _width;
                 height = _height;
@@ -45,7 +54,10 @@ namespace organisation
             int *deviceValues;
             int *deviceInGates;
             int *deviceOutGates;
-            //int *deviceClient;
+
+            int *hostValues;
+            int *hostInGates;
+            int *hostOutGates;
 
             int *deviceOutput;
             int *deviceOutputEndPtr;
@@ -60,20 +72,17 @@ namespace organisation
             int *hostSourceReadPositions;
             int *deviceSourceReadPositions;
 
-            // need to duplicate EndPtr buffer to A and B too!
-
-            //int *deviceHasReadPosition;
-            //int *hostHasOutput;
-
             parameters params;
 
             int clients;
             int length;
 
-        private:
-            const static int ITERATIONS = 20;
             bool init;
 
+        private:
+            const static int ITERATIONS = 20;
+            const static int HOST_BUFFER = 20;
+            
         public:
             program(::parallel::device &dev, parameters settings, int clients) { makeNull(); reset(dev, settings, clients); }
             ~program() { cleanup(); }
@@ -87,11 +96,9 @@ namespace organisation
             void set(std::vector<sycl::float4> positions, ::parallel::queue *q = NULL);
             std::vector<output> get(::parallel::queue *q = NULL);
 
-
-// need pinned memory below
-// void copy_batch(std::vector<native::program> programs);
+        public:
+            void copy(std::vector<::organisation::program> source, ::parallel::queue *q = NULL);
             
-
         protected:
             void makeNull();
             void cleanup();

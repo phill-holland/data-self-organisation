@@ -30,6 +30,9 @@ namespace organisation
         void set(int in, int out, gate value);     
         gate get(int in, int out);
            
+        std::vector<int> pull();
+        std::vector<int> pull(int in);
+
         std::vector<organisation::vector> outputs(int index);
         
         void generate();

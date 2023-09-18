@@ -12,8 +12,15 @@
 
 namespace organisation
 {    
+    namespace parallel
+    {
+        class program;
+    };
+    
     class program
-    {        
+    {      
+        friend class parallel::program;
+          
         static std::mt19937_64 generator;
 
         int width, height, depth;

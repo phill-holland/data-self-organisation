@@ -87,6 +87,28 @@ bool organisation::in::validate(int &in)
     return true;
 }
 
+std::vector<int> organisation::in::pull()
+{
+    std::vector<int> result;
+
+    for(auto &it: gates)
+    {
+        result.push_back(it.first);
+    }
+
+    return result;
+}
+
+std::vector<int> organisation::in::pull(int in)
+{
+    if(gates.find(in) != gates.end())
+    {
+        return gates.at(in).pull();
+    }
+
+    return std::vector<int>();
+}
+        
 bool organisation::in::equals(const in &source)
 {
     if(gates.size() != source.gates.size()) return false;

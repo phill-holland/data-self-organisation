@@ -51,6 +51,8 @@ namespace organisation
 
         std::vector<organisation::vector> get();
         
+        std::vector<int> pull();
+
     public:
         bool validate(int &count);
         

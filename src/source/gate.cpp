@@ -51,6 +51,21 @@ std::vector<organisation::vector> organisation::gates::get()
     return result;
 }
 
+std::vector<int> organisation::gates::pull()
+{
+    std::vector<int> result;
+    
+    for(auto &it: data)
+    {
+        if(!it.second.is_empty())
+        {
+            result.push_back(it.first);
+        }
+    }
+
+    return result;
+}
+
 bool organisation::gates::validate(int &count)
 {
     count = 0;
