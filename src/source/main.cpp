@@ -159,19 +159,30 @@ bool BasicProgramExecutionParallel()
 	::parallel::device *dev = new ::parallel::device(0);
 	::parallel::queue *q = new parallel::queue(*dev);
 
-    
+    const int clients = 1;
+
     organisation::parallel::parameters parameters(width, height, depth);
-    organisation::parallel::program p_program(*dev, parameters, 1);
+    organisation::parallel::program p_program(*dev, parameters, clients);
 
     std::vector<organisation::program> source = { p };
     p_program.copy(source, q);
 
-    organisation::vector w {0,-1,0};
-    std::vector<sycl::float4> positions = { { x,y,z,w.encode() } };
+    int x1 = (width / 2);
+    int y1 = (height / 2);
+    int z1 = (depth / 2);
 
-    //std::cout << x << "," << y << "," << z << "," << w.encode() << "\r\n";
+    organisation::vector w {0,1,0};
+    std::vector<sycl::float4> positions = { { x1, y1, z1, w.encode() } };//, { x-1,y,z,w.encode() } };
+
+    std::cout << "main input " << x << "," << y << "," << z << "," << w.encode() << "\r\n";
     p_program.set(positions, q);
 
+    std::cout << "run\r\n";
+
+    p_program.run(q);
+
+    std::vector<organisation::parallel::output> results = p_program.get(q);
+    
     return true;
 }
 

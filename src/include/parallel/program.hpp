@@ -69,8 +69,8 @@ namespace organisation
             sycl::float4 *deviceReadPositionsB;
             int *deviceReadPositionsEndPtr;
 
-            int *hostSourceReadPositions;
-            int *deviceSourceReadPositions;
+            sycl::float4 *hostSourceReadPositions;
+            sycl::float4 *deviceSourceReadPositions;
 
             parameters params;
 
