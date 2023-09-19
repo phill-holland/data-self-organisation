@@ -92,9 +92,13 @@ void organisation::parallel::program::run(::parallel::queue *q)
     sycl::float4 *source = deviceReadPositionsA;
     sycl::float4 *destination = deviceReadPositionsB;
 
+    qt.memset(deviceOutputEndPtr, 0, sizeof(int) * clients).wait();
+
     int iterations = 0;
     while(iterations++ < ITERATIONS)
     {
+        std::cout << "LOOPPP\r\n";
+
         qt.memset(destination, 0, sizeof(sycl::float4) * length).wait();
         qt.memset(deviceReadPositionsEndPtr, 0 , sizeof(int) * clients).wait();
 
@@ -129,7 +133,7 @@ sycl::stream out(1024, 256, h);
                     sycl::float4 current = _readPositionsSource[i];               
 
                     int client = i / _stride;
-                    out << "client " << client << " " << (15999 / _stride) << "\r\n";
+                    out << "client " << client << " " << "\r\n";
                     out << "x,y,z " << current.x() << " " << current.y() << " " << current.z() << "\r\n";
 
                     cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
@@ -142,8 +146,10 @@ out << "index " << index << "\r\n";
                     int value = _values[index];
                     if(value >= 0) 
                     {
-                        _output[ar.fetch_add(1)] = value;
-                        out << "value " << value << "\r\n";
+                        int vv = ar.fetch_add(1);
+                        if(vv < _stride) 
+                            _output[vv + (client * _stride)] = value;
+                        out << "value " << value << " cli " << client << "\r\n";
                     }
 
                     //(((index * length) + i) * params.in) + in_idx
@@ -180,9 +186,9 @@ out << "magnitude " << magnitudeTemp << "\r\n";
                                         float y1 = (float)((r / 3) - 1);//(float)j.quot - 1L;
                                         float x1 = (float)(j - 1);//(float)j.rem - 1L;
 
-                                        float z2 = z1 + (current.z() * magnitudeTemp);
-                                        float y2 = y1 + (current.y() * magnitudeTemp);
-                                        float x2 = x1 + (current.x() * magnitudeTemp);
+                                        float z2 = (z1 * magnitudeTemp) + current.z();
+                                        float y2 = (y1 * magnitudeTemp) + current.y();
+                                        float x2 = (x1 * magnitudeTemp) + current.x();
 
                                         out << "out x1,y1,z1 " << x1 << "," << y1 << "," << z1 << "\r\n";
                                         out << "out x2,y2,z2 " << x2 << "," << y2 << "," << z2 << "\r\n";
@@ -201,9 +207,10 @@ out << "magnitude " << magnitudeTemp << "\r\n";
 
                                             float w = (float)((sycl::abs(tz) * (3 * 3)) + (sycl::abs(ty) * 3) + sycl::abs(tx));
 
-                                            out << "new gate " << w << "\r\n";
-
-                                            _readPositionsDest[br.fetch_add(1)] = { x2,y2,z2,w };
+                                            int vv = br.fetch_add(1);
+                                            out << "new gate " << w << " out " << vv << "\r\n";
+                                            if(vv < _stride)
+                                                _readPositionsDest[vv + (client * _stride)] = { x2,y2,z2,w };
                                         }
                                     }
                                 }
@@ -213,6 +220,10 @@ out << "magnitude " << magnitudeTemp << "\r\n";
                 }
             });
         }).wait();
+
+//std::cout << "DESTINATIOON\r\n";
+//outputarb(destination, length);
+
 
         sycl::float4 *temp = destination;
         destination = source;
@@ -256,6 +267,7 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
 
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
 
+std::cout << "outputs\r\n";
 outputarb(deviceOutput, length);
 outputarb(deviceOutputEndPtr, clients);
 
@@ -288,11 +300,15 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
 
     int dest_index = 0;
     int index = 0;
-    for(std::vector<::organisation::program>::iterator it = source.begin(); it < source.end(); ++it)
+    for(std::vector<::organisation::program>::iterator it = source.begin(); it != source.end(); ++it)
     {
         int length = it->length;
+
+        std::cout << "PROGRAM " << length << "\r\n";
+
         if(length != params.size()) 
             break;
+
 
         for(int i = 0; i < length; ++i)
         {
@@ -343,6 +359,11 @@ std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
             qt.memcpy(&deviceOutGates[dest_index * params.in * params.out * length], hostOutGates, sizeof(int) * params.in * params.out * length * index).wait();
             qt.memcpy(&deviceMagnitudes[dest_index * params.in * params.out * length], hostMagnitudes, sizeof(int) * params.in * params.out * length * index).wait();
 
+            memset(hostValues, -1, sizeof(int) * params.size() * HOST_BUFFER);
+            memset(hostInGates, -1, sizeof(int) * params.size() * params.in * HOST_BUFFER);
+            memset(hostOutGates, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
+            memset(hostMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
+
             dest_index += index;
             index = 0;            
         }
@@ -351,6 +372,7 @@ std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
     if(index > 0)
     {
         // copy from host to device
+        int length = params.size();
 
         qt.memcpy(&deviceValues[dest_index * length], hostValues, sizeof(int) * length * index).wait();
         qt.memcpy(&deviceInGates[dest_index * params.in * length], hostInGates, sizeof(int) * params.in * length * index).wait();

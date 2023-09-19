@@ -1,8 +1,7 @@
 #include "data.h"
 
-void organisation::data::reset(std::vector<std::string> &source)
+void organisation::data::add(std::vector<std::string> &source)
 {
-    max = 0;
     for(std::vector<std::string>::iterator it = source.begin(); it != source.end(); ++it) 
 	{
         if(forward.find(*it) == forward.end())

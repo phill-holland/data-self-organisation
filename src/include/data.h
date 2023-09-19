@@ -15,12 +15,14 @@ namespace organisation
         int max;
 
     public:
-        data() { } 
+        data() { max = 0; } 
         data(std::vector<std::string> &source) { reset(source); }
         data(const data &source) { copy(source); }
 
     public:
-        void reset(std::vector<std::string> &source);        
+        void reset(std::vector<std::string> &source) { clear(); add(source); }
+
+        void add(std::vector<std::string> &source);
 
         void clear()
         {
