@@ -97,7 +97,7 @@ void organisation::parallel::program::run(::parallel::queue *q)
     int iterations = 0;
     while(iterations++ < ITERATIONS)
     {
-        std::cout << "LOOPPP\r\n";
+        //std::cout << "LOOPPP\r\n";
 
         qt.memset(destination, 0, sizeof(sycl::float4) * length).wait();
         qt.memset(deviceReadPositionsEndPtr, 0 , sizeof(int) * clients).wait();
@@ -124,7 +124,7 @@ void organisation::parallel::program::run(::parallel::queue *q)
             auto _stride = params.size();
             auto _length = length;
 
-sycl::stream out(1024, 256, h);
+//sycl::stream out(1024, 256, h);
 
             h.parallel_for(num_items, [=](auto i) 
             {
@@ -133,8 +133,8 @@ sycl::stream out(1024, 256, h);
                     sycl::float4 current = _readPositionsSource[i];               
 
                     int client = i / _stride;
-                    out << "client " << client << " " << "\r\n";
-                    out << "x,y,z " << current.x() << " " << current.y() << " " << current.z() << "\r\n";
+                    //out << "client " << client << " " << "\r\n";
+                    //out << "x,y,z " << current.x() << " " << current.y() << " " << current.z() << "\r\n";
 
                     cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
                                 sycl::memory_scope::device, 
@@ -142,14 +142,14 @@ sycl::stream out(1024, 256, h);
 
                     int index_moo = ((current.z() * _width * _height) + (current.y() * _width) + current.x());
                     int index = ((current.z() * _width * _height) + (current.y() * _width) + current.x()) + (client * _stride);
-out << "index " << index << "\r\n";
+//out << "index " << index << "\r\n";
                     int value = _values[index];
                     if(value >= 0) 
                     {
                         int vv = ar.fetch_add(1);
                         if(vv < _stride) 
                             _output[vv + (client * _stride)] = value;
-                        out << "value " << value << " cli " << client << "\r\n";
+                        //out << "value " << value << " cli " << client << "\r\n";
                     }
 
                     //(((index * length) + i) * params.in) + in_idx
@@ -158,10 +158,10 @@ out << "index " << index << "\r\n";
                     //int inIndex = (((client * _stride) + index) * _in);
                     //int inIndex = (index * length * params.in) + (i * params.in);
                     int inIndex = (client * _stride * _in) + (index_moo * _in);
-                    out << "inIndex " << inIndex << "\r\n";
+                   // out << "inIndex " << inIndex << "\r\n";
                     for(int x = 0; x < _in; ++x)
                     {
-                        out << "ingate[] " << _inGates[inIndex + x] << " w " << current.w() << "\r\n"; 
+                        //out << "ingate[] " << _inGates[inIndex + x] << " w " << current.w() << "\r\n"; 
                         if(_inGates[inIndex + x] >= 0)
                         {
                             if(_inGates[inIndex + x] == current.w())
@@ -172,13 +172,13 @@ out << "index " << index << "\r\n";
                                     s += (y * _in) + x;
                                     int outIndex = s;
 
-                                    out << "outgate[] " << _outGates[outIndex] << " outIndex " << outIndex << "\r\n";
+                                   // out << "outgate[] " << _outGates[outIndex] << " outIndex " << outIndex << "\r\n";
                                     //int outIndex = (_in * y) +  x;
                                     if(_outGates[outIndex] >=  0)
                                     {
                                         int outTemp = _outGates[outIndex];
                                         float magnitudeTemp = (float)_magnitude[outIndex];
-out << "magnitude " << magnitudeTemp << "\r\n";
+//out << "magnitude " << magnitudeTemp << "\r\n";
                                         int r = outTemp % 9;//div(index, 9);
                                         float z1 = (float)((outTemp / 9) - 1);//(float)r.quot - 1L;
 
@@ -190,8 +190,8 @@ out << "magnitude " << magnitudeTemp << "\r\n";
                                         float y2 = (y1 * magnitudeTemp) + current.y();
                                         float x2 = (x1 * magnitudeTemp) + current.x();
 
-                                        out << "out x1,y1,z1 " << x1 << "," << y1 << "," << z1 << "\r\n";
-                                        out << "out x2,y2,z2 " << x2 << "," << y2 << "," << z2 << "\r\n";
+                                        //out << "out x1,y1,z1 " << x1 << "," << y1 << "," << z1 << "\r\n";
+                                        //out << "out x2,y2,z2 " << x2 << "," << y2 << "," << z2 << "\r\n";
 
                                         if((x2 >= 0)&&(x2 < _width)&&(y2 >= 0)&&(y2 < _height)&&(z2 >=0)&&(z2 < _depth))
                                         {
@@ -203,12 +203,12 @@ out << "magnitude " << magnitudeTemp << "\r\n";
                                             int ty = roundf(-y1) + 1;
                                             int tz = roundf(-z1) + 1;
 
-    out << "out tx,ty,tz " << (x1*-1.0f) << "," << (y1*-1.0f) << "," << (z1*-1.0f) << "\r\n";
+    //out << "out tx,ty,tz " << (x1*-1.0f) << "," << (y1*-1.0f) << "," << (z1*-1.0f) << "\r\n";
 
                                             float w = (float)((sycl::abs(tz) * (3 * 3)) + (sycl::abs(ty) * 3) + sycl::abs(tx));
 
                                             int vv = br.fetch_add(1);
-                                            out << "new gate " << w << " out " << vv << "\r\n";
+                                            //out << "new gate " << w << " out " << vv << "\r\n";
                                             if(vv < _stride)
                                                 _readPositionsDest[vv + (client * _stride)] = { x2,y2,z2,w };
                                         }
@@ -257,8 +257,8 @@ void organisation::parallel::program::set(std::vector<sycl::float4> positions, :
         });
     }).wait();
 
-    outputarb(deviceReadPositionsA,length);
-    outputarb(deviceReadPositionsEndPtr,clients);
+    //outputarb(deviceReadPositionsA,length);
+    //outputarb(deviceReadPositionsEndPtr,clients);
 }
 
 std::vector<organisation::parallel::output> organisation::parallel::program::get(::parallel::queue *q)
@@ -267,9 +267,9 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
 
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
 
-std::cout << "outputs\r\n";
-outputarb(deviceOutput, length);
-outputarb(deviceOutputEndPtr, clients);
+//std::cout << "outputs\r\n";
+//outputarb(deviceOutput, length);
+//outputarb(deviceOutputEndPtr, clients);
 
     qt.memcpy(hostOutput, deviceOutput, sizeof(int) * length).wait();
     qt.memcpy(hostOutputEndPtr, deviceOutputEndPtr, sizeof(int) * clients).wait();
@@ -304,7 +304,7 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
     {
         int length = it->length;
 
-        std::cout << "PROGRAM " << length << "\r\n";
+        //std::cout << "PROGRAM " << length << "\r\n";
 
         if(length != params.size()) 
             break;
@@ -313,7 +313,7 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
         for(int i = 0; i < length; ++i)
         {
             //hostValues[0] = 1;
-            if(it->cells.at(i).value >=0) std::cout << "hostValues " << ((index * length) + i) << " " << it->cells.at(i).value << "\r\n";
+            //if(it->cells.at(i).value >=0) std::cout << "hostValues " << ((index * length) + i) << " " << it->cells.at(i).value << "\r\n";
             hostValues[(index * length) + i] = it->cells.at(i).value;
 
             std::vector<int> in = it->cells.at(i).pull();
@@ -326,7 +326,7 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
                     // (((index * length) + i) * params.in)
                     hostInGates[inIndex + in_idx] = *jt;
                     //hostInGates[in_idx + (index * params.in)] = *jt;
-std::cout << "in_idx " << in_idx << " jt=" << *jt << " " << (inIndex + in_idx) << "\r\n";
+//std::cout << "in_idx " << in_idx << " jt=" << *jt << " " << (inIndex + in_idx) << "\r\n";
                     std::vector<int> out = it->cells.at(i).pull(*jt);
                     int out_idx = 0;
                     for(std::vector<int>::iterator ot = out.begin(); ot < out.end(); ++ot)
@@ -339,7 +339,7 @@ std::cout << "in_idx " << in_idx << " jt=" << *jt << " " << (inIndex + in_idx) <
                             hostOutGates[s] = *ot;
                             hostMagnitudes[s] = it->cells.at(i).get(*jt,*ot).magnitude;
 
-std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
+//std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
                             // need new device magnitude buffer, of params.in * params.out * clients
                         }
 
@@ -364,7 +364,7 @@ std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
             memset(hostOutGates, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
             memset(hostMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
 
-            dest_index += index;
+            dest_index += HOST_BUFFER;//index;
             index = 0;            
         }
     }
@@ -380,10 +380,10 @@ std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
         qt.memcpy(&deviceMagnitudes[dest_index * params.in * params.out * length], hostMagnitudes, sizeof(int) * params.in * params.out * length * index).wait();
         
         //outputarb(deviceValues, this->length);
-        std::cout << "in gates\r\n";
-        outputarb(deviceInGates, clients * params.size() * params.in);
-        std::cout << "out gates\r\n";
-        outputarb(deviceOutGates, clients * params.size() * params.in * params.out);
+        //std::cout << "in gates\r\n";
+        //outputarb(deviceInGates, clients * params.size() * params.in);
+        //std::cout << "out gates\r\n";
+        //outputarb(deviceOutGates, clients * params.size() * params.in * params.out);
     }
 }
 

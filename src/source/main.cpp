@@ -189,48 +189,8 @@ organisation::program getTestProgram2(organisation::data &d, const int width, co
 }
 
 bool BasicProgramExecutionParallel()
-{
-    /*
-    const int width = 20, height = 20, depth = 20;
-    organisation::program p(width, height, depth);
-
-    std::vector<std::string> expected = organisation::split("daisy daisy give me your answer do .");
-    
-    std::vector<std::string> strings = organisation::split("daisy daisy give me your answer do .");
-    organisation::data d(strings);
-
-    organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
-    organisation::vector down = { 0,-1,0 } ,right = { -1,0,0 };
-
-    std::vector<organisation::vector> in = { up, up, left, up, left, up, left, up };
-    std::vector<organisation::vector> out = { down, right, down, right, down, right, down, right };
-
-    int x = (width / 2);
-    int y = (height / 2);
-    int z = (depth / 2);
-
-    int magnitude = 1;
-
-    for(int i = 0; i < strings.size(); ++i)
-    {
-        int value = d.map(strings[i]);
-        
-        organisation::vector out1 = out[i];
-
-        p.set(in[i], out1, magnitude, x, y, z);
-        p.set(value, x, y, z);
-
-        x += out1.x;
-        y += out1.y;
-        z += out1.z;
-    }
-    */
-    //std::vector<std::string> outputs = organisation::split(p.run(0, d));
-
-    //if (p.count() != 8) return false;
-    //if (outputs != expected) return false;
-
-    const int width = 20, height = 20, depth = 20;
+{    
+    const int width = 10, height = 10, depth = 10;
     organisation::data d;
 
     organisation::program p1 = getTestProgram1(d, width, height, depth);
@@ -293,9 +253,90 @@ bool BasicProgramExecutionParallel()
     return true;
 }
 
+bool BasicProgramExecutionParallelBatch()
+{    
+    const int width = 10, height = 10, depth = 10;
+    organisation::data d;
+
+    organisation::program p1 = getTestProgram1(d, width, height, depth);
+    organisation::program p2 = getTestProgram2(d, width, height, depth);
+
+    std::vector<std::string> devices = ::parallel::device::enumerate();
+    for(std::vector<std::string>::iterator it = devices.begin(); it < devices.end(); ++it)
+    {
+        std::cout << *it << "\r\n";
+    }
+	::parallel::device *dev = new ::parallel::device(0);
+	::parallel::queue *q = new parallel::queue(*dev);
+
+    const int clients = 5000;
+
+    organisation::parallel::parameters parameters(width, height, depth);
+    organisation::parallel::program p_program(*dev, parameters, clients);
+
+    p_program.clear(q);
+
+    int x1 = (width / 2);
+    int y1 = (height / 2);
+    int z1 = (depth / 2);
+
+    int x2 = width - 1;
+    int y2 = height - 1;
+    int z2 = depth - 1;
+
+    organisation::vector w {0,1,0};
+
+    std::vector<organisation::program> source;
+    std::vector<sycl::float4> positions;
+
+    for(int i = 0; i < clients; ++i)
+    { 
+        if(i % 2 == 0) 
+        {
+            source.push_back(p1);
+            positions.push_back({ x1, y1, z1, w.encode() });
+        }
+        else 
+        {
+            source.push_back(p2);       
+            positions.push_back({ x2, y2, z2, w.encode() });
+        }
+    }
+
+    p_program.copy(source, q);
+    
+    p_program.set(positions, q);
+
+    std::cout << "run\r\n";
+
+    p_program.run(q);
+
+    std::vector<organisation::parallel::output> results = p_program.get(q);
+    
+    std::string expected1("daisy daisy give me your answer do .");
+    std::string expected2("daisy daisy give me");
+
+    for(int i = 0; i < clients; ++i)
+    { 
+        std::string value = d.get(results[i].values);
+
+        if(i % 2 == 0) 
+        {            
+            if(expected1 != value) return false;
+        }
+        else
+        {
+            if(expected2 != value) return false;
+        }
+    }
+
+    return true;
+}
+
 int main(int argc, char *argv[])
 {  
-    BasicProgramExecutionParallel();
+    if(BasicProgramExecutionParallelBatch()) std::cout << "OK\r\n";
+    else std::cout << "NOT OK\r\n";
     //run(200);
 /*
 core::queue::fifo<organisation::schema,10L> fifo;
