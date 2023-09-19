@@ -21,6 +21,9 @@ void organisation::parallel::program::reset(::parallel::device &dev, parameters 
     deviceOutGates = sycl::malloc_device<int>(settings.size() * settings.in * settings.out * clients, q);
     if(deviceOutGates == NULL) return;
 
+    deviceMagnitudes = sycl::malloc_device<int>(settings.size() * settings.in * settings.out * clients, q);
+    if(deviceMagnitudes == NULL) return;
+
     // ***
 
     hostValues = sycl::malloc_host<int>(settings.size() * HOST_BUFFER, q);
@@ -31,6 +34,9 @@ void organisation::parallel::program::reset(::parallel::device &dev, parameters 
 
     hostOutGates = sycl::malloc_host<int>(HOST_BUFFER * settings.size() * settings.in * settings.out, q);
     if(hostOutGates == NULL) return;
+
+    hostMagnitudes = sycl::malloc_host<int>(HOST_BUFFER * settings.size() * settings.in * settings.out, q);
+    if(hostMagnitudes == NULL) return;
 
     // ***
 
@@ -97,6 +103,7 @@ void organisation::parallel::program::run(::parallel::queue *q)
             auto _values = deviceValues;
             auto _inGates = deviceInGates;
             auto _outGates = deviceOutGates;
+            auto _magnitude = deviceMagnitudes;
             auto _output = deviceOutput;
             auto _outputEndPtr = deviceOutputEndPtr;
             auto _readPositionsSource = source;
@@ -164,7 +171,8 @@ out << "index " << index << "\r\n";
                                     if(_outGates[outIndex] >=  0)
                                     {
                                         int outTemp = _outGates[outIndex];
-
+                                        float magnitudeTemp = (float)_magnitude[outIndex];
+out << "magnitude " << magnitudeTemp << "\r\n";
                                         int r = outTemp % 9;//div(index, 9);
                                         float z1 = (float)((outTemp / 9) - 1);//(float)r.quot - 1L;
 
@@ -172,9 +180,9 @@ out << "index " << index << "\r\n";
                                         float y1 = (float)((r / 3) - 1);//(float)j.quot - 1L;
                                         float x1 = (float)(j - 1);//(float)j.rem - 1L;
 
-                                        float z2 = z1 + current.z();
-                                        float y2 = y1 + current.y();
-                                        float x2 = x1 + current.x();
+                                        float z2 = z1 + (current.z() * magnitudeTemp);
+                                        float y2 = y1 + (current.y() * magnitudeTemp);
+                                        float x2 = x1 + (current.x() * magnitudeTemp);
 
                                         out << "out x1,y1,z1 " << x1 << "," << y1 << "," << z1 << "\r\n";
                                         out << "out x2,y2,z2 " << x2 << "," << y2 << "," << z2 << "\r\n";
@@ -273,6 +281,7 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
     memset(hostValues, -1, sizeof(int) * params.size() * HOST_BUFFER);
     memset(hostInGates, -1, sizeof(int) * params.size() * params.in * HOST_BUFFER);
     memset(hostOutGates, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
+    memset(hostMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
 
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
     sycl::range num_items{(size_t)clients};
@@ -312,6 +321,7 @@ std::cout << "in_idx " << in_idx << " jt=" << *jt << " " << (inIndex + in_idx) <
                             s += (out_idx * params.in) + in_idx;
                             //int s = in_idx + (out_idx * params.in) + (index * params.in * params.out);
                             hostOutGates[s] = *ot;
+                            hostMagnitudes[s] = it->cells.at(i).get(*jt,*ot).magnitude;
 
 std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
                             // need new device magnitude buffer, of params.in * params.out * clients
@@ -331,6 +341,7 @@ std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
             qt.memcpy(&deviceValues[dest_index * length], hostValues, sizeof(int) * length * index).wait();
             qt.memcpy(&deviceInGates[dest_index * params.in * length], hostInGates, sizeof(int) * params.in * length * index).wait();
             qt.memcpy(&deviceOutGates[dest_index * params.in * params.out * length], hostOutGates, sizeof(int) * params.in * params.out * length * index).wait();
+            qt.memcpy(&deviceMagnitudes[dest_index * params.in * params.out * length], hostMagnitudes, sizeof(int) * params.in * params.out * length * index).wait();
 
             dest_index += index;
             index = 0;            
@@ -344,6 +355,7 @@ std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
         qt.memcpy(&deviceValues[dest_index * length], hostValues, sizeof(int) * length * index).wait();
         qt.memcpy(&deviceInGates[dest_index * params.in * length], hostInGates, sizeof(int) * params.in * length * index).wait();
         qt.memcpy(&deviceOutGates[dest_index * params.in * params.out * length], hostOutGates, sizeof(int) * params.in * params.out * length * index).wait();
+        qt.memcpy(&deviceMagnitudes[dest_index * params.in * params.out * length], hostMagnitudes, sizeof(int) * params.in * params.out * length * index).wait();
         
         //outputarb(deviceValues, this->length);
         std::cout << "in gates\r\n";
@@ -423,13 +435,17 @@ void organisation::parallel::program::outputarb(sycl::float4 *source, int length
 
 void organisation::parallel::program::makeNull()
 {
+    dev = NULL;
+
     deviceValues = NULL;
     deviceInGates = NULL;
     deviceOutGates = NULL;
+    deviceMagnitudes = NULL;
     
     hostValues = NULL;
     hostInGates = NULL;
     hostOutGates = NULL;
+    hostMagnitudes = NULL;
 
     deviceOutput = NULL;
     deviceOutputEndPtr = NULL;
@@ -464,10 +480,12 @@ void organisation::parallel::program::cleanup()
         if (deviceOutputEndPtr != NULL) sycl::free(deviceOutputEndPtr, q);
         if (deviceOutput != NULL) sycl::free(deviceOutput, q);
 
+        if (hostMagnitudes != NULL) sycl::free(hostMagnitudes, q);
         if (hostOutGates != NULL) sycl::free(hostOutGates, q);
         if (hostInGates != NULL) sycl::free(hostInGates, q);
         if (hostValues != NULL) sycl::free(hostValues, q);
 
+        if (deviceMagnitudes != NULL) sycl::free(deviceMagnitudes, q);
         if (deviceOutGates != NULL) sycl::free(deviceOutGates, q);
         if (deviceInGates != NULL) sycl::free(deviceInGates, q);
         if (deviceValues != NULL) sycl::free(deviceValues, q);

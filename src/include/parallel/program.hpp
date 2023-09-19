@@ -54,10 +54,12 @@ namespace organisation
             int *deviceValues;
             int *deviceInGates;
             int *deviceOutGates;
+            int *deviceMagnitudes;
 
             int *hostValues;
             int *hostInGates;
             int *hostOutGates;
+            int *hostMagnitudes;
 
             int *deviceOutput;
             int *deviceOutputEndPtr;

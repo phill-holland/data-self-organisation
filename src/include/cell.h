@@ -40,6 +40,8 @@ namespace organisation
         std::vector<int> pull() { return routes.pull(); }
         std::vector<int> pull(int in) { return routes.pull(in); }
 
+        gate get(int in, int out) { return routes.get(in, out); }
+
         bool equals(const cell &source);
         void copy(const cell &source);
         

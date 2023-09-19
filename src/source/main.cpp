@@ -17,7 +17,7 @@ using namespace std;
 
 std::string source = R"(daisy daisy give me your answer do .)";
 /*I'm half crazy for the love of you .)";
-/*it won't be a stylish marriage .
+it won't be a stylish marriage .
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
@@ -165,7 +165,7 @@ bool BasicProgramExecutionParallel()
     organisation::parallel::program p_program(*dev, parameters, clients);
 
     p_program.clear(q);
-    
+
     std::vector<organisation::program> source = { p };
     p_program.copy(source, q);
 
