@@ -164,6 +164,8 @@ bool BasicProgramExecutionParallel()
     organisation::parallel::parameters parameters(width, height, depth);
     organisation::parallel::program p_program(*dev, parameters, clients);
 
+    p_program.clear(q);
+    
     std::vector<organisation::program> source = { p };
     p_program.copy(source, q);
 
