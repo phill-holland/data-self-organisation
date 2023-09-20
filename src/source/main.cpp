@@ -23,26 +23,42 @@ but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
-void run(int rerun = 1)
-{     
+void run()//int rerun = 1)
+{         
     auto strings = organisation::split(source);
     
     std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };
 
+	::parallel::device *dev = new ::parallel::device(0);
+	::parallel::queue *q = new parallel::queue(*dev);
+
+    const int width = 5, height = 5, depth = 5, in = 3, out = 3;
+    const int size = 1000, clients = 500;
+
+    //organisation::parallel::parameters parameters(width, height, depth, in, out);
+
+    organisation::populations::parameters settings;
+    settings.params = organisation::parallel::parameters(width, height, depth, in, out);
+    settings.dev = dev;
+    settings.q = q;
+    settings.expected = expected;
+    settings.mappings = organisation::data(strings);
+    settings.clients = clients;
+    settings.size = size;
+
     int epochs = expected.size();
 
-    organisation::data data(strings);
-    organisation::population p(data, expected, 1000);//3000);//2000);//1000);
+    //organisation::data data(strings);
+    organisation::populations::population p(settings);//data, expected, 1000);//3000);//2000);//1000);
     
     const int iterations = 300;
 
-    for(int j = 0; j < rerun; ++j)
-    {        
+    //for(int j = 0; j < rerun; ++j)
+    //{        
         int actual = 0;
 
         p.clear();
         p.generate();
-        p.start();
 
         organisation::schema best = p.go(expected, actual, iterations);
 
@@ -50,9 +66,9 @@ void run(int rerun = 1)
         {
             organisation::history history;
 
-            std::string output = best.run(i, expected[i], data, &history);
+            std::string output = best.run(i, expected[i], settings.mappings, &history);
             std::cout << "\r\n" << output << "\r\n";
-            std::cout << history.get(data);
+            std::cout << history.get(settings.mappings);
 
             if(actual <= iterations) 
             {
@@ -60,10 +76,10 @@ void run(int rerun = 1)
                 filename += std::to_string(i);
                 filename += std::string(".csv");
 
-                history.append(filename, data);
+                history.append(filename, settings.mappings);
             }
         }        
-    }
+    //}
 }
 
 bool BasicProgramExecution()
@@ -212,7 +228,7 @@ bool BasicProgramExecutionParallel()
     p_program.clear(q);
 
     std::vector<organisation::program> source = { p1, p2 };
-    p_program.copy(source, q);
+    //p_program.copy(source, q);
 
     int x1 = (width / 2);
     int y1 = (height / 2);
@@ -303,7 +319,7 @@ bool BasicProgramExecutionParallelBatch()
         }
     }
 
-    p_program.copy(source, q);
+    //p_program.copy(source, q);
     
     p_program.set(positions, q);
 
@@ -335,21 +351,10 @@ bool BasicProgramExecutionParallelBatch()
 
 int main(int argc, char *argv[])
 {  
-    if(BasicProgramExecutionParallelBatch()) std::cout << "OK\r\n";
-    else std::cout << "NOT OK\r\n";
-    //run(200);
-/*
-core::queue::fifo<organisation::schema,10L> fifo;
+    //if(BasicProgramExecutionParallelBatch()) std::cout << "OK\r\n";
+    //else std::cout << "NOT OK\r\n";
 
-organisation::schema *temp = new organisation::schema();
+    run();//200);
 
-fifo.set(*temp);
-
-organisation::schema *moo = new organisation::schema();
-fifo.get(*moo);
-
-delete moo;
-delete temp;
-*/
     return 0;
 }

@@ -41,7 +41,7 @@ namespace organisation
         program(const program &source) { copy(source); }
         ~program() { cleanup(); }
 
-        bool intialised() { return init; }
+        bool initalised() { return init; }
         void reset(int w, int h, int d);
 
     public:

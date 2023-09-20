@@ -10,7 +10,10 @@ namespace organisation
 {
     class schemas
     {
+    public:
         schema **data;
+
+    private:
         std::atomic<int> *locks;
 
         int length;
@@ -18,16 +21,19 @@ namespace organisation
         bool init;
         
     public:
-        schemas(int size) { makeNull(); reset(size); }
+        schemas(int width, int height, int depth, int size) { makeNull(); reset(width, height, depth, size); }
         ~schemas() { cleanup(); }
 
         bool initalised() { return init; }
-        void reset(int size);
+        void reset(int width, int height, int depth, int size);
 
         bool clear();
 
         bool get(schema &destination, int index);
         bool set(schema &source, int index);
+
+        schema *lock(int index);
+        bool unlock(int index);
 
         bool generate(organisation::data &source);
 

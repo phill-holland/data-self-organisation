@@ -2,6 +2,7 @@
 #include "parallel/device.hpp"
 #include "parallel/queue.hpp"
 #include "program.h"
+#include "schema.h"
 
 #ifndef _PARALLEL_PROGRAM
 #define _PARALLEL_PROGRAM
@@ -99,7 +100,7 @@ namespace organisation
             std::vector<output> get(::parallel::queue *q = NULL);
 
         public:
-            void copy(std::vector<::organisation::program> source, ::parallel::queue *q = NULL);
+            void copy(::organisation::schema **source, int source_size, ::parallel::queue *q = NULL);
             
         public:
             void outputarb(int *source, int length);

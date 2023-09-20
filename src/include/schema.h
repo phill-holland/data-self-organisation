@@ -32,7 +32,7 @@ namespace organisation
 
 
     public:
-        schema() { makeNull(); reset(); }        
+        schema(int width, int height, int depth) : prog(width, height, depth) { makeNull(); reset(); }        
         schema(const schema &source) { copy(source); }
         ~schema() { cleanup(); }
 

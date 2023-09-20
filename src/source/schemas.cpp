@@ -1,7 +1,7 @@
 #include "schemas.h"
 #include <iostream>
 
-void organisation::schemas::reset(int size)
+void organisation::schemas::reset(int width, int height, int depth, int size)
 {
     init = false; cleanup();
     this->length = size;
@@ -13,7 +13,7 @@ void organisation::schemas::reset(int size)
 
     for(int i = 0; i < size; ++i) 
     { 
-        data[i] = new organisation::schema();
+        data[i] = new organisation::schema(width, height, depth);
         if(data[i] == NULL) return;
     }
 
@@ -43,6 +43,41 @@ bool organisation::schemas::clear()
 
     return true;
 }
+
+organisation::schema *organisation::schemas::lock(int index)
+{
+    if((index < 0)||(index >= length)) return NULL;
+    if(locks[index] == 1) return NULL;
+
+    organisation::schema *result = NULL;
+
+    int a = locks[index].load();
+    int b = 1;
+    
+    if (locks[index].compare_exchange_weak(a, b, std::memory_order_release, std::memory_order_relaxed))
+    {
+        result = data[index];
+    }
+
+    return result;
+}
+
+bool organisation::schemas::unlock(int index)
+{
+    if((index < 0)||(index >= length)) return false;
+    if(locks[index] == 0) return true;
+
+    int a = locks[index].load();
+    int b = 0;
+    
+    if (locks[index].compare_exchange_weak(a, b, std::memory_order_release, std::memory_order_relaxed))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 
 bool organisation::schemas::get(schema &destination, int index)
 {

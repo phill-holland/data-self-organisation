@@ -288,7 +288,7 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
     return results;
 }
 
-void organisation::parallel::program::copy(std::vector<::organisation::program> source, ::parallel::queue *q)
+void organisation::parallel::program::copy(::organisation::schema **source, int source_size, ::parallel::queue *q)
 {
     memset(hostValues, -1, sizeof(int) * params.size() * HOST_BUFFER);
     memset(hostInGates, -1, sizeof(int) * params.size() * params.in * HOST_BUFFER);
@@ -300,9 +300,13 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
 
     int dest_index = 0;
     int index = 0;
-    for(std::vector<::organisation::program>::iterator it = source.begin(); it != source.end(); ++it)
+    //for(std::vector<::organisation::program>::iterator it = source.begin(); it != source.end(); ++it)
+    for(int source_index = 0; source_index < source_size; ++source_index)
     {
-        int length = it->length;
+        organisation::program *prog = &source[source_index]->prog;
+
+        //int length = it->length;
+        int length = prog->length;
 
         //std::cout << "PROGRAM " << length << "\r\n";
 
@@ -314,9 +318,9 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
         {
             //hostValues[0] = 1;
             //if(it->cells.at(i).value >=0) std::cout << "hostValues " << ((index * length) + i) << " " << it->cells.at(i).value << "\r\n";
-            hostValues[(index * length) + i] = it->cells.at(i).value;
+            hostValues[(index * length) + i] = prog->cells.at(i).value;
 
-            std::vector<int> in = it->cells.at(i).pull();
+            std::vector<int> in = prog->cells.at(i).pull();
             int in_idx = 0;
             for(std::vector<int>::iterator jt = in.begin(); jt < in.end(); ++jt)
             {
@@ -327,7 +331,7 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
                     hostInGates[inIndex + in_idx] = *jt;
                     //hostInGates[in_idx + (index * params.in)] = *jt;
 //std::cout << "in_idx " << in_idx << " jt=" << *jt << " " << (inIndex + in_idx) << "\r\n";
-                    std::vector<int> out = it->cells.at(i).pull(*jt);
+                    std::vector<int> out = prog->cells.at(i).pull(*jt);
                     int out_idx = 0;
                     for(std::vector<int>::iterator ot = out.begin(); ot < out.end(); ++ot)
                     {
@@ -337,7 +341,7 @@ void organisation::parallel::program::copy(std::vector<::organisation::program> 
                             s += (out_idx * params.in) + in_idx;
                             //int s = in_idx + (out_idx * params.in) + (index * params.in * params.out);
                             hostOutGates[s] = *ot;
-                            hostMagnitudes[s] = it->cells.at(i).get(*jt,*ot).magnitude;
+                            hostMagnitudes[s] = prog->cells.at(i).get(*jt,*ot).magnitude;
 
 //std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
                             // need new device magnitude buffer, of params.in * params.out * clients
