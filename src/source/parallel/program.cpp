@@ -76,8 +76,7 @@ void organisation::parallel::program::clear(::parallel::queue *q)
 
     qt.memset(deviceOutputEndPtr, 0, sizeof(int) * clients).wait();
     qt.memset(deviceReadPositionsEndPtr, 0, sizeof(int) * clients).wait();
-
-    /*
+    
     qt.memset(deviceValues, -1, sizeof(int) * length).wait();
     qt.memset(deviceOutput, 0, sizeof(int) * length).wait();
     qt.memset(deviceReadPositionsA, 0, sizeof(sycl::float4) * length).wait();
@@ -85,7 +84,7 @@ void organisation::parallel::program::clear(::parallel::queue *q)
     
     qt.memset(deviceInGates, -1, sizeof(int) * params.size() * params.in * clients);
     qt.memset(deviceOutGates, -1, sizeof(int) * params.size() * params.in * params.out * clients);
-    */
+    
 }
 
 void organisation::parallel::program::run(::parallel::queue *q)

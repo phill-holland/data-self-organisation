@@ -1,5 +1,3 @@
-//#include "threading/thread.h"
-//#include "threading/semaphore.h"
 #include "schema.h"
 #include "kdtree.h"
 #include "data.h"
@@ -55,74 +53,39 @@ namespace organisation
             results() { average = 0.0f; best = 0.0f; index = 0; }
         };
 
-        class population// : public core::threading::thread
+        class population
         {
             friend class generator;
             friend class collector;
 
             static const int minimum = 100, maximum = 10000;
-            //static const int threads = 6;
 
             static std::mt19937_64 generator;
 
-            //const static int queues = 200;
-
-            //core::queue::fifo<schema, queues> outgoing;
-            //core::queue::fifo<schema, queues> incoming;
-
             dominance::kdtree::kdtree *approximation;
 
-            //schema **data, **intermediate;
-            //schema **left, **right;
-            //std::atomic<int> *locks;
-
-            organisation::schemas *schemas;
-            
+            organisation::schemas *schemas;            
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
 
             parallel::program *programs;
-
-            
-            //int size;
 
             int dimensions;
 
             parameters settings;
 
-            //organisation::data mappings;
-            //std::vector<int> lengths;
-
-            //organisation::generator generating;
-            //organisation::collector collecting;
-
-            //core::threading::semaphore::token token;
-
             bool init;
 
-        //public:
-            //void background(core::threading::thread *bt);
-
         public:
-            population(parameters &params)//organisation::data source, std::vector<std::string> expected, int size) 
-            //: generating(this), collecting(this)
-                { makeNull(); reset(params); }//source, expected, size); }
+            population(parameters &params) { makeNull(); reset(params); }
 
             ~population() { cleanup(); }
 
             bool initalised() { return init; }
-            void reset(parameters &params);//organisation::data source, std::vector<std::string> expected, int size);
+            void reset(parameters &params);
 
             void clear();
                     
             organisation::schema go(std::vector<std::string> expected, int &count, int iterations = 0);
-
-            //schema top();
-
-            //void start() 
-            //{ 
-                //collecting.start();
-                //generating.start(); 
-            //}
 
         void generate();
 
@@ -131,11 +94,7 @@ namespace organisation
             bool set(schema &source, region r);
             
         protected:
-            //std::tuple<std::vector<std::string>,float> run(std::vector<std::string> expected, const float mutation);
-            //void back(schema **destination, schema **source, int thread);
-
-            schema *best(region r);//schema &destination, schema &competition);
-            //int worst(schema **source, int start, int end);
+            schema *best(region r);
             schema *worst(region r);
 
             void pull(organisation::schema **buffer, region r);
@@ -143,9 +102,6 @@ namespace organisation
 
         protected:
             results execute(organisation::schema **buffer, std::string expected);
-
-        //protected:
-            //int pull(schema &destination);
             
         protected:
             void makeNull();

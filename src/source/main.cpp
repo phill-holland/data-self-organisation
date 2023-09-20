@@ -33,7 +33,7 @@ void run()//int rerun = 1)
 	::parallel::queue *q = new parallel::queue(*dev);
 
     const int width = 5, height = 5, depth = 5, in = 15, out = 10;
-    const int size = 3000, clients = 1500;
+    const int size = 1000, clients = 800;
 
     //organisation::parallel::parameters parameters(width, height, depth, in, out);
 

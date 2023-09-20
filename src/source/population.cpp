@@ -5,17 +5,15 @@
 #include <future>
 #include <algorithm>
 #include <signal.h>
+#include <chrono>
 
 std::mt19937_64 organisation::populations::population::generator(std::random_device{}());
 
-void organisation::populations::population::reset(parameters &params)//organisation::data source, std::vector<std::string> expected, int size)
+void organisation::populations::population::reset(parameters &params)
 {
     init = false; cleanup();
 
     settings = params;
-    //this->size = size;
-
-    //mappings = source;
 
     dimensions = 0;
     std::vector<std::vector<std::string>> d;
@@ -78,7 +76,6 @@ void organisation::populations::population::reset(parameters &params)//organisat
 void organisation::populations::population::clear()
 {
     schemas->clear();
-    //programs->clear();
 }
 
 void organisation::populations::population::generate()
@@ -92,17 +89,6 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     bool finished = false;
     count = 0;
 
-    //const float mutate_rate_in_percent = 20.0f;
-    //const float mutation = (((float)settings.size) / 100.0f) * mutate_rate_in_percent;
-
-    //schema **source = left, **destination = right;
-    //generate();
-
-    //int x1 = settings.params.width / 2;
-    //int y1 = settings.params.height / 2;
-    //int z1 = settings.params.depth / 2;
-
-    //organisation::vector w {0,1,0};
     schema res(settings.params.width, settings.params.height, settings.params.depth);
 
     organisation::schema **set = intermediateC, **run = intermediateA, **get = intermediateB;
@@ -111,7 +97,6 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     region rget = { (settings.size / 2), settings.size - 1 };
 
     pull(intermediateA, rset);
-    //pull(intermediateC, rget);
 
     do
     {
@@ -166,98 +151,6 @@ organisation::schema organisation::populations::population::go(std::vector<std::
         rset = rget;
         rget = t2;
 
-        // *** set
-        
-        //push(set, rset);
-
-        // *** set
-
-        // *** get
-
-        //pull(get, rget);
-
-        // *** get
-
-        // *** run
-/*
-        std::vector<sycl::float4> positions;
-
-        for(int i = 0; i < settings.clients; ++i)
-        {
-            positions.push_back({x1,y1,z1,w.encode()});
-        }
-    
-        programs->clear(settings.q);
-        programs->copy(run, settings.clients, settings.q);
-        programs->set(positions, settings.q);
-        programs->run(settings.q);
-        std::vector<organisation::parallel::output> values = programs->get(settings.q);
-        */
-        // *** run
-
-// change programs->copy to accept pointers to programs
-// change schema to return pointers...??
-
-           // if(buffer.size() > 0)
-            //{
-                //programs->clear(settings.q);
-                //programs->copy(buffer, settings.q);
-                //programs->set(positions, settings.q);
-                //programs->run(settings.q);
-
-                // get results, compute scores for schemas! (recreate new schemas for reinsertion into population?)
-            //}
-            // run programs (loop through expected epochs!)
-            // set scores in schemas
-            // push back into population
-
-            //std::vector<std::future<std::tuple<std::vector<std::string>,float>>> results;
-/*
-            int m = threads;
-            if(generation + threads >= size) 
-                m = size - generation;
-            for(int i = 0; i < m; ++i)
-            {
-             //std::cout << "start " << intermediate[i] << "\r\n";   
-                //std::cout << (i + generation) << "\r\n";
-                auto result = std::async(&organisation::population::population::run, this, expected, mutation);
-                results.push_back(std::move(result));
-            }
-*/
-            
-
-            //for (std::vector<std::future<std::tuple<std::vector<std::string>,float>>>::iterator it = results.begin(); it != results.end(); ++it)
-            //{
-                /*
-                std::tuple<std::vector<std::string>,float> outputs = it->get();
-
-                std::vector<std::string> output = std::get<0>(outputs);
-                float sum = std::get<1>(outputs);
-                
-                total += sum;
-
-                if(sum > most)
-                {
-                    //res.copy(*dest);
-                    most = sum;
-                }
-
-                if(sum >= 0.9999f) result = true;    
-                if(output == expected) result = true;   
-                */        
-           // }      
-        //}
-       /* 
-        total /= settings.size;
-        
-        std::cout << "Generation (" << count << ") Best=" << most;
-        std::cout << " Avg=" << total;
-        //std::cout << " IC=" << incoming.entries();
-        //std::cout << " OC=" << outgoing.entries();
-        std::cout << "\r\n";
-
-        if((iterations > 0)&&(count > iterations)) result = true;
-        */
         ++count;
 
     } while(!finished);
@@ -266,7 +159,9 @@ organisation::schema organisation::populations::population::go(std::vector<std::
 }
 
 organisation::populations::results organisation::populations::population::execute(organisation::schema **buffer, std::string expected)
-{    
+{  
+    std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
+
     int x1 = settings.params.width / 2;
     int y1 = settings.params.height / 2;
     int z1 = settings.params.depth / 2;
@@ -292,18 +187,9 @@ organisation::populations::results organisation::populations::population::execut
     
     results result;
     
-//std::cout << "results size " << ((int)values.size()) << "\r\n";    
     for(i = 0, it = values.begin(); it != values.end(); ++it, ++i)    
     {
         std::string output = settings.mappings.get(it->values);
-        /*if(i < 10) 
-        {
-            for(std::vector<int>::iterator ij = it->values.begin(); ij != it->values.end(); ++ij)
-            {
-                std::cout << *ij << ",";
-            }
-            std::cout << output << "\r\n";
-        }*/
         buffer[i]->scores[0].compute(expected, output);
         float score = buffer[i]->sum();
         if(score > result.best)
@@ -316,67 +202,12 @@ organisation::populations::results organisation::populations::population::execut
 
     result.average /= (float)values.size();
 
+    std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
+    std::cout << "execute " << time_span.count() << "\r\n";    
+
     return result;
 }
-/*
-std::tuple<std::vector<std::string>,float> organisation::population::population::run(std::vector<std::string> expected, const float mutation)
-{    
-    std::vector<std::string> results;
-
-        organisation::schema destination;
-        if(!get(destination)) return std::tuple<std::vector<std::string>,float>(results,0.0f);        
-
-        int epoch = 0;
-        for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
-        {
-            results.push_back(destination.run(epoch, *it, settings.mappings));
-            ++epoch;
-        }
-
-    set(destination);
-
-    return std::tuple<std::vector<std::string>,float>(results,destination.sum());
-}
-*/
-/*
-void organisation::population::population::back(schema **destination, schema **source, int thread)
-{
-    
-    int block_size = 1000 / threads;
-
-    for(int i = 0; i < block_size; ++i)
-    {
-        organisation::schema *b = best(source);
-        int start = thread * block_size;
-        int end = start + block_size;
-        int w = worst(destination, start, end);
-
-        if(destination[w]->sum() < b->sum()) 
-            destination[w]->copy(*b);
-    }
-}
-*/
-//organisation::schema organisation::population::population::top()
-//{
-    /*
-    float s = 0.0f;
-    int j = 0;
-    
-    for(int i = 0; i < size; ++i)
-    {
-        if(data[i]->sum() > s)
-        {
-            j = i;
-            s = data[i]->sum();
-        }
-
-    }
-
-    return *data[j];
-    */
-   //return *left[0];
-   //return organisation::schema();
-//}
 
 bool organisation::populations::population::get(schema &destination, region r)
 {
@@ -387,8 +218,6 @@ bool organisation::populations::population::get(schema &destination, region r)
 
     if(((float)t) <= mutation) 
     {
-        //schema s1(settings.params.width, settings.params.height, settings.params.depth);
-        //if(!best(s1)) return false;
         schema *s1 = best(r);
         if(s1 == NULL) return false;
 
@@ -397,11 +226,6 @@ bool organisation::populations::population::get(schema &destination, region r)
     }
     else
     {
-        //schema s1(settings.params.width, settings.params.height, settings.params.depth);
-        //schema s2(settings.params.width, settings.params.height, settings.params.depth);
-
-        //if(!best(s1)) return false;
-        //if(!best(s2)) return false;
         schema *s1 = best(r);
         if(s1 == NULL) return false;
         schema *s2 = best(r);
@@ -415,12 +239,9 @@ bool organisation::populations::population::get(schema &destination, region r)
 
 bool organisation::populations::population::set(schema &source, region r)//int index)
 {    
-    //organisation::schema destination(settings.params.width, settings.params.height, settings.params.depth);
-    //int index = worst(destination);
     schema *destination = worst(r);
     if(destination == NULL) return false;
 
-    //if(index < 0) return false;
 	if(source.sum() < destination->sum()) return false;
 
     std::uniform_real_distribution<float> dist{ 0.0f, 1.0f };
@@ -447,76 +268,12 @@ bool organisation::populations::population::set(schema &source, region r)//int i
         result = true;
     }
 
-    //destination[index]->copy(*source);    
-    //if(!schemas->set(source, index)) return false;
-
     destination->copy(source);
 
 	return result;
 }
 
-/*
-organisation::schema *organisation::population::population::best(schema **source)
-{
-    const int samples = 10;
-
-	std::uniform_int_distribution<int> rand{ 0, size - 1 };
-
-    long competition;
-
-    long best = rand(generator);
-	float score = source[best]->sum();
-
-	for (int i = 0; i < samples; ++i)
-	{
-		competition = rand(generator);
-        float t2 = source[competition]->sum();
-
-        if(t2 > score)
-        {
-            best = competition;
-            score = t2;
-        }        
-	}
-
-	return source[best];
-}
-
-int organisation::population::population::worst(schema **source, int start, int end)
-{
-    const int samples = 10;
-
-	std::uniform_int_distribution<int> rand{ start, end - 1 };
-
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
-
-	temp1.set(0L);
-	temp2.set(0L);
-	origin.set(0L);
-
-    int competition;
-
-    int worst = rand(generator);
-	float score = source[worst]->sum();
-
-	for (int i = 0; i < samples; ++i)
-	{
-		competition = rand(generator);
-        float t2 = source[competition]->sum();
-
-         if(t2 < score)
-		{
-			worst = competition;
-			score = t2;
-		}
-	}
-
-	return worst;
-}
-*/
-
-organisation::schema *organisation::populations::population::best(region r)//organisation::schema &destination, organisation::schema &competition)
+organisation::schema *organisation::populations::population::best(region r)
 {
     const int samples = 10;
 
@@ -529,18 +286,14 @@ organisation::schema *organisation::populations::population::best(region r)//org
 	temp2.set(0L);
 	origin.set(0L);
 
-   //organisation::schema competition(settings.params.width, settings.params.height, settings.params.depth);
-   //if(pull(destination)<0) return false;
-
     int competition;
 
     int best = rand(generator);    
-	float score = schemas->data[best]->sum();//destination.sum();//source[best]->sum();
+	float score = schemas->data[best]->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
-        //if(pull(competition)<0) return false;
 
         schemas->data[best]->get(temp1, minimum, maximum);
         schemas->data[competition]->get(temp2, minimum, maximum);
@@ -566,21 +319,8 @@ organisation::schema *organisation::populations::population::best(region r)//org
 		}
 	}
 
-    //return true;
-	//return source[best];
     return schemas->data[best];
 }
-
-/*
-int organisation::populations::population::pull(organisation::schema &destination)
-{
-    std::uniform_int_distribution<int> rand{ 0, settings.size - 1 };
-    int escape = 0, index = rand(generator);
-    while((!schemas->get(destination, index))&&(++escape<15)) { index = rand(generator); }
-    if(escape>=15) return -1;
-    return index;
-}
-*/
 
 organisation::schema *organisation::populations::population::worst(region r)
 {
@@ -595,22 +335,14 @@ organisation::schema *organisation::populations::population::worst(region r)
 	temp2.set(0L);
 	origin.set(0L);
 
-    //int result = -1;
-
     int competition;
-    //int temp;
     int worst = rand(generator);
-    //organisation::schema competition(settings.params.width, settings.params.height, settings.params.depth);
-    //result = pull(destination);
-    //if(result < 0) return -1;
 
-	float score = schemas->data[worst]->sum();//destination.sum();//data[worst]->sum();
+	float score = schemas->data[worst]->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
-        //temp = pull(destination);
-        //if(temp < 0) return -1;
 
         schemas->data[worst]->get(temp1, minimum, maximum);
         schemas->data[competition]->get(temp2, minimum, maximum);
@@ -625,41 +357,46 @@ organisation::schema *organisation::populations::population::worst(region r)
 			}
 			else 
 			{
-				//destination = competition;
-                worst = competition;
-                //result = temp;
+                worst = competition;             
 				score = t2;
 			}
 		}
 		else if(t2 < score)
 		{
-			//destination = competition;
-            //result = temp;
             worst = competition;
 			score = t2;
 		}
 	}
 
     return schemas->data[worst];
-    //return result;
-    //return true;
-	//return worst;
 }
 
 void organisation::populations::population::pull(organisation::schema **buffer, region r)
 {
+    std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
+
     for(int i = 0; i < settings.clients; ++i)
     {
         get(*buffer[i], r);
     }    
+
+    std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
+    std::cout << "pull " << time_span.count() << "\r\n";    
 }
 
 void organisation::populations::population::push(organisation::schema **buffer, region r)
 {
+    std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();
+
     for(int i = 0; i < settings.clients; ++i)
     {
         set(*buffer[i], r);
-    }    
+    } 
+
+    std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
+    std::cout << "push " << time_span.count() << "\r\n";    
 }
 
 void organisation::populations::population::makeNull() 
@@ -680,7 +417,7 @@ void organisation::populations::population::cleanup()
     {
         for(int i = settings.clients - 1; i >= 0; --i)
         {
-            if(intermediateC[i] != NULL) delete intermediateC;
+            if(intermediateC[i] != NULL) delete intermediateC[i];
         }
         delete[] intermediateC;
     }
@@ -689,7 +426,7 @@ void organisation::populations::population::cleanup()
     {
         for(int i = settings.clients - 1; i >= 0; --i)
         {
-            if(intermediateB[i] != NULL) delete intermediateB;
+            if(intermediateB[i] != NULL) delete intermediateB[i];
         }
         delete[] intermediateB;
     }
@@ -698,7 +435,7 @@ void organisation::populations::population::cleanup()
     {
         for(int i = settings.clients - 1; i >= 0; --i)
         {
-            if(intermediateA[i] != NULL) delete intermediateA;
+            if(intermediateA[i] != NULL) delete intermediateA[i];
         }
         delete[] intermediateA;
     }
