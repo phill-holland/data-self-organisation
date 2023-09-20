@@ -87,15 +87,13 @@ void organisation::populations::population::generate()
 }
 
 organisation::schema organisation::populations::population::go(std::vector<std::string> expected, int &count, int iterations)
-{
-    schema res(settings.params.width, settings.params.height, settings.params.depth);
-    float most = 0.0f;
-
-    bool result = false;
+{    
+    float highest = 0.0f;
+    bool finished = false;
     count = 0;
 
-    const float mutate_rate_in_percent = 20.0f;
-    const float mutation = (((float)settings.size) / 100.0f) * mutate_rate_in_percent;
+    //const float mutate_rate_in_percent = 20.0f;
+    //const float mutation = (((float)settings.size) / 100.0f) * mutate_rate_in_percent;
 
     //schema **source = left, **destination = right;
     //generate();
@@ -105,6 +103,7 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     //int z1 = settings.params.depth / 2;
 
     //organisation::vector w {0,1,0};
+    schema res(settings.params.width, settings.params.height, settings.params.depth);
 
     organisation::schema **set = intermediateC, **run = intermediateA, **get = intermediateB;
 
@@ -112,20 +111,51 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     region rget = { (settings.size / 2), settings.size - 1 };
 
     pull(intermediateA, rset);
-    pull(intermediateC, rget);
+    //pull(intermediateC, rget);
 
     do
     {
-        float total = 0.0f;        
-      
-      //auto result = std::async(&organisation::population::population::run, this, expected, mutation);
-        auto r1 = std::async(&organisation::populations::population::pull, this, set, rset);
-        auto r2 = std::async(&organisation::populations::population::push, this, get, rget);
-        auto r3 = std::async(&organisation::populations::population::execute, this, run);
+        /*
+        if(set == intermediateA) std::cout << "set A\r\n";
+        else if(set == intermediateB) std::cout << "set B\r\n";
+        else if(set == intermediateC) std::cout << "set C\r\n";
+        
+        std::cout << "rset " << rset.start << " " << rset.end << "\r\n";
+
+        if(run == intermediateA) std::cout << "run A\r\n";
+        else if(run == intermediateB) std::cout << "run B\r\n";
+        else if(run == intermediateC) std::cout << "run C\r\n";
+
+        if(get == intermediateA) std::cout << "get A\r\n";
+        else if(get == intermediateB) std::cout << "get B\r\n";
+        else if(get == intermediateC) std::cout << "get C\r\n";
+
+        std::cout << "rget " << rget.start << " " << rget.end << "\r\n";
+    */
+        auto r1 = std::async(&organisation::populations::population::push, this, set, rset);
+        auto r2 = std::async(&organisation::populations::population::pull, this, get, rget);
+        auto r3 = std::async(&organisation::populations::population::execute, this, run, expected[0]);
 
         r1.wait();
         r2.wait();
         r3.wait();
+
+        organisation::populations::results result = r3.get();
+
+        if(result.best > highest)
+        {
+            res.copy(*run[result.index]);
+            highest = result.best;
+        }
+
+        if(result.best >= 0.9999f) finished = true;    
+        
+        std::cout << "Generation (" << count << ") Best=" << result.best;
+        std::cout << " Highest=" << highest;
+        std::cout << " Avg=" << result.average;
+        std::cout << "\r\n";
+
+        if((iterations > 0)&&(count > iterations)) finished = true;
 
         organisation::schema **t1 = set;
         set = run;
@@ -181,7 +211,7 @@ organisation::schema organisation::populations::population::go(std::vector<std::
             // set scores in schemas
             // push back into population
 
-            std::vector<std::future<std::tuple<std::vector<std::string>,float>>> results;
+            //std::vector<std::future<std::tuple<std::vector<std::string>,float>>> results;
 /*
             int m = threads;
             if(generation + threads >= size) 
@@ -196,8 +226,9 @@ organisation::schema organisation::populations::population::go(std::vector<std::
 */
             
 
-            for (std::vector<std::future<std::tuple<std::vector<std::string>,float>>>::iterator it = results.begin(); it != results.end(); ++it)
-            {
+            //for (std::vector<std::future<std::tuple<std::vector<std::string>,float>>>::iterator it = results.begin(); it != results.end(); ++it)
+            //{
+                /*
                 std::tuple<std::vector<std::string>,float> outputs = it->get();
 
                 std::vector<std::string> output = std::get<0>(outputs);
@@ -213,10 +244,10 @@ organisation::schema organisation::populations::population::go(std::vector<std::
 
                 if(sum >= 0.9999f) result = true;    
                 if(output == expected) result = true;   
-                          
-            }      
+                */        
+           // }      
         //}
-        
+       /* 
         total /= settings.size;
         
         std::cout << "Generation (" << count << ") Best=" << most;
@@ -226,16 +257,16 @@ organisation::schema organisation::populations::population::go(std::vector<std::
         std::cout << "\r\n";
 
         if((iterations > 0)&&(count > iterations)) result = true;
-
+        */
         ++count;
 
-    } while(!result);
+    } while(!finished);
 
     return res;
 }
 
-void organisation::populations::population::execute(organisation::schema **buffer)
-{
+organisation::populations::results organisation::populations::population::execute(organisation::schema **buffer, std::string expected)
+{    
     int x1 = settings.params.width / 2;
     int y1 = settings.params.height / 2;
     int z1 = settings.params.depth / 2;
@@ -253,7 +284,39 @@ void organisation::populations::population::execute(organisation::schema **buffe
     programs->copy(buffer, settings.clients, settings.q);
     programs->set(positions, settings.q);
     programs->run(settings.q);
+
     std::vector<organisation::parallel::output> values = programs->get(settings.q);
+    
+    int i = 0;
+    std::vector<organisation::parallel::output>::iterator it;
+    
+    results result;
+    
+//std::cout << "results size " << ((int)values.size()) << "\r\n";    
+    for(i = 0, it = values.begin(); it != values.end(); ++it, ++i)    
+    {
+        std::string output = settings.mappings.get(it->values);
+        /*if(i < 10) 
+        {
+            for(std::vector<int>::iterator ij = it->values.begin(); ij != it->values.end(); ++ij)
+            {
+                std::cout << *ij << ",";
+            }
+            std::cout << output << "\r\n";
+        }*/
+        buffer[i]->scores[0].compute(expected, output);
+        float score = buffer[i]->sum();
+        if(score > result.best)
+        {
+            result.best = score;
+            result.index = i;
+        }
+        result.average += score;
+    }
+
+    result.average /= (float)values.size();
+
+    return result;
 }
 /*
 std::tuple<std::vector<std::string>,float> organisation::population::population::run(std::vector<std::string> expected, const float mutation)

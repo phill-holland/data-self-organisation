@@ -44,6 +44,17 @@ namespace organisation
             }
         };
 
+        class results
+        {
+        public:
+            float average;
+            float best;
+            int index;
+
+        public:
+            results() { average = 0.0f; best = 0.0f; index = 0; }
+        };
+
         class population// : public core::threading::thread
         {
             friend class generator;
@@ -131,7 +142,7 @@ namespace organisation
             void push(organisation::schema **buffer, region r);
 
         protected:
-            void execute(organisation::schema **buffer);
+            results execute(organisation::schema **buffer, std::string expected);
 
         //protected:
             //int pull(schema &destination);
