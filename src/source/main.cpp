@@ -23,7 +23,7 @@ but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
-void run()//int rerun = 1)
+organisation::schema run()//int rerun = 1)
 {         
     auto strings = organisation::split(source);
     
@@ -51,7 +51,7 @@ void run()//int rerun = 1)
     //organisation::data data(strings);
     organisation::populations::population p(settings);//data, expected, 1000);//3000);//2000);//1000);
     
-    const int iterations = 300;
+    const int iterations = 50; // 300
 
     //for(int j = 0; j < rerun; ++j)
     //{        
@@ -60,7 +60,8 @@ void run()//int rerun = 1)
         p.clear();
         p.generate();
 
-        organisation::schema best = p.go(expected, actual, iterations);
+        organisation::schema best(settings.params.width,settings.params.height,settings.params.depth);
+        best.copy(p.go(expected, actual, iterations));
 
         for(int i = 0; i < epochs; ++i)
         {
@@ -78,7 +79,9 @@ void run()//int rerun = 1)
 
                 history.append(filename, settings.mappings);
             }
-        }        
+        }   
+
+    return best;    
     //}
 }
 
@@ -209,8 +212,14 @@ bool BasicProgramExecutionParallel()
     const int width = 10, height = 10, depth = 10;
     organisation::data d;
 
-    organisation::program p1 = getTestProgram1(d, width, height, depth);
-    organisation::program p2 = getTestProgram2(d, width, height, depth);
+    organisation::schema s1(width, height, depth);
+    organisation::schema s2(width, height, depth);
+
+    //organisation::program p1 = getTestProgram1(d, width, height, depth);
+    //organisation::program p2 = getTestProgram2(d, width, height, depth);
+
+    s1.prog = getTestProgram1(d, width, height, depth);
+    s2.prog = getTestProgram2(d, width, height, depth);
 
     std::vector<std::string> devices = ::parallel::device::enumerate();
     for(std::vector<std::string>::iterator it = devices.begin(); it < devices.end(); ++it)
@@ -227,8 +236,9 @@ bool BasicProgramExecutionParallel()
 
     p_program.clear(q);
 
-    std::vector<organisation::program> source = { p1, p2 };
-    //p_program.copy(source, q);
+    //std::vector<organisation::program> source = { p1, p2 };
+    std::vector<organisation::schema*> source = { &s1, &s2 };
+    p_program.copy(source.data(),source.size(),q);//source, q);
 
     int x1 = (width / 2);
     int y1 = (height / 2);
@@ -251,9 +261,16 @@ bool BasicProgramExecutionParallel()
 
     std::vector<organisation::parallel::output> results = p_program.get(q);
     
+    
     //std::vector<std::string> expected1 = organisation::split("daisy daisy give me your answer do .");
     std::string expected1("daisy daisy give me your answer do .");
     std::string expected2("daisy daisy give me");
+
+    std::string out1 = s1.run(0, expected1, d, NULL);
+    std::cout << "out1 " << out1 << "\r\n";
+
+    std::string out2 = s2.run(0, expected2, d, NULL);
+    std::cout << "out2 " << out2 << "\r\n";
 
     std::string results1 = d.get(results[0].values);
     std::cout << "RESULT " << results1 << "\r\n";
@@ -276,6 +293,12 @@ bool BasicProgramExecutionParallelBatch()
 
     organisation::program p1 = getTestProgram1(d, width, height, depth);
     organisation::program p2 = getTestProgram2(d, width, height, depth);
+
+    organisation::schema s1(width,height,depth);
+    s1.prog = p1;
+
+    organisation::schema s2(width,height,depth);
+    s2.prog = p2;
 
     std::vector<std::string> devices = ::parallel::device::enumerate();
     for(std::vector<std::string>::iterator it = devices.begin(); it < devices.end(); ++it)
@@ -302,24 +325,26 @@ bool BasicProgramExecutionParallelBatch()
 
     organisation::vector w {0,1,0};
 
-    std::vector<organisation::program> source;
+    std::vector<organisation::schema*> source;
     std::vector<sycl::float4> positions;
 
     for(int i = 0; i < clients; ++i)
     { 
         if(i % 2 == 0) 
         {
-            source.push_back(p1);
+            source.push_back(&s1);
             positions.push_back({ x1, y1, z1, w.encode() });
         }
         else 
         {
-            source.push_back(p2);       
+            //organisation::schema s2(width,height,depth);
+            //s2.prog = p2;
+            source.push_back(&s2);       
             positions.push_back({ x2, y2, z2, w.encode() });
         }
     }
 
-    //p_program.copy(source, q);
+    p_program.copy(source.data(),source.size(), q);
     
     p_program.set(positions, q);
 
@@ -338,23 +363,133 @@ bool BasicProgramExecutionParallelBatch()
 
         if(i % 2 == 0) 
         {            
-            if(expected1 != value) return false;
+            if(expected1 != value) 
+            {
+                std::cout << "wrong " << i << " [" << expected1 << "] [" << value << "]\r\n";
+                return false;
+            }
         }
         else
         {
-            if(expected2 != value) return false;
+            if(expected2 != value) 
+            {
+                std::cout << "wrong " << i << " [" << expected2 << "] [" << value << "]\r\n";
+                return false;
+            }
         }
     }
 
     return true;
 }
 
-int main(int argc, char *argv[])
-{  
-    //if(BasicProgramExecutionParallelBatch()) std::cout << "OK\r\n";
+bool BasicProgramExecutionParallelSingle(organisation::schema &s1,organisation::data d,const int width, int height, int depth)
+{          
+    //organisation::schema s1(width, height, depth);
+    //organisation::schema s2(width, height, depth);
+
+    //organisation::program p1 = getTestProgram1(d, width, height, depth);
+    //organisation::program p2 = getTestProgram2(d, width, height, depth);
+
+    //s1.prog = p1;//getTestProgram1(d, width, height, depth);
+    //s2.prog = getTestProgram2(d, width, height, depth);
+
+    std::vector<std::string> devices = ::parallel::device::enumerate();
+    for(std::vector<std::string>::iterator it = devices.begin(); it < devices.end(); ++it)
+    {
+        std::cout << *it << "\r\n";
+    }
+	::parallel::device *dev = new ::parallel::device(0);
+	::parallel::queue *q = new parallel::queue(*dev);
+
+    const int clients = 1;
+
+    organisation::parallel::parameters parameters(width, height, depth);
+    organisation::parallel::program p_program(*dev, parameters, clients);
+
+    p_program.clear(q);
+
+    //std::vector<organisation::program> source = { p1, p2 };
+    std::vector<organisation::schema*> source = { &s1 };
+    p_program.copy(source.data(),source.size(),q);//source, q);
+
+    int x1 = (width / 2);
+    int y1 = (height / 2);
+    int z1 = (depth / 2);
+
+    int x2 = width - 1;
+    int y2 = height - 1;
+    int z2 = depth - 1;
+
+
+    organisation::vector w {0,1,0};
+    std::vector<sycl::float4> positions = { { x1, y1, z1, w.encode() } };
+
+    //std::cout << "main input " << x << "," << y << "," << z << "," << w.encode() << "\r\n";
+    p_program.set(positions, q);
+
+    std::cout << "run\r\n";
+
+    p_program.run(q);
+
+    std::vector<organisation::parallel::output> results = p_program.get(q);
+    
+    
+    //std::vector<std::string> expected1 = organisation::split("daisy daisy give me your answer do .");
+    std::string expected1("daisy daisy give me your answer do .");
+    //std::string expected2("daisy daisy give me");
+
+    std::string out1 = s1.run(0, expected1, d, NULL);
+    std::cout << "out1 " << out1 << "\r\n";
+
+    //std::string out2 = s2.run(0, expected2, d, NULL);
+    //std::cout << "out2 " << out2 << "\r\n";
+
+    std::string results1 = d.get(results[0].values);
+    std::cout << "RESULT " << results1 << "\r\n";
+    if(expected1 == results1) std::cout << "OK\r\n";
+    else std::cout << "NOT OK\r\n";
+
+for(int i = 0; i <results.size(); ++i)
+{
+    for(int j = 0; j < results[i].values.size(); ++j)
+    {
+        std::cout << results[i].values[j] << " ";
+    }
+    std::cout << "\r\n";
+}
+   // std::string results2 = d.get(results[1].values);
+    //std::cout << "RESULT " << results2 << "\r\n";
+    //if(expected2 == results2) std::cout << "OK\r\n";
     //else std::cout << "NOT OK\r\n";
 
-    run();//200);
+//std::cout << d.get(results[1].values) << "\r\n";
+    return true;
+}
+
+int main(int argc, char *argv[])
+{  
+    //BasicProgramExecutionParallel();
+    //return 0;
+   // if(BasicProgramExecutionParallelBatch()) std::cout << "OK\r\n";
+   // else std::cout << "NOT OK\r\n";
+   // return 0;
+/*
+const int width = 10, height = 10, depth = 10;
+organisation::data d;
+organisation::schema s1(width, height, depth);
+organisation::program p1 = getTestProgram1(d,width,height,depth); //(10,10,10);
+s1.prog = p1;
+    BasicProgramExecutionParallelSingle(s1,d,width,height,depth);
+*/
+    organisation::schema s1 = run();//200);
+
+const int width = 5, height = 5, depth = 5;
+std::vector<std::string> strings = organisation::split("daisy daisy give me your answer do .");
+organisation::data d(strings);
+//organisation::schema s1(width, height, depth);
+//organisation::program p1 = getTestProgram1(d,width,height,depth); //(10,10,10);
+//s1.prog = p1;
+    BasicProgramExecutionParallelSingle(s1,d,width,height,depth);
 
     return 0;
 }

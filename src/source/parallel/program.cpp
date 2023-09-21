@@ -83,8 +83,7 @@ void organisation::parallel::program::clear(::parallel::queue *q)
     qt.memset(deviceReadPositionsB, 0, sizeof(sycl::float4) * length).wait();
     
     qt.memset(deviceInGates, -1, sizeof(int) * params.size() * params.in * clients);
-    qt.memset(deviceOutGates, -1, sizeof(int) * params.size() * params.in * params.out * clients);
-    
+    qt.memset(deviceOutGates, -1, sizeof(int) * params.size() * params.in * params.out * clients);    
 }
 
 void organisation::parallel::program::run(::parallel::queue *q)
@@ -171,7 +170,9 @@ void organisation::parallel::program::run(::parallel::queue *q)
                             {
                                 for(int y = 0; y < _out; ++y)
                                 {                            
-                                    int s = (((client * _stride) + index_moo) * _out * _in);// + in_idx
+                                    //int s = (((client * _stride) + index_moo) * _out * _in);// + in_idx
+                                    int s = (client * _stride * _in * _out);
+                                    s += (index_moo * _out * _in);
                                     s += (y * _in) + x;
                                     int outIndex = s;
 
@@ -340,8 +341,13 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
                     {
                         if(out_idx < params.out)
                         {
-                            int s = (((index * length) + i) * params.out * params.in);// + in_idx
+                            int s = (index * length * params.in * params.out);
+                            s += (i * params.out * params.in);
                             s += (out_idx * params.in) + in_idx;
+                            //int outIndex = s;
+
+                            //int s = (((index * length) + i) * params.out * params.in);// + in_idx
+                            //s += (out_idx * params.in) + in_idx;
                             //int s = in_idx + (out_idx * params.in) + (index * params.in * params.out);
                             hostOutGates[s] = *ot;
                             hostMagnitudes[s] = prog->cells.at(i).get(*jt,*ot).magnitude;
@@ -360,6 +366,7 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
         ++index;
         if(index >= HOST_BUFFER)
         {
+            //std::cout << "dest_index " << dest_index << " length " << length << "\r\n\r\n";
             // copy from host to device
             qt.memcpy(&deviceValues[dest_index * length], hostValues, sizeof(int) * length * index).wait();
             qt.memcpy(&deviceInGates[dest_index * params.in * length], hostInGates, sizeof(int) * params.in * length * index).wait();

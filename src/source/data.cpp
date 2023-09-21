@@ -1,4 +1,5 @@
 #include "data.h"
+#include <iostream>
 
 void organisation::data::add(std::vector<std::string> &source)
 {
@@ -45,8 +46,13 @@ std::string organisation::data::get(std::vector<int> &source)
         result = map(*source.begin());
 
     for(std::vector<int>::iterator it = source.begin() + 1; it < source.end(); ++it)
-    {
-        result += std::string(" ") + map(*it);
+    {   
+        std::string temp = map(*it);
+        if(temp.size() == 0)
+        {
+            std::cout << "HMM " << (*it) << "\r\n";
+        }     
+        else result += std::string(" ") + temp;//map(*it);
     }
 
     return result;

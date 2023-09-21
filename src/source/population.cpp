@@ -43,7 +43,7 @@ void organisation::populations::population::reset(parameters &params)
         if(intermediateA[i] == NULL) return;
         if(!intermediateA[i]->initalised()) return;
     }
-    
+
     intermediateB = new organisation::schema*[settings.clients];
     if (intermediateB == NULL) return;
     for(int i = 0; i < settings.clients; ++i) intermediateB[i] = NULL;
@@ -186,8 +186,10 @@ organisation::populations::results organisation::populations::population::execut
     std::vector<organisation::parallel::output>::iterator it;
     
     results result;
-    
-    for(i = 0, it = values.begin(); it != values.end(); ++it, ++i)    
+    std::string current;
+
+    std::cout << "values.size " << values.size() << "\r\n";
+    for(i = 0, it = values.begin(); it != values.end(); it++, i++)    
     {
         std::string output = settings.mappings.get(it->values);
         buffer[i]->scores[0].compute(expected, output);
@@ -196,10 +198,36 @@ organisation::populations::results organisation::populations::population::execut
         {
             result.best = score;
             result.index = i;
+            current = output;
+        }
+        if(score >= 0.98f)
+        {
+            std::cout << "output [" << i << "] " << output << "\r\n";
+            for(int j = 0; j < settings.clients; ++j)
+            {                
+                std::string moo = buffer[j]->run(0, expected, settings.mappings, NULL);
+                if(moo == expected)
+                {
+                    std::cout << "here we go! [" << j << "]\r\n";
+                }                
+            }
         }
         result.average += score;
     }
 
+
+    std::cout << "result.index [" << result.index << "] " << result.best << " " << current << "\r\n";
+/*
+    for(int j = 0; j < settings.clients; ++j)
+    {                
+        std::string moo = buffer[j]->run(0, expected, settings.mappings, NULL);
+        if(moo == expected)
+        {
+            std::cout << "here we go! [" << j << "]\r\n";
+        }                
+    }
+        }
+*/
     result.average /= (float)values.size();
 
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();

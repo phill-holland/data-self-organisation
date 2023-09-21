@@ -23,7 +23,7 @@ namespace organisation
           
         static std::mt19937_64 generator;
 
-        int width, height, depth;
+        int _width, _height, _depth;
 
         //cell *cells;
         std::vector<cell> cells;
@@ -31,13 +31,13 @@ namespace organisation
 
         bool init;
 
-    public:
-        static const int WIDTH = 5;
-        static const int HEIGHT = 5;
-        static const int DEPTH = 5;
+    //public:
+        //static const int WIDTH = 5;
+        //static const int HEIGHT = 5;
+        //static const int DEPTH = 5;
 
     public:
-        program(int w = WIDTH, int h = HEIGHT, int d = DEPTH) { makeNull(); reset(w,h,d); }
+        program(int w, int h, int d) { makeNull(); reset(w,h,d); }
         program(const program &source) { copy(source); }
         ~program() { cleanup(); }
 
@@ -58,6 +58,10 @@ namespace organisation
 
         bool validate(data &source);
 
+        int width() { return _width; }
+        int height() { return _height; }
+        int depth() { return _depth; }
+        
     public:
         void copy(const program &source);
         bool equals(const program &source);

@@ -72,6 +72,7 @@
         "bitset": "cpp",
         "charconv": "cpp",
         "future": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "typeindex": "cpp"
     }
 }

@@ -10,8 +10,8 @@ void organisation::program::reset(int w, int h, int d)
 {
     init = false; cleanup();
 
-    width = w; height = h; depth = d;
-    length = width * height * depth;
+    _width = w; _height = h; _depth = d;
+    length = _width * _height * _depth;
 
     cells.resize(length);
     //cells = new cell[length];
@@ -36,7 +36,8 @@ void organisation::program::generate(data &source)
 
     for(int i = 0; i < length; ++i)
     {
-        int k = (std::uniform_int_distribution<int>{1, source.maximum()})(generator);
+        //int k = (std::uniform_int_distribution<int>{1, source.maximum()})(generator);
+        int k = (std::uniform_int_distribution<int>{0, source.maximum() - 1})(generator);
         cells[i].generate(k);
     }
 }
@@ -52,9 +53,9 @@ std::string organisation::program::run(int start, data &source, history *destina
 {
     std::vector<int> result;
 
-    int x = (width / 2) - start;
-    int y = (height / 2);
-    int z = (depth / 2);
+    int x = (_width / 2) - start;
+    int y = (_height / 2);
+    int z = (_depth / 2);
     
     //int x = width - 1 - start;
     //int y = height - 1;
@@ -75,7 +76,7 @@ std::string organisation::program::run(int start, data &source, history *destina
 
         positions.pop_back();
 
-        int index = (current.z * width * height) + (current.y * width) + current.x;
+        int index = (current.z * _width * _height) + (current.y * _width) + current.x;
         
         vector input = next.normalise().inverse();
         if(cells[index].is_input(input))
@@ -95,7 +96,7 @@ std::string organisation::program::run(int start, data &source, history *destina
 
                 if((position.x >= 0)&&(position.y >= 0)&&(position.z >= 0))
                 {
-                    if((position.x < width)&&(position.y < height)&&(position.z < depth))
+                    if((position.x < _width)&&(position.y < _height)&&(position.z < _depth))
                     {
                         positions.push_back(std::tuple<vector,vector>(position, t));
                     }
@@ -123,22 +124,22 @@ int organisation::program::count()
 
 void organisation::program::set(int value, int x, int y, int z)
 {
-    if ((x < 0)||(x >= width)) return;
-    if ((y < 0)||(y >= height)) return;
-    if ((z < 0)||(z >= depth)) return;
+    if ((x < 0)||(x >= _width)) return;
+    if ((y < 0)||(y >= _height)) return;
+    if ((z < 0)||(z >= _depth)) return;
 
-    int index = (z * width * height) + (y * width) + x;
+    int index = (z * _width * _height) + (y * _width) + x;
 
     cells[index].value = value;
 }
 
 void organisation::program::set(vector input, vector output, int magnitude, int x, int y, int z)
 {
-    if ((x < 0)||(x >= width)) return;
-    if ((y < 0)||(y >= height)) return;
-    if ((z < 0)||(z >= depth)) return;
+    if ((x < 0)||(x >= _width)) return;
+    if ((y < 0)||(y >= _height)) return;
+    if ((z < 0)||(z >= _depth)) return;
 
-    int index = (z * width * height) + (y * width) + x;
+    int index = (z * _width * _height) + (y * _width) + x;
 
     cells[index].set(input, output, magnitude);
 }
@@ -167,9 +168,9 @@ void organisation::program::copy(const program &source)
     //reset(source.width, source.height, source.depth);
     //cells = source.cells;
     cells.assign(source.cells.begin(), source.cells.end());
-    width = source.width;
-    height = source.height;
-    depth = source.depth;
+    _width = source._width;
+    _height = source._height;
+    _depth = source._depth;
     length = source.length;
 }
 
