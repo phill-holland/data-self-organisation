@@ -51,7 +51,7 @@ organisation::schema run()//int rerun = 1)
     //organisation::data data(strings);
     organisation::populations::population p(settings);//data, expected, 1000);//3000);//2000);//1000);
     
-    const int iterations = 50; // 300
+    const int iterations = 300; // 300
 
     //for(int j = 0; j < rerun; ++j)
     //{        
@@ -403,7 +403,7 @@ bool BasicProgramExecutionParallelSingle(organisation::schema &s1,organisation::
 
     const int clients = 1;
 
-    organisation::parallel::parameters parameters(width, height, depth);
+    organisation::parallel::parameters parameters(width, height, depth, 15, 10);
     organisation::parallel::program p_program(*dev, parameters, clients);
 
     p_program.clear(q);
@@ -439,13 +439,13 @@ bool BasicProgramExecutionParallelSingle(organisation::schema &s1,organisation::
     //std::string expected2("daisy daisy give me");
 
     std::string out1 = s1.run(0, expected1, d, NULL);
-    std::cout << "out1 " << out1 << "\r\n";
+    std::cout << "CPU result [" << out1 << "]\r\n";
 
     //std::string out2 = s2.run(0, expected2, d, NULL);
     //std::cout << "out2 " << out2 << "\r\n";
 
     std::string results1 = d.get(results[0].values);
-    std::cout << "RESULT " << results1 << "\r\n";
+    std::cout << "GPU RESULT [" << results1 << "]\r\n";
     if(expected1 == results1) std::cout << "OK\r\n";
     else std::cout << "NOT OK\r\n";
 
@@ -482,10 +482,21 @@ s1.prog = p1;
     BasicProgramExecutionParallelSingle(s1,d,width,height,depth);
 */
     organisation::schema s1 = run();//200);
+    //s2.prog.save("prog3.txt");
+    
+    //return 0;
 
 const int width = 5, height = 5, depth = 5;
+//organisation::schema s1(width,height,depth);
+
 std::vector<std::string> strings = organisation::split("daisy daisy give me your answer do .");
 organisation::data d(strings);
+
+//s1.generate(d);
+s1.prog.save("run.txt");
+//s1.clear();
+//s1.prog.load("prog3.txt");
+//s1.prog.save("prog2.txt");
 //organisation::schema s1(width, height, depth);
 //organisation::program p1 = getTestProgram1(d,width,height,depth); //(10,10,10);
 //s1.prog = p1;

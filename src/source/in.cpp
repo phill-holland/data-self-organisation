@@ -3,6 +3,15 @@
 
 std::mt19937_64 organisation::in::generator(std::random_device{}());
 
+void organisation::in::set(int in)
+{
+    if(gates.find(in) == gates.end()) 
+    {
+        organisation::gates g;
+        gates[in] = g;
+    }
+}
+
 void organisation::in::set(int in, int out, gate value)
 {
     if(gates.find(in) == gates.end()) 

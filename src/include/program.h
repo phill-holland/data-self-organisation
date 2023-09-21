@@ -69,6 +69,10 @@ namespace organisation
     public:
         void cross(program &a, program &b, int middle = -1);
 
+    public:
+        void save(std::string filename);
+        void load(std::string filename);
+
     protected:
         void makeNull();
         void cleanup();

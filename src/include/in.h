@@ -24,9 +24,11 @@ namespace organisation
         bool is_empty(int index)
         {
             if(gates.find(index) == gates.end()) return true;
-            return gates[index].is_empty();
+            return false;
+            //return gates[index].is_empty();
         }
 
+        void set(int in);
         void set(int in, int out, gate value);     
         gate get(int in, int out);
            

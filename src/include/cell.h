@@ -35,13 +35,15 @@ namespace organisation
 
         bool is_empty() { return value < 0; }
 
-        std::tuple<bool,bool> validate(int max);
+    std::tuple<bool,bool> validate(int max);
 
         std::vector<int> pull() { return routes.pull(); }
         std::vector<int> pull(int in) { return routes.pull(in); }
 
         gate get(int in, int out) { return routes.get(in, out); }
-
+        void set(int in, int out, gate value) { routes.set(in, out, value); }
+        void set(int in) { return routes.set(in); }
+        
         bool equals(const cell &source);
         void copy(const cell &source);
         

@@ -84,6 +84,7 @@ void organisation::parallel::program::clear(::parallel::queue *q)
     
     qt.memset(deviceInGates, -1, sizeof(int) * params.size() * params.in * clients);
     qt.memset(deviceOutGates, -1, sizeof(int) * params.size() * params.in * params.out * clients);    
+    qt.memset(deviceMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * clients);    
 }
 
 void organisation::parallel::program::run(::parallel::queue *q)
@@ -126,7 +127,7 @@ void organisation::parallel::program::run(::parallel::queue *q)
             auto _stride = params.size();
             auto _length = length;
 
-//sycl::stream out(1024, 256, h);
+//sycl::stream out(4096, 1024, h);
 
             h.parallel_for(num_items, [=](auto i) 
             {
@@ -135,25 +136,22 @@ void organisation::parallel::program::run(::parallel::queue *q)
                     sycl::float4 current = _readPositionsSource[i];               
 
                     int client = i / _stride;
-                    //out << "client " << client << " " << "\r\n";
-                    //out << "x,y,z " << current.x() << " " << current.y() << " " << current.z() << "\r\n";
-
-                    cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
-                                sycl::memory_scope::device, 
-                                sycl::access::address_space::ext_intel_global_device_space> ar(_outputEndPtr[client]);
+                    //out << "\r\nclient " << client << " " << _readPositionsEndPtr[client] << "\r\n";
+                    //out << "x,y,z " << current.x() << " " << current.y() << " " << current.z() << " " << current.w() << "\r\n";
 
                     int index_moo = ((current.z() * _width * _height) + (current.y() * _width) + current.x());
                     int index = ((current.z() * _width * _height) + (current.y() * _width) + current.x()) + (client * _stride);
 //out << "index " << index << "\r\n";
+/*
                     int value = _values[index];
                     if(value >= 0) 
                     {
                         int vv = ar.fetch_add(1);
                         if(vv < _stride) 
                             _output[vv + (client * _stride)] = value;
-                        //out << "value " << value << " cli " << client << "\r\n";
+                        out << "value " << value << " cli " << client << "\r\n";
                     }
-
+*/
                     //(((index * length) + i) * params.in) + in_idx
                     //(((client * _stride) + i) * _in) + in_idx
                     //int inIndex = (_in * client);
@@ -162,12 +160,26 @@ void organisation::parallel::program::run(::parallel::queue *q)
                     int inIndex = (client * _stride * _in) + (index_moo * _in);
                    // out << "inIndex " << inIndex << "\r\n";
                     for(int x = 0; x < _in; ++x)
-                    {
-                        //out << "ingate[] " << _inGates[inIndex + x] << " w " << current.w() << "\r\n"; 
+                    {                        
                         if(_inGates[inIndex + x] >= 0)
-                        {
+                        {                            
                             if(_inGates[inIndex + x] == current.w())
                             {
+                                cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
+                                sycl::memory_scope::device, 
+                                sycl::access::address_space::ext_intel_global_device_space> ar(_outputEndPtr[client]);
+
+                                int value = _values[index];
+                                if(value >= 0) 
+                                {
+                                    int vv = ar.fetch_add(1);
+                                    if(vv < _stride) 
+                                        _output[vv + (client * _stride)] = value;
+                                    //out << "value " << value << " cli " << client << "\r\n";
+                                }
+                                // ********
+
+                                //out << "ingate[] " << _inGates[inIndex + x] << " w " << current.w() << " _in " << _in << "\r\n"; 
                                 for(int y = 0; y < _out; ++y)
                                 {                            
                                     //int s = (((client * _stride) + index_moo) * _out * _in);// + in_idx
@@ -178,43 +190,49 @@ void organisation::parallel::program::run(::parallel::queue *q)
 
                                    // out << "outgate[] " << _outGates[outIndex] << " outIndex " << outIndex << "\r\n";
                                     //int outIndex = (_in * y) +  x;
-                                    if(_outGates[outIndex] >=  0)
-                                    {
+                                    if(_outGates[outIndex] >= 0)
+                                    {                                        
                                         int outTemp = _outGates[outIndex];
                                         float magnitudeTemp = (float)_magnitude[outIndex];
-//out << "magnitude " << magnitudeTemp << "\r\n";
-                                        int r = outTemp % 9;//div(index, 9);
-                                        float z1 = (float)((outTemp / 9) - 1);//(float)r.quot - 1L;
-
-                                        int j = r % 3;//div(r.rem, 3);
-                                        float y1 = (float)((r / 3) - 1);//(float)j.quot - 1L;
-                                        float x1 = (float)(j - 1);//(float)j.rem - 1L;
-
-                                        float z2 = (z1 * magnitudeTemp) + current.z();
-                                        float y2 = (y1 * magnitudeTemp) + current.y();
-                                        float x2 = (x1 * magnitudeTemp) + current.x();
-
-                                        //out << "out x1,y1,z1 " << x1 << "," << y1 << "," << z1 << "\r\n";
-                                        //out << "out x2,y2,z2 " << x2 << "," << y2 << "," << z2 << "\r\n";
-
-                                        if((x2 >= 0)&&(x2 < _width)&&(y2 >= 0)&&(y2 < _height)&&(z2 >=0)&&(z2 < _depth))
+                                        
+                                       // out << "outgate[] " << y << " w=" << outTemp << " m=" << magnitudeTemp << " " << _out << "\r\n";
+                                        //out << "mag " << _magnitude[outIndex] << "\r\n";
+                                        if(magnitudeTemp > 0)
                                         {
-                                            cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
-                                            sycl::memory_scope::device, 
-                                            sycl::access::address_space::ext_intel_global_device_space> br(_readPositionsEndPtr[client]);
+                    
+                                            int r = outTemp % 9;//div(index, 9);
+                                            float z1 = (float)((outTemp / 9) - 1);//(float)r.quot - 1L;
 
-                                            int tx = roundf(-x1) + 1;
-                                            int ty = roundf(-y1) + 1;
-                                            int tz = roundf(-z1) + 1;
+                                            int j = r % 3;//div(r.rem, 3);
+                                            float y1 = (float)((r / 3) - 1);//(float)j.quot - 1L;
+                                            float x1 = (float)(j - 1);//(float)j.rem - 1L;
 
-    //out << "out tx,ty,tz " << (x1*-1.0f) << "," << (y1*-1.0f) << "," << (z1*-1.0f) << "\r\n";
+                                            float z2 = (z1 * magnitudeTemp) + current.z();
+                                            float y2 = (y1 * magnitudeTemp) + current.y();
+                                            float x2 = (x1 * magnitudeTemp) + current.x();
 
-                                            float w = (float)((sycl::abs(tz) * (3 * 3)) + (sycl::abs(ty) * 3) + sycl::abs(tx));
+                                            //out << "out x1,y1,z1 " << (x1 * magnitudeTemp) << "," << (y1 * magnitudeTemp) << "," << (z1 * magnitudeTemp) << "\r\n";
+                                            //out << "out x2,y2,z2 " << x2 << "," << y2 << "," << z2 << " " << outTemp << "\r\n";
 
-                                            int vv = br.fetch_add(1);
-                                            //out << "new gate " << w << " out " << vv << "\r\n";
-                                            if(vv < _stride)
-                                                _readPositionsDest[vv + (client * _stride)] = { x2,y2,z2,w };
+                                            if((x2 >= 0)&&(x2 < _width)&&(y2 >= 0)&&(y2 < _height)&&(z2 >=0)&&(z2 < _depth))
+                                            {
+                                                cl::sycl::atomic_ref<int, cl::sycl::memory_order::relaxed, 
+                                                sycl::memory_scope::device, 
+                                                sycl::access::address_space::ext_intel_global_device_space> br(_readPositionsEndPtr[client]);
+
+                                                int tx = roundf(-x1) + 1;
+                                                int ty = roundf(-y1) + 1;
+                                                int tz = roundf(-z1) + 1;
+
+        //out << "out tx,ty,tz " << (x1*-1.0f) << "," << (y1*-1.0f) << "," << (z1*-1.0f) << "\r\n";
+
+                                                float w = (float)((sycl::abs(tz) * (3 * 3)) + (sycl::abs(ty) * 3) + sycl::abs(tx));
+
+                                                int vv = br.fetch_add(1);
+                                               // out << "new gate " << w << " out " << vv << "\r\n";
+                                                if(vv < _stride)
+                                                    _readPositionsDest[vv + (client * _stride)] = { x2,y2,z2,w };
+                                            }
                                         }
                                     }
                                 }
@@ -344,6 +362,7 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
                             int s = (index * length * params.in * params.out);
                             s += (i * params.out * params.in);
                             s += (out_idx * params.in) + in_idx;
+                            
                             //int outIndex = s;
 
                             //int s = (((index * length) + i) * params.out * params.in);// + in_idx
