@@ -83,6 +83,16 @@ float organisation::schema::sum()
     return result / ((float)scores.size());
 }
 
+void organisation::schema::compute(std::vector<std::tuple<std::string,std::string>> values)
+{
+    int i = 0;
+    for(std::vector<std::tuple<std::string,std::string>>::iterator it = values.begin(); it != values.end(); ++it)
+    {
+        scores[i].compute(std::get<0>(*it),std::get<1>(*it));
+        ++i;
+    }
+}
+
 void organisation::schema::mutate(data &source)
 {
 	prog.mutate(source);

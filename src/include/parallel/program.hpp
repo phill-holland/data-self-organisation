@@ -3,6 +3,7 @@
 #include "parallel/queue.hpp"
 #include "program.h"
 #include "schema.h"
+#include "data.h"
 
 #ifndef _PARALLEL_PROGRAM
 #define _PARALLEL_PROGRAM
@@ -20,14 +21,18 @@ namespace organisation
             const static int IN = 3;
             const static int OUT = 3;
 
+            const static int EPOCHS = 1;
+
             int length;
 
         public:
             int width, height, depth;
             int in, out;
+            int epochs;
+
         public:
             parameters(int _width = WIDTH, int _height = HEIGHT, int _depth = DEPTH, 
-                       int _in = IN, int _out = OUT) 
+                       int _in = IN, int _out = OUT, int _epochs = EPOCHS) 
             {
                 width = _width;
                 height = _height;
@@ -37,6 +42,8 @@ namespace organisation
                 out = _out;
 
                 length = _width * _height * _depth;
+
+                epochs = EPOCHS;
             }            
 
             int size() { return length; }
@@ -45,7 +52,8 @@ namespace organisation
         class output
         {
         public:
-            std::vector<int> values;
+            //std::vector<int> values;
+            std::vector<std::string> values;
         };
         
         class program
@@ -63,13 +71,19 @@ namespace organisation
             int *hostMagnitudes;
 
             int *deviceOutput;
+            int *deviceOutputIteration;
+            int *deviceOutputEpoch;
             int *deviceOutputEndPtr;
 
             int *hostOutput;
+            int *hostOutputIteration;
+            int *hostOutputEpoch;
             int *hostOutputEndPtr;
 
             sycl::float4 *deviceReadPositionsA;
             sycl::float4 *deviceReadPositionsB;
+            int *deviceReadPositionsEpochA;
+            int *deviceReadPositionsEpochB;
             int *deviceReadPositionsEndPtr;
 
             sycl::float4 *hostSourceReadPositions;
@@ -97,7 +111,7 @@ namespace organisation
 
             void run(::parallel::queue *q = NULL);        
             void set(std::vector<sycl::float4> positions, ::parallel::queue *q = NULL);
-            std::vector<output> get(::parallel::queue *q = NULL);
+            std::vector<output> get(organisation::data &mappings, ::parallel::queue *q = NULL);
 
         public:
             void copy(::organisation::schema **source, int source_size, ::parallel::queue *q = NULL);

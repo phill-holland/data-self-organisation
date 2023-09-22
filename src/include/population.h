@@ -101,7 +101,7 @@ namespace organisation
             void push(organisation::schema **buffer, region r);
 
         protected:
-            results execute(organisation::schema **buffer, std::string expected);
+            results execute(organisation::schema **buffer, std::vector<std::string> expected);
             
         protected:
             void makeNull();

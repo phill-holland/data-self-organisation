@@ -50,6 +50,8 @@ namespace organisation
 
         float sum();
         
+        void compute(std::vector<std::tuple<std::string,std::string>> values);
+
     public:        
         void cross(schema *destination, schema *value);
         void mutate(data &source);

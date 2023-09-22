@@ -24,7 +24,7 @@ void organisation::populations::population::reset(parameters &params)
         dimensions += (t.size() * 2) + 1;
     }
 
-	approximation = new dominance::kdtree::kdtree(dimensions, 10000);
+	approximation = new dominance::kdtree::kdtree(dimensions, 50000);//10000);
 	if (approximation == NULL) return;
 	if (!approximation->initalised()) return;
 
@@ -119,7 +119,7 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     */
         auto r1 = std::async(&organisation::populations::population::push, this, set, rset);
         auto r2 = std::async(&organisation::populations::population::pull, this, get, rget);
-        auto r3 = std::async(&organisation::populations::population::execute, this, run, expected[0]);
+        auto r3 = std::async(&organisation::populations::population::execute, this, run, expected);
 
         r1.wait();
         r2.wait();
@@ -158,8 +158,26 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     return res;
 }
 
-organisation::populations::results organisation::populations::population::execute(organisation::schema **buffer, std::string expected)
+organisation::populations::results organisation::populations::population::execute(organisation::schema **buffer, std::vector<std::string> expected)
 {  
+    auto combine = [](std::vector<std::string> expected, std::vector<std::string> output)
+    {
+        std::vector<std::tuple<std::string,std::string>> result(expected.size());
+
+        int i = 0;
+        for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
+        {            
+            std::tuple<std::string,std::string> temp(*it,output.at(i));
+            //std::cout << "combine push_back [" << std::get<0>(temp) << "] [" << std::get<1>(temp) << "]\r\n";
+            result[i] = temp;
+            ++i;
+            //result.push_back(temp);
+        }
+
+//std::cout << "combine " << " " << expected.size() << " " << output.size() << " " << result.size() << "\r\n";
+        return result;
+    };
+
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
 
     int x1 = settings.params.width / 2;
@@ -170,9 +188,11 @@ organisation::populations::results organisation::populations::population::execut
 
     std::vector<sycl::float4> positions;
 
-    for(int i = 0; i < settings.clients; ++i)
+    int j = 0;
+    for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
     {
-        positions.push_back({x1,y1,z1,w.encode()});
+        positions.push_back( { x1 + j, y1, z1, w.encode() } );
+        ++j;
     }
 
     programs->clear(settings.q);
@@ -180,26 +200,31 @@ organisation::populations::results organisation::populations::population::execut
     programs->set(positions, settings.q);
     programs->run(settings.q);
 
-    std::vector<organisation::parallel::output> values = programs->get(settings.q);
+    std::vector<organisation::parallel::output> values = programs->get(settings.mappings, settings.q);
     
-    int i = 0;
-    std::vector<organisation::parallel::output>::iterator it;
     
     results result;
-    std::string current;
+    std::vector<std::string> current;
 
-    std::cout << "values.size " << values.size() << "\r\n";
+    //std::cout << "values.size " << values.size() << "\r\n";
+    int i = 0;
+    std::vector<organisation::parallel::output>::iterator it;    
     for(i = 0, it = values.begin(); it != values.end(); it++, i++)    
     {
-        std::string output = settings.mappings.get(it->values);
-        buffer[i]->scores[0].compute(expected, output);
+        // ***
+        //std::string output = settings.mappings.get(it->values);
+        buffer[i]->compute(combine(expected, it->values));
+        //buffer[i]->scores[0].compute(expected, output);
+        // ***
+
         float score = buffer[i]->sum();
         if(score > result.best)
         {
             result.best = score;
             result.index = i;
-            current = output;
+            current = it->values;
         }
+        /*
         if(score >= 0.98f)
         {
             std::cout << "output [" << i << "] " << output << "\r\n";
@@ -212,11 +237,25 @@ organisation::populations::results organisation::populations::population::execut
                 }                
             }
         }
+        */
         result.average += score;
     }
 
 
-    std::cout << "result.index [" << result.index << "] " << result.best << " " << current << "\r\n";
+    std::cout << "result.index [" << result.index << "] " << result.best << "\r\n";
+    for(std::vector<std::string>::iterator it = current.begin(); it != current.end(); ++it)
+    {
+        std::string temp = *it;
+        if(temp.size() > 80)
+        {
+            temp.resize(80);
+            temp += "...";
+        }
+
+        std::cout << temp << "\r\n";
+    }
+    
+    // << current << "\r\n";
 /*
     for(int j = 0; j < settings.clients; ++j)
     {                

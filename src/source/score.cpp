@@ -116,79 +116,81 @@ bool organisation::score::compute(std::string expected, std::string value)
 	int score_len = (_words(expected) * 2) + 1;
 	//scores.resize(score_len);
 
+	for(int i = 0; i < score_len; ++i) set(0.0f, i);
+
+    if(value.size() == 0) return true;
+
 	bool valid = true;
 	const int MAX_WORDS = 5;
-
-    if(value.size() > 0)
-	{		
-        std::vector<std::tuple<std::string,int>> alphabet = _split(expected);
-        
-		const int alphabet_len = alphabet.size();		
-		float max = (float)MAX_WORDS;
-		if(((float)(alphabet_len - 1))>max) max = (float)(alphabet_len - 1);
-
-		int l1 = expected.size();
-		int l2 = value.size();
-
-		const float fib[] = { 1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f, 89.0f, 144.0f };
-		const int max_str_len = 10;
+ 
+	std::vector<std::tuple<std::string,int>> alphabet = _split(expected);
 	
-		int d = abs(l2 - l1);
-		if(d > max_str_len) d = max_str_len;
+	const int alphabet_len = alphabet.size();		
+	float max = (float)MAX_WORDS;
+	if(((float)(alphabet_len - 1))>max) max = (float)(alphabet_len - 1);
 
-		float len_score = 1.0f / fib[d];
-		if(!set(len_score, score_len - 1)) valid = false;
-		//scores.push_back(len_score);
-		
-        int index = 0;
-		for(auto &it : alphabet)
-		{            
-			int f1 = _closest(it, value, alphabet_len);
-			int f3 = std::get<1>(it);
-						
-			if(f1 >= f3) 
-            {
-				float distance = _distance(f1, f3, 0.0f, max); 
-                if(!set(distance, index)) valid = false;
-				//scores.push_back(distance);
-            }
-			else if(!set(0.1f, index)) valid = false;
-			//else scores.push_back(0.1f);
+	int l1 = expected.size();
+	int l2 = value.size();
 
-            ++index;
-		}
+	const float fib[] = { 1.0f, 2.0f, 3.0f, 5.0f, 8.0f, 13.0f, 21.0f, 34.0f, 55.0f, 89.0f, 144.0f };
+	const int max_str_len = 10;
+
+	int d = abs(l2 - l1);
+	if(d > max_str_len) d = max_str_len;
+
+	float len_score = 1.0f / fib[d];
+	if(!set(len_score, score_len - 1)) valid = false;
+	//scores.push_back(len_score);
 	
-        index = 0;
-        for(std::vector<std::tuple<std::string,int>>::iterator it = alphabet.begin(); it != (alphabet.end() - 1); ++it)
-		{			
-            std::tuple<std::string,int> a1 = *it;
-            std::tuple<std::string,int> a2 = *(it + 1);
-
-			int f1 = _closest(a1, value, alphabet_len);
-			int f2 = _closest(a2, value, alphabet_len);			
-			
-			if(f1 < f2) 
-			{
-				if(!set(_distance(f1, f2, -1.0f, max),index + alphabet_len)) valid = false;
-				//scores.push_back(_distance(f1, f2, -1.0f, max));
-			}
-			else set(0.0f, index+alphabet_len);
-
-            ++index;
-		}
-
-        std::tuple<std::string,int> last = *(alphabet.end() - 1);
-		int f1 = _closest(last, value, alphabet_len);
-		int f2 = _words(value);
-
-		if(f1 < f2) 
+	int index = 0;
+	for(auto &it : alphabet)
+	{            
+		int f1 = _closest(it, value, alphabet_len);
+		int f3 = std::get<1>(it);
+					
+		if(f1 >= f3) 
 		{
-			if(!set(_distance(f1, f2, -1.0f, max),alphabet_len + alphabet_len - 1)) valid = false;
-			//scores.push_back(_distance(f1, f2, -1.0f, max));
+			float distance = _distance(f1, f3, 0.0f, max); 
+			if(!set(distance, index)) valid = false;
+			//scores.push_back(distance);
 		}
-		else set(0.0f,alphabet_len + alphabet_len - 1);
+		else if(!set(0.1f, index)) valid = false;
+		//else scores.push_back(0.1f);
+
+		++index;
 	}
 
+	index = 0;
+	for(std::vector<std::tuple<std::string,int>>::iterator it = alphabet.begin(); it != (alphabet.end() - 1); ++it)
+	{			
+		std::tuple<std::string,int> a1 = *it;
+		std::tuple<std::string,int> a2 = *(it + 1);
+
+		int f1 = _closest(a1, value, alphabet_len);
+		int f2 = _closest(a2, value, alphabet_len);			
+		
+		if(f1 < f2) 
+		{
+			if(!set(_distance(f1, f2, -1.0f, max),index + alphabet_len)) valid = false;
+			//scores.push_back(_distance(f1, f2, -1.0f, max));
+		}
+		else set(0.0f, index+alphabet_len);
+
+		++index;
+	}
+
+	std::tuple<std::string,int> last = *(alphabet.end() - 1);
+	int f1 = _closest(last, value, alphabet_len);
+	int f2 = _words(value);
+
+	if(f1 < f2) 
+	{
+		if(!set(_distance(f1, f2, -1.0f, max),alphabet_len + alphabet_len - 1)) valid = false;
+		//scores.push_back(_distance(f1, f2, -1.0f, max));
+	}
+	else set(0.0f,alphabet_len + alphabet_len - 1);
+	
+	
 	return valid;
 }
 
