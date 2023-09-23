@@ -25,17 +25,11 @@ namespace organisation
 
         int _width, _height, _depth;
 
-        //cell *cells;
         std::vector<cell> cells;
         int length;
 
         bool init;
-
-    //public:
-        //static const int WIDTH = 5;
-        //static const int HEIGHT = 5;
-        //static const int DEPTH = 5;
-
+        
     public:
         program(int w, int h, int d) { makeNull(); reset(w,h,d); }
         program(const program &source) { copy(source); }

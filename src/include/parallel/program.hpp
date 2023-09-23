@@ -52,7 +52,6 @@ namespace organisation
         class output
         {
         public:
-            //std::vector<int> values;
             std::vector<std::string> values;
         };
         

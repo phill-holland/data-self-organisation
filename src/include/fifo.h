@@ -22,12 +22,8 @@ namespace core
 
 		public:
 			fifo() { makeNull(); reset(); }
-            /*template<typename... Args> fifo(Args && ...args) : items(std::forward<Args>(args)...) 
-            { 
-                makeNull(); reset();
-            }*/
-
 			~fifo() { cleanup(); }
+
 			bool initalised() { return init; }
 			void reset();
 
@@ -97,11 +93,8 @@ namespace core
 
 			if (lpread.compare_exchange_weak(a, b, std::memory_order_release, std::memory_order_relaxed))
 			{
-				//std::cout << "getme " << a << " ele " << elements << "\r\n";
 				elements.fetch_sub(1, std::memory_order_relaxed);
 				destination = X(items[a]);
-				//std::cout << "getmeend " << a << "\r\n";
-				//--elements;
 				
 				return true;
 			}
@@ -117,12 +110,10 @@ namespace core
 			if (b == lpread) return false;
 
 			if(lpwrite.compare_exchange_weak(a, b, std::memory_order_release, std::memory_order_relaxed))
-			{
-			//std::cout << "setme " << a << "\r\n";
-				items[a] = source;				
-				//++elements;
+			{		
+				items[a] = source;							
 				elements.fetch_add(1, std::memory_order_release);
-				//std::cout << "setmeend " << a << "\r\n";
+				
 				return true;
 			}
 

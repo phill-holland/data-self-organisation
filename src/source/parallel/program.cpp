@@ -123,7 +123,6 @@ void organisation::parallel::program::clear(::parallel::queue *q)
     qt.memset(deviceMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * clients);    
 }
 
-// add iteration buffer, and then sort output by lowest hash value, per output, per iteration
 void organisation::parallel::program::run(::parallel::queue *q)
 {
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
@@ -140,8 +139,6 @@ void organisation::parallel::program::run(::parallel::queue *q)
     int iterations = 0;
     while(iterations++ < ITERATIONS)
     {
-        //std::cout << "LOOPPP\r\n";
-
         auto msA = qt.memset(destination, 0, sizeof(sycl::float4) * length);
         auto msB = qt.memset(destinationEpoch, 0, sizeof(int) * length);
         auto msC = qt.memset(deviceReadPositionsEndPtr, 0 , sizeof(int) * clients);
@@ -179,8 +176,6 @@ void organisation::parallel::program::run(::parallel::queue *q)
             auto _stride = params.size();
             auto _length = length;
 
-//sycl::stream out(4096, 1024, h);
-
             h.parallel_for(num_items, [=](auto i) 
             {
                 if((_readPositionsSource[i].x() != 0)||(_readPositionsSource[i].y() != 0)||(_readPositionsSource[i].z()!= 0))
@@ -189,29 +184,12 @@ void organisation::parallel::program::run(::parallel::queue *q)
                     int currentEpoch = _readPositionsSourceEpoch[i];           
 
                     int client = i / _stride;
-                    //out << "\r\nclient " << client << " " << _readPositionsEndPtr[client] << "\r\n";
-                    //out << "x,y,z " << current.x() << " " << current.y() << " " << current.z() << " " << current.w() << "\r\n";
 
-                    int index_moo = ((current.z() * _width * _height) + (current.y() * _width) + current.x());
-                    int index = ((current.z() * _width * _height) + (current.y() * _width) + current.x()) + (client * _stride);
-//out << "index " << index << "\r\n";
-/*
-                    int value = _values[index];
-                    if(value >= 0) 
-                    {
-                        int vv = ar.fetch_add(1);
-                        if(vv < _stride) 
-                            _output[vv + (client * _stride)] = value;
-                        out << "value " << value << " cli " << client << "\r\n";
-                    }
-*/
-                    //(((index * length) + i) * params.in) + in_idx
-                    //(((client * _stride) + i) * _in) + in_idx
-                    //int inIndex = (_in * client);
-                    //int inIndex = (((client * _stride) + index) * _in);
-                    //int inIndex = (index * length * params.in) + (i * params.in);
-                    int inIndex = (client * _stride * _in) + (index_moo * _in);
-                   // out << "inIndex " << inIndex << "\r\n";
+                    int local_index = ((current.z() * _width * _height) + (current.y() * _width) + current.x());
+                    int index = local_index + (client * _stride);
+
+                    int inIndex = (client * _stride * _in) + (local_index * _in);
+
                     for(int x = 0; x < _in; ++x)
                     {                        
                         if(_inGates[inIndex + x] >= 0)
@@ -232,44 +210,33 @@ void organisation::parallel::program::run(::parallel::queue *q)
                                         _outputIteration[vv + (client * _stride)] = _iteration;
                                         _outputEpoch[vv + (client * _stride)] = currentEpoch;
                                     }
-                                    //out << "value " << value << " cli " << client << "\r\n";
                                 }
-                                // ********
 
-                                //out << "ingate[] " << _inGates[inIndex + x] << " w " << current.w() << " _in " << _in << "\r\n"; 
                                 for(int y = 0; y < _out; ++y)
                                 {                            
-                                    //int s = (((client * _stride) + index_moo) * _out * _in);// + in_idx
                                     int s = (client * _stride * _in * _out);
-                                    s += (index_moo * _out * _in);
+                                    s += (local_index * _out * _in);
                                     s += (y * _in) + x;
                                     int outIndex = s;
 
-                                   // out << "outgate[] " << _outGates[outIndex] << " outIndex " << outIndex << "\r\n";
-                                    //int outIndex = (_in * y) +  x;
                                     if(_outGates[outIndex] >= 0)
                                     {                                        
                                         int outTemp = _outGates[outIndex];
                                         float magnitudeTemp = (float)_magnitude[outIndex];
                                         
-                                       // out << "outgate[] " << y << " w=" << outTemp << " m=" << magnitudeTemp << " " << _out << "\r\n";
-                                        //out << "mag " << _magnitude[outIndex] << "\r\n";
                                         if(magnitudeTemp > 0)
                                         {
                     
-                                            int r = outTemp % 9;//div(index, 9);
-                                            float z1 = (float)((outTemp / 9) - 1);//(float)r.quot - 1L;
+                                            int r = outTemp % 9;
+                                            float z1 = (float)((outTemp / 9) - 1);
 
-                                            int j = r % 3;//div(r.rem, 3);
-                                            float y1 = (float)((r / 3) - 1);//(float)j.quot - 1L;
-                                            float x1 = (float)(j - 1);//(float)j.rem - 1L;
+                                            int j = r % 3;
+                                            float y1 = (float)((r / 3) - 1);
+                                            float x1 = (float)(j - 1);
 
                                             float z2 = (z1 * magnitudeTemp) + current.z();
                                             float y2 = (y1 * magnitudeTemp) + current.y();
                                             float x2 = (x1 * magnitudeTemp) + current.x();
-
-                                            //out << "out x1,y1,z1 " << (x1 * magnitudeTemp) << "," << (y1 * magnitudeTemp) << "," << (z1 * magnitudeTemp) << "\r\n";
-                                            //out << "out x2,y2,z2 " << x2 << "," << y2 << "," << z2 << " " << outTemp << "\r\n";
 
                                             if((x2 >= 0)&&(x2 < _width)&&(y2 >= 0)&&(y2 < _height)&&(z2 >=0)&&(z2 < _depth))
                                             {
@@ -281,12 +248,9 @@ void organisation::parallel::program::run(::parallel::queue *q)
                                                 int ty = roundf(-y1) + 1;
                                                 int tz = roundf(-z1) + 1;
 
-        //out << "out tx,ty,tz " << (x1*-1.0f) << "," << (y1*-1.0f) << "," << (z1*-1.0f) << "\r\n";
-
                                                 float w = (float)((sycl::abs(tz) * (3 * 3)) + (sycl::abs(ty) * 3) + sycl::abs(tx));
 
                                                 int vv = br.fetch_add(1);
-                                               // out << "new gate " << w << " out " << vv << "\r\n";
                                                 if(vv < _stride)
                                                 {
                                                     _readPositionsDest[vv + (client * _stride)] = { x2,y2,z2,w };
@@ -303,9 +267,6 @@ void organisation::parallel::program::run(::parallel::queue *q)
             });
         }).wait();
 
-//std::cout << "DESTINATIOON\r\n";
-//outputarb(destination, length);
-
 
         sycl::float4 *temp = destination;
         destination = source;
@@ -319,8 +280,6 @@ void organisation::parallel::program::run(::parallel::queue *q)
 
 void organisation::parallel::program::set(std::vector<sycl::float4> positions, ::parallel::queue *q)
 {
-    //if(positions.size() != clients) return;
-//std::cout << "positions " << positions.size() << "\r\n";
     if(positions.size() > params.epochs) { std::cout << "set fail\r\n"; return; }
 
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
@@ -350,10 +309,6 @@ void organisation::parallel::program::set(std::vector<sycl::float4> positions, :
             _readPositionsEndPtr[i] = _epochs;
         });
     }).wait();
-
-    //outputarb(deviceReadPositionsA,length);
-    //outputarb(deviceReadPositionsEpochA, length);
-    //outputarb(deviceReadPositionsEndPtr,clients);
 }
 
 std::vector<organisation::parallel::output> organisation::parallel::program::get(organisation::data &mappings, ::parallel::queue *q)
@@ -361,10 +316,6 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
     std::vector<output> results(clients);
 
     sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
-
-//std::cout << "outputs\r\n";
-//outputarb(deviceOutput, length);
-//outputarb(deviceOutputEndPtr, clients);
 
     auto mcA = qt.memcpy(hostOutput, deviceOutput, sizeof(int) * length);
     auto mcB = qt.memcpy(hostOutputIteration, deviceOutputIteration, sizeof(int) * length);
@@ -376,53 +327,6 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
     mcC.wait();
     mcD.wait();
 
-    //outputarb(deviceOutput, length);
-    //outputarb(deviceOutputEpoch, length);
-/*
-    int previous = -1;
-    int start = -1;//, end = -1;
-
-    for(int i = 0; i < length; ++i)
-    {
-        int client = i / params.size();;
-        int index = i % params.size();
-
-        if(index < hostOutputEndPtr[client])
-        {
-            if(hostOutputIteration[i] != previous) 
-            {                
-                if((start != -1)&&(start != i))
-                {
-                   // std::cout << "previous " << previous << "\r\n";
-                    if(i - start > 1)
-                    {
-                        std::vector<int> temp;
-                        for(int j = start; j <  i; ++j)
-                        {
-                            temp.push_back(hostOutput[j]);   
-
-//std::cout << "previous " << previous << " ho[j]=" << hostOutput[j] << " j=" << j << "\r\n";                                                 
-                        }
-
-                        std::sort(temp.begin(),temp.end());
-
-                        int j = start;
-                        //for(int j = start; j <  i; ++j)
-                        for(std::vector<int>::iterator it = temp.begin(); it != temp.end(); ++it)
-                        {
-                            hostOutput[j] = *it;
-                           // std::cout << "out " << previous << " ho[j]=" << hostOutput[j] << " j=" << j << "\r\n";                                                 
-                            ++j;
-                        }
-                    }
-                }
-
-                start = i;
-                previous = hostOutputIteration[i];
-            }
-        }
-    }
-*/
     std::unordered_map<int, std::vector<std::tuple<int,int>>> client_data;
     for(int i = 0; i < clients; ++i)
     {
@@ -437,7 +341,6 @@ std::vector<organisation::parallel::output> organisation::parallel::program::get
         if(index < hostOutputEndPtr[client])
         {
             client_data[client].push_back(std::tuple<int,int>(hostOutput[i],hostOutputEpoch[i]));
-            //results[client].values.push_back(hostOutput[i]);
         }
     }
 
@@ -474,24 +377,18 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
 
     int dest_index = 0;
     int index = 0;
-    //for(std::vector<::organisation::program>::iterator it = source.begin(); it != source.end(); ++it)
+    
     for(int source_index = 0; source_index < source_size; ++source_index)
     {
         organisation::program *prog = &source[source_index]->prog;
 
-        //int length = it->length;
         int length = prog->length;
-
-        //std::cout << "PROGRAM " << length << "\r\n";
 
         if(length != params.size()) 
             break;
 
-
         for(int i = 0; i < length; ++i)
         {
-            //hostValues[0] = 1;
-            //if(it->cells.at(i).value >=0) std::cout << "hostValues " << ((index * length) + i) << " " << it->cells.at(i).value << "\r\n";
             hostValues[(index * length) + i] = prog->cells.at(i).value;
 
             std::vector<int> in = prog->cells.at(i).pull();
@@ -501,10 +398,8 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
                 if(in_idx < params.in)
                 {                    
                     int inIndex = (index * length * params.in) + (i * params.in);
-                    // (((index * length) + i) * params.in)
                     hostInGates[inIndex + in_idx] = *jt;
-                    //hostInGates[in_idx + (index * params.in)] = *jt;
-//std::cout << "in_idx " << in_idx << " jt=" << *jt << " " << (inIndex + in_idx) << "\r\n";
+
                     std::vector<int> out = prog->cells.at(i).pull(*jt);
                     int out_idx = 0;
                     for(std::vector<int>::iterator ot = out.begin(); ot < out.end(); ++ot)
@@ -515,16 +410,8 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
                             s += (i * params.out * params.in);
                             s += (out_idx * params.in) + in_idx;
                             
-                            //int outIndex = s;
-
-                            //int s = (((index * length) + i) * params.out * params.in);// + in_idx
-                            //s += (out_idx * params.in) + in_idx;
-                            //int s = in_idx + (out_idx * params.in) + (index * params.in * params.out);
                             hostOutGates[s] = *ot;
                             hostMagnitudes[s] = prog->cells.at(i).get(*jt,*ot).magnitude;
-
-//std::cout << "out_idx " << out_idx << " ot=" << *ot << " " << s << "\r\n";
-                            // need new device magnitude buffer, of params.in * params.out * clients
                         }
 
                         ++out_idx;
@@ -537,8 +424,6 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
         ++index;
         if(index >= HOST_BUFFER)
         {
-            //std::cout << "dest_index " << dest_index << " length " << length << "\r\n\r\n";
-            // copy from host to device
             auto mcA = qt.memcpy(&deviceValues[dest_index * length], hostValues, sizeof(int) * length * index);
             auto mcB = qt.memcpy(&deviceInGates[dest_index * params.in * length], hostInGates, sizeof(int) * params.in * length * index);
             auto mcC = qt.memcpy(&deviceOutGates[dest_index * params.in * params.out * length], hostOutGates, sizeof(int) * params.in * params.out * length * index);
@@ -554,14 +439,13 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
             memset(hostOutGates, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
             memset(hostMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * HOST_BUFFER);
 
-            dest_index += HOST_BUFFER;//index;
+            dest_index += HOST_BUFFER;
             index = 0;            
         }
     }
 
     if(index > 0)
     {
-        // copy from host to device
         int length = params.size();
 
         auto mcA = qt.memcpy(&deviceValues[dest_index * length], hostValues, sizeof(int) * length * index);
@@ -573,11 +457,6 @@ void organisation::parallel::program::copy(::organisation::schema **source, int 
         mcB.wait();
         mcC.wait();
         mcD.wait();
-        //outputarb(deviceValues, this->length);
-        //std::cout << "in gates\r\n";
-        //outputarb(deviceInGates, clients * params.size() * params.in);
-        //std::cout << "out gates\r\n";
-        //outputarb(deviceOutGates, clients * params.size() * params.in * params.out);
     }
 }
 
@@ -596,9 +475,9 @@ void organisation::parallel::program::outputarb(int *source, int length)
 		if ((temp[i] != -1)&&(temp[i]!=0))
 		{
 			result += std::string("[");
-			result += std::to_string(i);//string::fromInt(i));
+			result += std::to_string(i);
 			result += std::string("]");
-			result += std::to_string(temp[i]);//string::fromInt(temp[i]));
+			result += std::to_string(temp[i]);
 			result += std::string(",");
 		}
 	}
@@ -628,9 +507,9 @@ void organisation::parallel::program::outputarb(sycl::float4 *source, int length
         if ((ix != 0) || (iy != 0) || (iz != 0))
         {
 			result += std::string("[");
-			result += std::to_string(i);//string::fromInt(i));
+			result += std::to_string(i);
 			result += std::string("]");
-			result += std::to_string(temp[i].x());//std::string::fromFloat(temp[i].x()));
+			result += std::to_string(temp[i].x());
 			result += std::string(",");
 			result += std::to_string(temp[i].y());
 			result += std::string(",");

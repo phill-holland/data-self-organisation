@@ -9,7 +9,6 @@ namespace organisation
 {
     class score
     {
-        //std::vector<float> scores;
         std::unordered_map<int,float> scores;
         bool init;
 

@@ -15,28 +15,26 @@
 
 using namespace std;
 
-std::string source = R"(daisy daisy give me your answer do .
-I'm half crazy for the love of you .)";
-/*it won't be a stylish marriage .
+std::string source = R"(daisy daisy give me your answer do .)";
+/*I'm half crazy for the love of you .
+it won't be a stylish marriage .
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
-organisation::schema run()//int rerun = 1)
+organisation::schema run()
 {         
     auto strings = organisation::split(source);
     
-    std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };
+    std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you .", "it won't be a stylish marriage ." };
 
 	::parallel::device *dev = new ::parallel::device(0);
 	::parallel::queue *q = new parallel::queue(*dev);
 
     const int width = 5, height = 5, depth = 5, in = 15, out = 10;
-    const int size = 3000, clients = 2500;
+    const int size = 1000, clients = 800;
     const int epochs = expected.size();
-//1000, 800
-    //organisation::parallel::parameters parameters(width, height, depth, in, out);
 
     organisation::populations::parameters settings;
     settings.params = organisation::parallel::parameters(width, height, depth, in, out);
@@ -48,43 +46,37 @@ organisation::schema run()//int rerun = 1)
     settings.size = size;
     settings.params.epochs = epochs;
 
+    organisation::populations::population p(settings);
     
+    const int iterations = 300;
 
-    //organisation::data data(strings);
-    organisation::populations::population p(settings);//data, expected, 1000);//3000);//2000);//1000);
-    
-    const int iterations = 300; // 300
+    int actual = 0;
 
-    //for(int j = 0; j < rerun; ++j)
-    //{        
-        int actual = 0;
+    p.clear();
+    p.generate();
 
-        p.clear();
-        p.generate();
+    organisation::schema best(settings.params.width,settings.params.height,settings.params.depth);
+    best.copy(p.go(expected, actual, iterations));
 
-        organisation::schema best(settings.params.width,settings.params.height,settings.params.depth);
-        best.copy(p.go(expected, actual, iterations));
+    for(int i = 0; i < epochs; ++i)
+    {
+        organisation::history history;
 
-        for(int i = 0; i < epochs; ++i)
+        std::string output = best.run(i, expected[i], settings.mappings, &history);
+        std::cout << "\r\n" << output << "\r\n";
+        std::cout << history.get(settings.mappings);
+
+        if(actual <= iterations) 
         {
-            organisation::history history;
+            std::string filename("output/output");
+            filename += std::to_string(i);
+            filename += std::string(".csv");
 
-            std::string output = best.run(i, expected[i], settings.mappings, &history);
-            std::cout << "\r\n" << output << "\r\n";
-            std::cout << history.get(settings.mappings);
+            history.append(filename, settings.mappings);
+        }
+    }   
 
-            if(actual <= iterations) 
-            {
-                std::string filename("output");
-                filename += std::to_string(i);
-                filename += std::string(".csv");
-
-                history.append(filename, settings.mappings);
-            }
-        }   
-
-    return best;    
-    //}
+    return best;
 }
 
 bool BasicProgramExecution()
@@ -134,12 +126,9 @@ bool BasicProgramExecution()
 organisation::program getTestProgram1(organisation::data &d, int width, const int height, const int depth)
 {
     organisation::program p(width, height, depth);
-
-    //std::vector<std::string> expected = organisation::split("daisy daisy give me your answer do .");
     
     std::vector<std::string> strings = organisation::split("daisy daisy give me your answer do .");
     d.add(strings);
-    //organisation::data d(strings);
 
     organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
     organisation::vector down = { 0,-1,0 } ,right = { -1,0,0 };
@@ -173,11 +162,8 @@ organisation::program getTestProgram1(organisation::data &d, int width, const in
 organisation::program getTestProgram2(organisation::data &d, const int width, const int height, const int depth)
 {
     organisation::program p(width, height, depth);
-
-    //std::vector<std::string> expected = organisation::split("daisy daisy give me");
     
     std::vector<std::string> strings = organisation::split("daisy daisy give me");
-    //organisation::data d(strings);
     d.add(strings);
 
     organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
@@ -212,14 +198,11 @@ organisation::program getTestProgram2(organisation::data &d, const int width, co
 organisation::program getTestProgram3(organisation::data &d, int width, const int height, const int depth)
 {
     organisation::program p(width, height, depth);
-
-    //std::vector<std::string> expected = organisation::split("daisy daisy give me your answer do .");
     
     std::vector<std::string> stringsA = organisation::split("daisy daisy give me your answer do .");
     std::vector<std::string> stringsB = organisation::split("I eat monkeys for breakfast with jam .");
     d.add(stringsA);
     d.add(stringsB);
-    //organisation::data d(strings);
 
     organisation::vector up = { 0,1,0 } ,left = { 1,0,0 };
     organisation::vector down = { 0,-1,0 } ,right = { -1,0,0 };
@@ -555,7 +538,7 @@ std::vector<std::string> strings = organisation::split("daisy daisy give me your
 organisation::data d(strings);
 
 //s1.generate(d);
-s1.prog.save("run.txt");
+s1.prog.save("output/run1.txt");
 //s1.clear();
 //s1.prog.load("prog3.txt");
 //s1.prog.save("prog2.txt");

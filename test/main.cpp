@@ -118,7 +118,7 @@ TEST(BasicProgramCross, BasicAssertions)
     
     // ***
 
-    organisation::program result;
+    organisation::program result(width,height,depth);
     result.cross(p2, p1, offset + 1);
 
     std::vector<std::string> outputs = organisation::split(result.run(0, d));
@@ -132,7 +132,8 @@ TEST(BasicProgramExecutionWithMagnitude, BasicAssertions)
 {    
     GTEST_SKIP();
 
-    organisation::program p;
+    const int width = 10, height = 10, depth = 10;
+    organisation::program p(width,height,depth);
 
     std::vector<std::string> expected = organisation::split("daisy daisy give me");
     
@@ -145,9 +146,9 @@ TEST(BasicProgramExecutionWithMagnitude, BasicAssertions)
     std::vector<organisation::vector> in = { up, up, left, up  };
     std::vector<organisation::vector> out = { down, right, down, right };
 
-    int x = organisation::program::WIDTH - 1;
-    int y = organisation::program::HEIGHT - 1;
-    int z = organisation::program::DEPTH - 1;
+    int x = width - 1;
+    int y = height - 1;
+    int z = depth - 1;
 
     int magnitude = 2;
 
@@ -183,7 +184,8 @@ but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";
 
-    organisation::program p1, p2;
+    const int width = 10, height = 10, depth = 10;
+    organisation::program p1(width,height,depth), p2(width,height,depth);
         
     std::vector<std::string> strings = organisation::split(source);
     organisation::data d(strings);
@@ -210,6 +212,8 @@ std::string source = R"(daisy daisy give me your answer do .
 but you'll look sweet upon the seat .
 )";
 
+    const int width = 10, height = 10, depth = 10;
+
     std::string expected1 = "daisy daisy give me your answer do .";
     std::string expected2 = "but you'll look sweet upon the seat .";
 
@@ -218,7 +222,7 @@ but you'll look sweet upon the seat .
 
     //std::vector<int> lengths = { (int)(s1.size() * 2) + 1, (int)(s2.size() * 2) + 1 };
 
-    organisation::schema schema;
+    organisation::schema schema(width,height,depth);
 
     std::vector<std::string> strings = organisation::split(source);
     organisation::data d(strings);
@@ -232,13 +236,13 @@ but you'll look sweet upon the seat .
     std::vector<organisation::vector> in2 = { up, left, left, left, left, left, left, left };
     std::vector<organisation::vector> out2 = { right, right, right, right, right, right, right, right };
 
-    int x1 = organisation::program::WIDTH - 1;
-    int y1 = organisation::program::HEIGHT - 1;
-    int z1 = organisation::program::DEPTH - 1;
+    int x1 = width - 1;
+    int y1 = height - 1;
+    int z1 = depth - 1;
 
-    int x2 = organisation::program::WIDTH - 2;
-    int y2 = organisation::program::HEIGHT - 1;
-    int z2 = organisation::program::DEPTH - 1;
+    int x2 = width - 2;
+    int y2 = height - 1;
+    int z2 = depth - 1;
 
     int magnitude = 1;
 

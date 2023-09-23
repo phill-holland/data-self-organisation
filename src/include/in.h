@@ -25,7 +25,6 @@ namespace organisation
         {
             if(gates.find(index) == gates.end()) return true;
             return false;
-            //return gates[index].is_empty();
         }
 
         void set(int in);
