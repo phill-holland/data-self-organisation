@@ -13,11 +13,15 @@ file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.h *.cpp)
 
 set(SOURCES ${TEST_SOURCES})
 
+set(CMAKE_CXX_STANDARD 20)
+
 enable_testing()
 
 add_executable(${BINARY} ${TEST_SOURCES})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
+
+target_compile_options(${BINARY} PRIVATE -fsycl -fsycl-targets=nvptx64-nvidia-cuda,spir64_gen)
 
 target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib gtest_main)
 
@@ -25,3 +29,5 @@ include(GoogleTest)
 gtest_add_tests(TARGET ${CMAKE_PROJECT_NAME}_test)
 
 target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib "${CMAKE_THREAD_LIBS_INIT}")
+
+target_link_options(${BINARY} PUBLIC -fsycl -fsycl-targets=nvptx64-nvidia-cuda)

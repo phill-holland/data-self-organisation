@@ -59,3 +59,24 @@ namespace organisation
 };
 
 #endif
+
+
+/*
+auto is_dominant = [](int *a, int *b) 
+	{ 
+		const int dimensions = 2;
+		bool any = false;
+		for (int i = 0; i < dimensions; ++i)
+		{
+			//Log << a[i];
+			// modify kdtree for this condition, between left and right insert
+			if(a[i] > b[i]) return false;
+			any |= (a[i] < b[i]);
+			//if((*epochs)[i]->results.score > (*source.epochs)[i]->results.score) return false;
+			//any |= ((*epochs)[i]->results.score < (*source.epochs)[i]->results.score);
+		}
+
+		return any;
+	};
+
+*/
