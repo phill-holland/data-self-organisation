@@ -95,7 +95,7 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
     return best;
 }
 
-bool single(organisation::schema &schema, organisation::data &mappings, organisation::parallel::parameters parameters, std::vector<std::string> expected)//,const int width, int height, int depth)
+bool single(organisation::schema &schema, organisation::data &mappings, organisation::parallel::parameters parameters, std::vector<std::string> expected)
 {          
 	::parallel::device *dev = new ::parallel::device(0);
 	::parallel::queue *q = new parallel::queue(*dev);
@@ -114,7 +114,14 @@ bool single(organisation::schema &schema, organisation::data &mappings, organisa
     int z1 = (parameters.depth / 2);
 
     organisation::vector w {0,1,0};
-    std::vector<sycl::float4> positions = { { x1, y1, z1, w.encode() } };
+    std::vector<sycl::float4> positions;
+
+    int j = 0;
+    for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
+    {
+        positions.push_back( { x1 + j, y1, z1, w.encode() } );
+        ++j;
+    }
 
     p_program.set(positions, q);
 
