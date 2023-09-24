@@ -16,25 +16,28 @@
 using namespace std;
 
 std::string source = R"(daisy daisy give me your answer do .
-I'm half crazy for the love of you .
-it won't be a stylish marriage .)";
-/*I can't afford a carriage .
+I'm half crazy for the love of you .)";
+/*it won't be a stylish marriage .)";
+I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
 std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
-const int rounds = 5;
+const int rounds = 15;
 //const int population = 1000, clients = 800;
-const int population = 2000, clients = 1500;
+const int population = 4000, clients = 3500;
 const int iterations = 300;
 
 organisation::parallel::parameters get()
 {
     const int width = 5, height = 5, depth = 5, in = 15, out = 10;
-        
-    return organisation::parallel::parameters(width, height, depth, in, out);
+
+    organisation::parallel::parameters parameters(width, height, depth, in, out);
+    parameters.epochs = expected.size();
+
+    return parameters; 
 }
 
 organisation::schema run(organisation::parallel::parameters parameters, organisation::data &mappings, std::vector<std::string> expected, int round = 0)
@@ -42,8 +45,6 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
 	::parallel::device *dev = new ::parallel::device(0);
 	::parallel::queue *q = new parallel::queue(*dev);
     
-    const int epochs = expected.size();
-
     organisation::populations::parameters settings;
     settings.params = parameters;
     settings.dev = dev;
@@ -52,7 +53,6 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
     settings.mappings = mappings;
     settings.clients = clients;
     settings.size = population;
-    settings.params.epochs = epochs;
 
     organisation::populations::population p(settings);
     
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
     organisation::data mappings(strings);
     
     organisation::parallel::parameters parameters = get();
-
+    
     for(int i = 0; i < rounds; ++i)
     {
         organisation::schema best = run(parameters, mappings, expected, i);
