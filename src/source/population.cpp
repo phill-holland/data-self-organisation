@@ -100,23 +100,6 @@ organisation::schema organisation::populations::population::go(std::vector<std::
 
     do
     {
-        /*
-        if(set == intermediateA) std::cout << "set A\r\n";
-        else if(set == intermediateB) std::cout << "set B\r\n";
-        else if(set == intermediateC) std::cout << "set C\r\n";
-        
-        std::cout << "rset " << rset.start << " " << rset.end << "\r\n";
-
-        if(run == intermediateA) std::cout << "run A\r\n";
-        else if(run == intermediateB) std::cout << "run B\r\n";
-        else if(run == intermediateC) std::cout << "run C\r\n";
-
-        if(get == intermediateA) std::cout << "get A\r\n";
-        else if(get == intermediateB) std::cout << "get B\r\n";
-        else if(get == intermediateC) std::cout << "get C\r\n";
-
-        std::cout << "rget " << rget.start << " " << rget.end << "\r\n";
-    */
         auto r1 = std::async(&organisation::populations::population::push, this, set, rset);
         auto r2 = std::async(&organisation::populations::population::pull, this, get, rget);
         auto r3 = std::async(&organisation::populations::population::execute, this, run, expected);
@@ -168,13 +151,10 @@ organisation::populations::results organisation::populations::population::execut
         for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
         {            
             std::tuple<std::string,std::string> temp(*it,output.at(i));
-            //std::cout << "combine push_back [" << std::get<0>(temp) << "] [" << std::get<1>(temp) << "]\r\n";
             result[i] = temp;
             ++i;
-            //result.push_back(temp);
         }
 
-//std::cout << "combine " << " " << expected.size() << " " << output.size() << " " << result.size() << "\r\n";
         return result;
     };
 
@@ -206,16 +186,11 @@ organisation::populations::results organisation::populations::population::execut
     results result;
     std::vector<std::string> current;
 
-    //std::cout << "values.size " << values.size() << "\r\n";
     int i = 0;
     std::vector<organisation::parallel::output>::iterator it;    
     for(i = 0, it = values.begin(); it != values.end(); it++, i++)    
     {
-        // ***
-        //std::string output = settings.mappings.get(it->values);
         buffer[i]->compute(combine(expected, it->values));
-        //buffer[i]->scores[0].compute(expected, output);
-        // ***
 
         float score = buffer[i]->sum();
         if(score > result.best)
@@ -224,20 +199,7 @@ organisation::populations::results organisation::populations::population::execut
             result.index = i;
             current = it->values;
         }
-        /*
-        if(score >= 0.98f)
-        {
-            std::cout << "output [" << i << "] " << output << "\r\n";
-            for(int j = 0; j < settings.clients; ++j)
-            {                
-                std::string moo = buffer[j]->run(0, expected, settings.mappings, NULL);
-                if(moo == expected)
-                {
-                    std::cout << "here we go! [" << j << "]\r\n";
-                }                
-            }
-        }
-        */
+        
         result.average += score;
     }
 
@@ -255,18 +217,6 @@ organisation::populations::results organisation::populations::population::execut
         std::cout << temp << "\r\n";
     }
     
-    // << current << "\r\n";
-/*
-    for(int j = 0; j < settings.clients; ++j)
-    {                
-        std::string moo = buffer[j]->run(0, expected, settings.mappings, NULL);
-        if(moo == expected)
-        {
-            std::cout << "here we go! [" << j << "]\r\n";
-        }                
-    }
-        }
-*/
     result.average /= (float)values.size();
 
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();

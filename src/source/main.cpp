@@ -15,18 +15,19 @@
 
 using namespace std;
 
-std::string source = R"(daisy daisy give me your answer do .)";
-/*I'm half crazy for the love of you .
-it won't be a stylish marriage .
-I can't afford a carriage .
+std::string source = R"(daisy daisy give me your answer do .
+I'm half crazy for the love of you .
+it won't be a stylish marriage .)";
+/*I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
-std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you .", "it won't be a stylish marriage ." };
+std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
-const int rounds = 3;
-const int population = 1000, clients = 800;
+const int rounds = 5;
+//const int population = 1000, clients = 800;
+const int population = 2000, clients = 1500;
 const int iterations = 300;
 
 organisation::parallel::parameters get()
@@ -124,14 +125,18 @@ bool single(organisation::schema &schema, organisation::data &mappings, organisa
     int index = 0;
     for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
     {
-        std::string out1 = schema.run(0, *it, mappings, NULL);
-        std::cout << "CPU [" << out1 << "]\r\n";
+        std::string out1 = schema.run(index, *it, mappings, NULL);
+        std::cout << "CPU " << index << " [" << out1 << "]\r\n";
 
-        std::string results1 = results[0].values[index];
-        std::cout << "GPU [" << results1 << "]\r\n";
-        if(*it == results1) std::cout << "OK\r\n";
-        else std::cout << "NOT OK\r\n";
-        
+        if(results[0].values.size() < index)
+        {
+            std::string results1 = results[0].values[index];
+            std::cout << "GPU " << index << " [" << results1 << "]\r\n";
+            if(*it == results1) std::cout << "OK\r\n";
+            else std::cout << "NOT OK\r\n";
+        }
+        else std::cout << "GPU " << index << " NO OUTPUT\r\n";
+
         ++index;
     }
 
