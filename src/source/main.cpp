@@ -26,8 +26,8 @@ of a bicycle built for two .
 std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
 const int rounds = 15;
-//const int population = 1000, clients = 800;
-const int population = 4000, clients = 3500;
+const int population = 1000, clients = 800;
+//const int population = 4000, clients = 3500;
 const int iterations = 300;
 
 organisation::parallel::parameters get()
