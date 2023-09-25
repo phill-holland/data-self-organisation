@@ -14,13 +14,17 @@ namespace organisation
     {
     public:        
         static const int MAGNITUDE = 2;
-
+        
     public:
         int magnitude;
+        int encoded;
 
     public:
-        gate() { magnitude = -1; }
-        gate(int magnitude) { this->magnitude = magnitude; }
+        gate(int _magnitude = -1, int _encoded = -1) 
+        { 
+            magnitude = _magnitude; 
+            encoded = _encoded;
+        }
 
     public:
         void clear() { magnitude = -1; }
@@ -30,21 +34,28 @@ namespace organisation
 
     class gates
     {
-        std::unordered_map<int, gate> data;
+        int write;
 
     public:
         static const int IN = 15;
-        static const int OUT = 10;//6;//3;
+        static const int OUT = 10;
 
     public:
-        gates() { }
+        int encoded;
+
+    private:
+        //std::unordered_map<int, gate> data;
+        gate data[OUT];
+
+    public:
+        gates() { clear(); }
         gates(const gates &source) { copy(source); }
 
-        void clear() { data.clear(); }
+        void clear();
 
-        bool is_empty() { return data.size() <= 0; }
+        bool is_empty();
 
-        int size() { return data.size(); }
+        int size();
 
         void set(int index, gate g);
         gate get(int index);

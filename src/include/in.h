@@ -13,20 +13,19 @@ namespace organisation
     class in
     {
         static std::mt19937_64 generator;
-        std::unordered_map<int, organisation::gates> gates;
+        //std::unordered_map<int, organisation::gates> gates;
+        
+        organisation::gates gates[organisation::gates::IN];
+
+        int write;
 
     public:
-        void clear()
-        {
-            gates.clear();
-        }
+        in() { write = 0; }
 
-        bool is_empty(int index)
-        {
-            if(gates.find(index) == gates.end()) return true;
-            return false;
-        }
-
+        void clear();
+        
+        bool is_empty(int index);
+        
         void set(int in);
         void set(int in, int out, gate value);     
         gate get(int in, int out);

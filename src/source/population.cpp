@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <signal.h>
 #include <chrono>
+#include <valgrind/callgrind.h>
 
 std::mt19937_64 organisation::populations::population::generator(std::random_device{}());
 
@@ -392,10 +393,14 @@ void organisation::populations::population::pull(organisation::schema **buffer, 
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
 
+    CALLGRIND_START_INSTRUMENTATION;
+    CALLGRIND_TOGGLE_COLLECT;
     for(int i = 0; i < settings.clients; ++i)
     {
         get(*buffer[i], r);
     }    
+    CALLGRIND_TOGGLE_COLLECT;
+    CALLGRIND_STOP_INSTRUMENTATION;
 
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   

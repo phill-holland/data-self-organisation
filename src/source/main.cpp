@@ -26,8 +26,8 @@ of a bicycle built for two .
 std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
 const int rounds = 15;
-const int population = 1000, clients = 800;
-//const int population = 4000, clients = 3500;
+//const int population = 1000, clients = 800;
+const int population = 4000, clients = 3500;
 const int iterations = 300;
 
 organisation::parallel::parameters get()
@@ -135,7 +135,7 @@ bool single(organisation::schema &schema, organisation::data &mappings, organisa
         std::string out1 = schema.run(index, *it, mappings, NULL);
         std::cout << "CPU " << index << " [" << out1 << "]\r\n";
 
-        if(results[0].values.size() < index)
+        if(results[0].values.size() > index)
         {
             std::string results1 = results[0].values[index];
             std::cout << "GPU " << index << " [" << results1 << "]\r\n";
@@ -163,11 +163,19 @@ int main(int argc, char *argv[])
     
     organisation::parallel::parameters parameters = get();
     
+    //parameters.width = 1;
+    //parameters.height = 1;
+    //parameters.depth = 1;
+    //organisation::schema moo(parameters.width,parameters.height,parameters.depth);
+    //std::cout << "START\r\n";
+    //moo.generate(mappings);
+    //moo.prog.save("output/test.txt");
+    
     for(int i = 0; i < rounds; ++i)
     {
         organisation::schema best = run(parameters, mappings, expected, i);
         single(best, mappings, parameters, expected);
     }
-
+    
     return 0;
 }

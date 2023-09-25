@@ -35,7 +35,7 @@ namespace organisation
 
         bool is_empty() { return value < 0; }
 
-    std::tuple<bool,bool> validate(int max);
+        std::tuple<bool,bool> validate(int max);
 
         std::vector<int> pull() { return routes.pull(); }
         std::vector<int> pull(int in) { return routes.pull(in); }
