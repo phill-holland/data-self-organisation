@@ -119,6 +119,8 @@ void organisation::in::generate()
     clear();
 
     int in = (std::uniform_int_distribution<int>{0, gates::IN})(generator);     
+
+//in = 2;    
 //in = 2;
 //in = gates::IN + 5;
     for(int i = 0; i < in; ++i)
@@ -137,6 +139,7 @@ void organisation::in::generate()
 //k = 16;
 
 //out = gates::OUT + 5;
+
         for(int j = 0; j < out; ++j)
         {
             int magnitude = (std::uniform_int_distribution<int>{1, gate::MAGNITUDE})(generator);

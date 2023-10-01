@@ -5,9 +5,10 @@ file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true *.h *.hpp *.cpp)
 set(SOURCES ${SOURCES})
 
 set(CMAKE_CXX_STANDARD 20)
-#set(DPCPP_HOME "/home/phill/sycl_workspace")
-#set(CMAKE_CXX_COMPILER "${DPCPP_HOME}/llvm/build/bin/clang++")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g")
+
+set(LLVM_ENABLE_THREADS TRUE)
+set(LLVM_PARALLEL_COMPILE_JOBS, 8)
+set(LLVM_PARALLEL_LINK_JOBS, 8)
 
 add_executable(${BINARY} ${SOURCES})
 

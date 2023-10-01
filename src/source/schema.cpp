@@ -59,10 +59,23 @@ float organisation::schema::sum()
 void organisation::schema::compute(std::vector<std::tuple<std::string,std::string>> values)
 {
     int i = 0;
+    bool penalty = false;
     for(std::vector<std::tuple<std::string,std::string>>::iterator it = values.begin(); it != values.end(); ++it)
     {
         scores[i].compute(std::get<0>(*it),std::get<1>(*it));
         ++i;
+
+        if(std::get<1>(*it).size() <= 0) penalty = true;
+    }
+
+    if(penalty)
+    {
+        int i = 0;
+        for(std::vector<std::tuple<std::string,std::string>>::iterator it = values.begin(); it != values.end(); ++it)
+        {
+            scores[i].clear();
+            ++i;
+        }
     }
 }
 

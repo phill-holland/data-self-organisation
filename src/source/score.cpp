@@ -109,16 +109,17 @@ bool organisation::score::compute(std::string expected, std::string value)
 		return result;
 	};
 
-	int score_len = (_words(expected) * 2) + 1;
+	std::vector<std::tuple<std::string,int>> alphabet = _split(expected);
+	
+	//int score_len = (_words(expected) * 2) + 1;
+	int score_len = (alphabet.size() * 2) + 1;
 	for(int i = 0; i < score_len; ++i) set(0.0f, i);
 
     if(value.size() == 0) return true;
 
 	bool valid = true;
 	const int MAX_WORDS = 5;
- 
-	std::vector<std::tuple<std::string,int>> alphabet = _split(expected);
-	
+ 	
 	const int alphabet_len = alphabet.size();		
 	float max = (float)MAX_WORDS;
 	if(((float)(alphabet_len - 1))>max) max = (float)(alphabet_len - 1);

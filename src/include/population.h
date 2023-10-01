@@ -4,6 +4,7 @@
 #include "fifo.h"
 #include "schemas.h"
 #include "parallel/program.hpp"
+#include "parallel/front.hpp"
 #include <random>
 #include <atomic>
 
@@ -26,6 +27,7 @@ namespace organisation
             std::vector<std::string> expected;
 
             int clients;
+            int fronts;
             int size;
         };
 
@@ -59,10 +61,12 @@ namespace organisation
             friend class collector;
 
             static const int minimum = 100, maximum = 10000;
+            //static const int fronts = 200;
 
             static std::mt19937_64 generator;
 
-            dominance::kdtree::kdtree *approximation;
+            //dominance::kdtree::kdtree *approximationA, *approximationB;
+            organisation::parallel::front *frontA, *frontB;
 
             organisation::schemas *schemas;            
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
@@ -90,15 +94,19 @@ namespace organisation
         void generate();
 
         protected:
-            bool get(schema &destination, region r);
-            bool set(schema &source, region r);
+            bool get(schema &destination, region r, organisation::parallel::front *front);
+            bool set(schema &source, region r, organisation::parallel::front *front);
             
         protected:
-            schema *best(region r);
-            schema *worst(region r);
+            schema *best(region r, organisation::parallel::front *front);
+            schema *worst(region r, organisation::parallel::front *front);
 
-            void pull(organisation::schema **buffer, region r);
-            void push(organisation::schema **buffer, region r);
+        protected:
+            void pull(organisation::schema **buffer, region r, organisation::parallel::front *front);
+            void push(organisation::schema **buffer, region r, organisation::parallel::front *front);
+
+        protected:
+            void pick(region r, organisation::parallel::front *destination);
 
         protected:
             results execute(organisation::schema **buffer, std::vector<std::string> expected);

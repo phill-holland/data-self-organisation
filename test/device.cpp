@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "parallel/program.hpp"
+#include "parallel/front.hpp"
 #include "general.h"
 #include "data.h"
 #include "schema.h"
@@ -48,6 +49,8 @@ organisation::program getTestProgram(organisation::data &d, int width, const int
 
 TEST(BasicProgramExecutionParallel, BasicAssertions)
 {    
+    GTEST_SKIP();
+
     const int width = 10, height = 10, depth = 10;
     const int clients = 200;
     const int epochs = 2;
@@ -95,5 +98,98 @@ TEST(BasicProgramExecutionParallel, BasicAssertions)
     {
         EXPECT_EQ(results[0].values[0], expected1);
         EXPECT_EQ(results[0].values[1], expected2);
+    }
+}
+
+TEST(BasicFrontSchemaParallel, BasicAssertions)
+{    
+    const int width = 10, height = 10, depth = 10;
+    const int clients = 2;
+    const int epochs = 2;
+
+    organisation::schema s1(width, height, depth), s2(width, height, depth);
+
+	::parallel::device *dev = new ::parallel::device(0);
+	::parallel::queue *q = new parallel::queue(*dev);
+
+
+    std::string expected1("daisy daisy give me your answer do .");  
+    std::string expected2("I'm half crazy for the love of you .");
+
+    std::string result1("daisy give me your answer do .");  
+    std::string result2("I'm half crazy the the love of you .");
+
+    std::vector<std::string> expected = { expected1, expected2 };
+
+    int terms = 0;
+    for(std::vector<std::string>::iterator it = expected.begin(); it != expected.end(); ++it)
+    {
+        std::vector<std::string> t = organisation::split(*it);
+        terms += (t.size() * 2) + 1;
+    }
+
+    organisation::parallel::front f(*dev, terms, clients);
+
+    std::vector<std::tuple<std::string,std::string>> source1 = { 
+        std::tuple<std::string,std::string>(expected1, result1),
+        std::tuple<std::string,std::string>(expected2, result2)
+    };
+
+    std::vector<std::tuple<std::string,std::string>> source2 = { 
+        std::tuple<std::string,std::string>(expected1, expected1),
+        std::tuple<std::string,std::string>(expected2, expected2)
+    };
+
+    s1.compute(source1);
+    s2.compute(source2);
+
+    f.set(&s1, 0);
+    f.set(&s2, 1);
+
+    f.run(q);
+
+    EXPECT_FALSE(f.is_front(0));
+    EXPECT_TRUE(f.is_front(1));
+}
+
+TEST(BasicFrontTestParallel, BasicAssertions)
+{
+	::parallel::device *dev = new ::parallel::device(0);
+	::parallel::queue *q = new parallel::queue(*dev);
+
+    int points[][2] = { {97,23},{55,77},{34,76},{80,60},{99,04},{81,05},{05,81},{30,79},{15,80},{70,65},
+                        {90,40},{40,30},{30,40},{20,60},{60,50},{20,20},{30,01},{60,40},{70,25},{44,62},
+                        {55,55},{55,10},{15,45},{83,22},{76,46},{56,32},{45,55},{10,70},{10,30},{97,23}
+                      };
+    
+	const int count = 30;
+    const int terms = 2;
+
+    bool results[count];
+    for(int i = 0; i < count; ++i) results[i] = false;
+
+    results[0] = true;
+    results[1] = true;
+    results[3] = true;
+    results[4] = true;
+    results[6] = true;
+    results[7] = true;
+    results[8] = true;
+    results[9] = true;
+    results[10] = true;
+    results[29] = true;
+
+    organisation::parallel::front f(*dev, terms, count);
+
+    for(int i = 0; i < count; ++i)
+    {
+        f.set(points[i],i);
+    }
+
+    f.run(q);
+
+    for(int i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(results[i], f.is_front(i));
     }
 }

@@ -5,6 +5,13 @@ parallel::device::device(int index)
     dev = select(index);
 }
 
+uint32_t parallel::device::local_mem_size()
+{
+    bool has_local = dev.is_host() || (dev.get_info<sycl::info::device::local_mem_type>() != sycl::info::local_mem_type::none);
+    uint32_t result = dev.get_info<sycl::info::device::local_mem_size>();
+    return result;
+}
+
 std::vector<std::string> parallel::device::enumerate()
 {
 	std::vector<std::string> result;

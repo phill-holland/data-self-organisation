@@ -53,6 +53,7 @@ TEST(BasicProgramExecution, BasicAssertions)
 TEST(BasicProgramCross, BasicAssertions)
 {
     GTEST_SKIP();
+    
     const int width = 10, height = 10, depth = 10;
     organisation::program p1(width,height,depth), p2(width,height,depth);
 
@@ -66,10 +67,6 @@ TEST(BasicProgramCross, BasicAssertions)
 
     std::vector<organisation::vector> in1 = { up, up, left, up, left, up, left, up };
     std::vector<organisation::vector> out1 = { down, right, down, right, down, right, down, right };
-
-    //int x = (width / 2);
-    //int y = (height / 2);
-    //int z = (depth / 2);
 
     int x = width - 1;
     int y = height - 1;

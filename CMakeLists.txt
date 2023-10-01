@@ -7,7 +7,7 @@ project(data-self-organisation)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -gdwarf-4")
 
-set(CMAKE_BUILD_TYPE "Debug")
+#set(CMAKE_BUILD_TYPE "Debug")
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 

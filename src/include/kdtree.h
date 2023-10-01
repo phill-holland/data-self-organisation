@@ -26,12 +26,16 @@ namespace dominance
             bool initalised() { return init; }
             void reset(long dimensions, long length);
 
+            void clear();
+
             void insert(kdpoint *point);
             
             bool inside(const kdpoint &value, kdpoint *min, kdpoint *max);
 
             void remove(kdpoint &point, bool debug = false);
             bool exists(kdpoint &point);
+            
+            long size() { return length - unallocated.size(); }
             
         protected:
             bool isintersect(kdpoint *root, kdpoint *min, kdpoint *max);

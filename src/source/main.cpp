@@ -13,22 +13,26 @@
 #include "parallel/queue.hpp"
 #include "parallel/program.hpp"
 
+#include "parallel/front.hpp"
+
 using namespace std;
 
-std::string source = R"(daisy daisy give me your answer do .
-I'm half crazy for the love of you .)";
-/*it won't be a stylish marriage .)";
+std::string source = R"(daisy daisy give me your answer do .)";
+/*I'm half crazy for the love of you .)";
+it won't be a stylish marriage .)";
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
-std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
+std::vector<std::string> expected = { "daisy daisy give me your answer do ."};//, "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
-const int rounds = 15;
-//const int population = 1000, clients = 800;
-const int population = 4000, clients = 3500;
-const int iterations = 300;
+const int rounds = 1;//15;
+const int population = 2000, clients = population / 2;//800;
+//const int population = 4000, clients = 3500;
+const int fronts = 1000;
+const int iterations = 1000;
+
 
 organisation::parallel::parameters get()
 {
@@ -36,7 +40,6 @@ organisation::parallel::parameters get()
 
     organisation::parallel::parameters parameters(width, height, depth, in, out);
     parameters.epochs = expected.size();
-
     return parameters; 
 }
 
@@ -53,6 +56,7 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
     settings.mappings = mappings;
     settings.clients = clients;
     settings.size = population;
+    settings.fronts = fronts;
 
     organisation::populations::population p(settings);
     
