@@ -17,20 +17,20 @@
 
 using namespace std;
 
-std::string source = R"(daisy daisy give me your answer do .)";
-/*I'm half crazy for the love of you .)";
-it won't be a stylish marriage .)";
+std::string source = R"(daisy daisy give me your answer do .
+I'm half crazy for the love of you .)";
+/*it won't be a stylish marriage .)";
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
-std::vector<std::string> expected = { "daisy daisy give me your answer do ."};//, "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
+std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
 const int rounds = 1;//15;
-const int population = 2000, clients = population / 2;//800;
+const int population = 5000, clients = population / 2;//800;
 //const int population = 4000, clients = 3500;
-const int fronts = 1000;
+const int fronts = 2500;
 const int iterations = 1000;
 
 

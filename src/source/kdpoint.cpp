@@ -78,6 +78,18 @@ long dominance::kdtree::kdpoint::get(unsigned long dimension)
     return values[dimension];
 }
 
+bool dominance::kdtree::kdpoint::dominates(const kdpoint &source)
+{
+    bool any = false;
+    for (int i = 0; i < dimensions; ++i)
+    {
+        if(source.values[i] > values[i]) return false;
+        any |= (source.values[i] < values[i]);
+    }
+
+    return any;
+}
+
 void dominance::kdtree::kdpoint::copy(const kdpoint &source)
 {
     if (dimensions <= source.dimensions)

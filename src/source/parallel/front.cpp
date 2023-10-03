@@ -156,6 +156,10 @@ void organisation::parallel::front::run(::parallel::queue *q)
             }
 
             _isFront[i] = front;
+
+            // (if front == 0)
+            // points is dominated by another
+            // atomic add dominatedCount[i]
         });
     }).wait();
 
