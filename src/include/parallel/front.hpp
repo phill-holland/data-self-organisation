@@ -18,8 +18,10 @@ namespace organisation
 
             float *deviceValues;
             int *deviceIsFront;
+            int *deviceDominatedCount;
             
             int *hostIsFront;
+            int *hostDominatedCount;
             float *hostValues;
 
             int terms;            
@@ -40,11 +42,17 @@ namespace organisation
             organisation::schema *get(int client);
             
             bool is_front(int client);
+            int rank(int client);
 
+            int front_count();
+            int rank_front_count();
+            
             void run(::parallel::queue *q);
             void run2(::parallel::queue *q);
             void run3(::parallel::queue *q);
             void run4(::parallel::queue *q);
+
+            void extra(::parallel::queue *q);
 
         public:
             void outputarb(int *source, int length);

@@ -335,7 +335,7 @@ organisation::schema *organisation::populations::population::best(region r, orga
     return front->get(client);
 }
 */
-/*
+
 organisation::schema *organisation::populations::population::best(region r, organisation::parallel::front *front)
 {
     const int samples = 10;
@@ -345,22 +345,31 @@ organisation::schema *organisation::populations::population::best(region r, orga
     int competition;
 
     int best = rand(generator);    
-	float score = 0.0f;
-    organisation::schema *b = front->get(best);
-    if(b != NULL) score = b->sum();
+    int rank = front->rank(best);
+	//float score = 0.0f;
+    //organisation::schema *b = front->get(best);
+    //if(b != NULL) score = b->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
 
-        float t2 = 0.0f;
-        organisation::schema *s1 = front->get(competition);
-        if(s1 != NULL)
+        int r1 = front->rank(competition);
+        if((r1 < rank)&&(r1 > -1))
         {
-            t2 = s1->sum();
+            best = competition;
+            rank = r1;
         }
-        else std::cout << "NULL " << competition << "\r\n";
 
+        //float t2 = 0.0f;
+        //organisation::schema *s1 = front->get(competition);
+        //if(s1 != NULL)
+        //{
+            //t2 = s1->sum();
+        //}
+        //else std::cout << "NULL " << competition << "\r\n";
+
+/*
         if(!front->is_front(best)&&front->is_front(competition))
         {
             best = competition;
@@ -374,11 +383,12 @@ organisation::schema *organisation::populations::population::best(region r, orga
                 score = t2;
             }
         }
+        */
     }
     
     return front->get(best);
 }
-*/
+
 /*
 organisation::schema *organisation::populations::population::best(region r, organisation::parallel::front *front)
 {
@@ -431,8 +441,12 @@ organisation::schema *organisation::populations::population::best(region r, orga
 }
 */
 
+/*
 organisation::schema *organisation::populations::population::best(region r, organisation::parallel::front *front)
 {
+    // ***
+    // this one
+    // ***
     const int samples = 10;
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
@@ -467,7 +481,7 @@ organisation::schema *organisation::populations::population::best(region r, orga
 
     return schemas->data[best];    
 }
-
+*/
 /*
 organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
 {
@@ -488,7 +502,7 @@ organisation::schema *organisation::populations::population::worst(region r, org
     return front->get(client);
 }
 */
-/*
+
 organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
 {
      const int samples = 10;
@@ -498,23 +512,27 @@ organisation::schema *organisation::populations::population::worst(region r, org
     int competition;
 
     int worst = rand(generator);    
-	float score = 0.0f;
-    organisation::schema *b = front->get(worst);
-    if(b != NULL)
-        score = b->sum();
+    int rank = front->rank(worst);
+	//float score = 0.0f;
+    //organisation::schema *b = front->get(worst);
+    //if(b != NULL) score = b->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
 
-        float t2 = 0.0f;
-        organisation::schema *s1 = front->get(competition);
-        if(s1 != NULL)
-        {
-            t2 = s1->sum();
-        }
-        else std::cout << "NULL " << competition << "\r\n";
+        //float t2 = 0.0f;
+        //organisation::schema *s1 = front->get(competition);
+        //if(s1 != NULL) t2 = s1->sum();
 
+        int r1 = front->rank(competition);
+        //if(r1 != 0) std::cout << "not zero!\r\n";
+        if((r1 > rank)&&(r1 > -1))
+        {
+            worst = competition;
+            rank = r1;
+        }
+        /*
         if(front->is_front(worst)&&!front->is_front(competition))
         {
             worst = competition;
@@ -528,11 +546,12 @@ organisation::schema *organisation::populations::population::worst(region r, org
                 score = t2;
             }
         }
+        */
     }
     
     return front->get(worst);
 }
-*/
+
 /*
 organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
 {
@@ -583,8 +602,12 @@ organisation::schema *organisation::populations::population::worst(region r, org
     return schemas->data[worst];
 }
 */
+/*
 organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
 {
+    // ****
+    // this one
+    // ****
     const int samples = 10;
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
@@ -631,12 +654,15 @@ organisation::schema *organisation::populations::population::worst(region r, org
 
     return schemas->data[worst];
 }
+*/
 
 void organisation::populations::population::pull(organisation::schema **buffer, region r, organisation::parallel::front *front)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
 
-    //pick(r, front);
+    pick(r, front);
+
+    std::cout << "pull " << front->front_count() << " " << front->rank_front_count() << "\r\n";
     //front->run(settings.q);
 
     //CALLGRIND_START_INSTRUMENTATION;
@@ -657,7 +683,9 @@ void organisation::populations::population::push(organisation::schema **buffer, 
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();
 
-    //pick(r, front);
+    pick(r, front);
+    
+    std::cout << "push " << front->front_count() << " " << front->rank_front_count() << "\r\n";
     
     for(int i = 0; i < settings.clients; ++i)
     {
@@ -715,7 +743,7 @@ void organisation::populations::population::pick(region r, organisation::paralle
         }
     }
 
-    destination->run(settings.q);
+    destination->extra(settings.q);
 }
 
 void organisation::populations::population::makeNull() 

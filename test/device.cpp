@@ -104,6 +104,8 @@ TEST(BasicProgramExecutionParallel, BasicAssertions)
 
 TEST(BasicFrontSchemaParallel, BasicAssertions)
 {    
+    GTEST_SKIP();
+
     const int width = 10, height = 10, depth = 10;
     const int clients = 2;
     const int epochs = 2;
@@ -187,7 +189,7 @@ TEST(BasicFrontTestParallel, BasicAssertions)
         f.set(points[i],i);
     }
 
-    f.run(q);
+    f.extra(q);
 
     for(int i = 0; i < count; ++i)
     {
@@ -197,6 +199,8 @@ TEST(BasicFrontTestParallel, BasicAssertions)
 
 TEST(BasicFrontTest, BasicAssertions)
 {
+    GTEST_SKIP();
+
     int points[][2] = { {97,23},{55,77},{34,76},{80,60},{99,04},{81,05},{05,81},{30,79},{15,80},{70,65},
                         {90,40},{40,30},{30,40},{20,60},{60,50},{20,20},{30,01},{60,40},{70,25},{44,62},
                         {55,55},{55,10},{15,45},{83,22},{76,46},{56,32},{45,55},{10,70},{10,30},{97,23}

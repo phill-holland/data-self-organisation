@@ -25,8 +25,14 @@ void organisation::parallel::front::reset(::parallel::device &dev, int terms, in
     deviceIsFront = sycl::malloc_device<int>(clients, q);
     if(deviceIsFront == NULL) return;
     
+    deviceDominatedCount = sycl::malloc_device<int>(clients, q);
+    if(deviceDominatedCount == NULL) return;
+
     hostIsFront = sycl::malloc_host<int>(clients, q);
-    if(hostIsFront == NULL) return;
+    if(hostIsFront == NULL) return;    
+
+    hostDominatedCount = sycl::malloc_host<int>(clients, q);
+    if(hostDominatedCount == NULL) return;
 
     hostValues = sycl::malloc_host<float>(length, q);
     if(hostValues == NULL) return;
@@ -100,6 +106,37 @@ bool organisation::parallel::front::is_front(int client)
     return hostIsFront[client] == 1 ? true : false;
 }
 
+int organisation::parallel::front::rank(int client)
+{
+    if((client < 0) || (client > clients)) return -1;
+
+    return hostDominatedCount[client];
+}
+
+int organisation::parallel::front::front_count()
+{
+    int result = 0;
+
+    for(int i = 0; i < clients; ++i)
+    {
+        if(hostIsFront[i] == 1) ++result;
+    }
+
+    return result;
+}
+
+int organisation::parallel::front::rank_front_count()
+{
+    int result = 0;
+
+    for(int i = 0; i < clients; ++i)
+    {
+        if(hostDominatedCount[i] == 0) ++result;
+    }
+
+    return result;
+}
+
 void organisation::parallel::front::run(::parallel::queue *q)
 {
     const size_t length = clients;
@@ -166,6 +203,88 @@ void organisation::parallel::front::run(::parallel::queue *q)
     qt.memcpy(hostIsFront, deviceIsFront, sizeof(int) * clients).wait();
 
    // outputarb(deviceIsFront, clients);
+}
+
+void organisation::parallel::front::extra(::parallel::queue *q)
+{
+    const size_t length = clients;
+
+    sycl::queue& qt = ::parallel::queue::get_queue(*dev, q);
+    sycl::range num_items{(size_t)length};
+
+    sycl::range global{0,length};
+    sycl::range local {1,(size_t)terms};
+
+    auto m1 = qt.memcpy(deviceValues, hostValues, sizeof(float) * terms * clients);
+    auto m2 = qt.memset(deviceIsFront, 0, sizeof(int) * clients);
+    auto m3 = qt.memset(deviceDominatedCount, 0, sizeof(int) * clients);
+
+    m1.wait();
+    m2.wait();
+    m3.wait();
+
+    qt.submit([&](auto &h) 
+    {        
+        auto _values = deviceValues;
+        auto _isFront = deviceIsFront;
+        auto _dominatedCount = deviceDominatedCount;
+        auto _terms = terms;
+        auto _clients = clients;
+
+//sycl::stream out(2048, 256, h);
+
+        h.parallel_for(num_items, [=](auto i) 
+        {
+            int index = i * _terms;
+            int front = 1;
+            int count = 0;
+
+            for(int client = 0; client < _clients; ++client)
+            {
+                if(client != i)                
+                {                 
+                    bool any = false;
+
+                    for(int j = 0; j < _terms; j = j + 1)
+                    {                        
+                        float a = _values[j + index];           
+                        float b = _values[j + (client * _terms)];
+
+                        if(a > b) 
+                        { 
+                            any = false;
+                            break; 
+                        }
+			            
+                        any |= (a < b);
+                    }
+
+                    if(any) 
+                    { 
+                        front = 0; 
+                        count = count + 1;
+                        //break;
+                    }
+                }
+            }
+
+            _isFront[i] = front;
+            _dominatedCount[i] = count;
+
+            // (if front == 0)
+            // points is dominated by another
+            // atomic add dominatedCount[i]
+        });
+    }).wait();
+
+    auto m4 = qt.memcpy(hostIsFront, deviceIsFront, sizeof(int) * clients);
+    auto m5 = qt.memcpy(hostDominatedCount, deviceDominatedCount, sizeof(int) * clients);
+
+    m4.wait();
+    m5.wait();
+    //outputarb(deviceIsFront, clients);
+    //std::cout << "\r\n\r\n";
+    //outputarb(deviceDominatedCount, clients);
 }
 
 void organisation::parallel::front::run2(::parallel::queue *q)
@@ -531,6 +650,9 @@ void organisation::parallel::front::makeNull()
 
     deviceValues = NULL;   
     deviceIsFront = NULL;
+    deviceDominatedCount = NULL;
+    hostIsFront = NULL;
+    hostDominatedCount = NULL;
     hostValues = NULL;    
 }
 
@@ -541,7 +663,9 @@ void organisation::parallel::front::cleanup()
         sycl::queue q = ::parallel::queue(*dev).get();
         
         if (hostValues != NULL) sycl::free(hostValues, q);
+        if (hostDominatedCount != NULL) sycl::free(hostDominatedCount, q);
         if (hostIsFront != NULL) sycl::free(hostIsFront, q);
+        if (deviceDominatedCount != NULL) sycl::free(deviceDominatedCount, q);
         if (deviceIsFront != NULL) sycl::free(deviceIsFront, q);
         if (deviceValues != NULL) sycl::free(deviceValues, q);        
     }
