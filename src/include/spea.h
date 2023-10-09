@@ -11,27 +11,25 @@
 #include <random>
 #include <atomic>
 
-#ifndef _ORGANISATION_POPULATION
-#define _ORGANISATION_POPULATION
+#ifndef _ORGANISATION_SPEA
+#define _ORGANISATION_SPEA
 
 namespace organisation
 {
     namespace populations
-    {        
-        class population
+    {                
+        class spea
         {
             friend class generator;
             friend class collector;
 
             static const int minimum = 100, maximum = 10000;
-            //static const int fronts = 200;
 
             static std::mt19937_64 generator;
 
-            //dominance::kdtree::kdtree *approximationA, *approximationB;
-            organisation::parallel::front *frontA, *frontB;
+            organisation::parallel::front *front;
 
-            organisation::schemas *schemas;            
+            organisation::schemas *schemas, *archive;            
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
 
             parallel::program *programs;
@@ -43,8 +41,8 @@ namespace organisation
             bool init;
 
         public:
-            population(parameters &params) { makeNull(); reset(params); }
-            ~population() { cleanup(); }
+            spea(parameters &params) { makeNull(); reset(params); }
+            ~spea() { cleanup(); }
 
             bool initalised() { return init; }
             void reset(parameters &params);
@@ -56,19 +54,20 @@ namespace organisation
         void generate();
 
         protected:
-            bool get(schema &destination, region r, organisation::parallel::front *front);
-            bool set(schema &source, region r, organisation::parallel::front *front);
+            bool get(schema &destination, region r);
+            bool set(schema &source, region r);
             
         protected:
-            schema *best(region r, organisation::parallel::front *front);
-            schema *worst(region r, organisation::parallel::front *front);
+            schema *best(region r);
+            schema *worst(region r);
 
         protected:
-            void pull(organisation::schema **buffer, region r, organisation::parallel::front *front);
-            void push(organisation::schema **buffer, region r, organisation::parallel::front *front);
+            void pull(organisation::schema **buffer, region r);
+            void push(organisation::schema **buffer, region r);
 
         protected:
             void pick(region r, organisation::parallel::front *destination);
+            void archiver();
 
         protected:
             results execute(organisation::schema **buffer, std::vector<std::string> expected);

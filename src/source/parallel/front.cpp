@@ -40,6 +40,11 @@ void organisation::parallel::front::reset(::parallel::device &dev, int terms, in
     init = true;
 };
 
+void organisation::parallel::front::clear()
+{
+    memset(hostValues, 0, sizeof(float) * terms * clients);
+}
+
 void organisation::parallel::front::set(organisation::schema *source, int client)
 {
     if((client < 0) || (client > clients)) return;

@@ -36,6 +36,8 @@ namespace organisation
             bool initalised() { return init; }
             void reset(::parallel::device &dev, int terms, int clients);
 
+            void clear();
+
             void set(organisation::schema *source, int client);
             void set(int *source, int client);
             
