@@ -40,6 +40,9 @@ namespace organisation
 
         bool get(dominance::kdtree::kdpoint &destination, int minimum, int maximum);
 
+        std::vector<float> get();
+        float get(int dimension);
+
         float sum();
         
         void compute(std::vector<std::tuple<std::string,std::string>> values);

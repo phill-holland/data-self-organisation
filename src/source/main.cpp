@@ -28,7 +28,7 @@ of a bicycle built for two .
 std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
 const int rounds = 15;//15;
-const int population = 1000, clients = population / 2;//800;
+const int population = 6000, clients = population / 2;//800;
 //const int population = 4000, clients = 3500;
 const int fronts = 500;
 const int iterations = 1000;
@@ -36,7 +36,7 @@ const int iterations = 1000;
 
 organisation::parallel::parameters get()
 {
-    const int width = 5, height = 5, depth = 5, in = 15, out = 10;
+    const int width = 5, height = 5, depth = 5, in = 5, out = 26;//in = 15, out = 10;
 
     organisation::parallel::parameters parameters(width, height, depth, in, out);
     parameters.epochs = expected.size();

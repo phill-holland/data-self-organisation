@@ -269,6 +269,8 @@ bool organisation::populations::spea::set(schema &source, region r)
 
 organisation::schema *organisation::populations::spea::best(region r)
 {
+    return NULL;
+    /*
     const int samples = 10;
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
@@ -301,11 +303,14 @@ organisation::schema *organisation::populations::spea::best(region r)
         }         
 	}
 
-    return schemas->data[best];    
+    return schemas->data[best];  
+    */  
 }
 
 organisation::schema *organisation::populations::spea::worst(region r)
 {
+    return NULL;
+    /*
     const int samples = 10;
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
@@ -339,6 +344,7 @@ organisation::schema *organisation::populations::spea::worst(region r)
 	}
 
     return schemas->data[worst];
+    */
 }
 
 void organisation::populations::spea::pull(organisation::schema **buffer, region r)
@@ -372,6 +378,7 @@ void organisation::populations::spea::push(organisation::schema **buffer, region
 
 void organisation::populations::spea::pick(region r, organisation::parallel::front *destination)
 {
+    /*
     std::uniform_int_distribution<int> rand{ r.start, r.end };
 
     if(settings.fronts != (settings.size / 2))
@@ -392,6 +399,7 @@ void organisation::populations::spea::pick(region r, organisation::parallel::fro
     }
 
     destination->extra(settings.q);
+    */
 }
 
 void organisation::populations::spea::archiver()

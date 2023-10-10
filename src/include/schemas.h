@@ -2,6 +2,7 @@
 #include "data.h"
 #include <random>
 #include <atomic>
+#include <vector>
 
 #ifndef _ORGANISATION_SCHEMAS
 #define _ORGANISATION_SCHEMAS
@@ -10,11 +11,12 @@ namespace organisation
 {
     class schemas
     {
-    public:
-        schema **data;
+    //public:
+        //schema **data;
+        std::vector<schema*> data;
 
     private:
-        std::atomic<int> *locks;
+        //std::atomic<int> *locks;
 
         int length;
 
@@ -29,14 +31,22 @@ namespace organisation
 
         bool clear();
 
-        bool get(schema &destination, int index);
-        bool set(schema &source, int index);
+        schema *get(int index)
+        {
+            if((index < 0)||(index >= length)) return NULL;
+            return data[index];
+        }
 
-        schema *lock(int index);
-        bool unlock(int index);
+        //bool get(schema &destination, int index);
+        //bool set(schema &source, int index);
+
+        //schema *lock(int index);
+        //bool unlock(int index);
 
         bool generate(organisation::data &source);
 
+        void sort(int dimension);
+        
     protected:
         void makeNull();
         void cleanup();

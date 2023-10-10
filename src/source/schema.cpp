@@ -42,6 +42,36 @@ bool organisation::schema::get(dominance::kdtree::kdpoint &destination, int mini
     return true;
 }
 
+std::vector<float> organisation::schema::get()
+{
+    std::vector<float> result;
+
+    for(auto &it: scores)
+    {     
+        for(int j = 0; j < it.second.size(); ++j)
+        {
+            float temp = it.second.get(j);
+            result.push_back(temp);
+        }        
+    }
+
+    return result;
+}
+
+float organisation::schema::get(int dimension)
+{
+    int temp = dimension;
+    int index = 0;
+
+    while(temp > scores[index].size())
+    {
+        temp -= scores[index].size();
+        ++index;
+    }
+
+    return scores[index].get(temp);
+}
+
 float organisation::schema::sum()
 {
     float result = 0.0f;

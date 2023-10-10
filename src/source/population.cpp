@@ -20,33 +20,13 @@ void organisation::populations::population::reset(parameters &params)
     std::vector<std::vector<std::string>> d;
     for(std::vector<std::string>::iterator it = settings.expected.begin(); it != settings.expected.end(); ++it)
     {
-        std::vector<std::string> t = split(*it);
-        //lengths.push_back((t.size() * 2) + 1);
+        std::vector<std::string> t = split(*it);        
         dimensions += (t.size() * 2) + 1;
     }
 
-    frontA = new organisation::parallel::front(*settings.dev, dimensions, settings.fronts);
-    if (frontA == NULL) return;
-    if (!frontA->initalised()) return;
-
-    frontB = new organisation::parallel::front(*settings.dev, dimensions, settings.fronts);
-    if (frontB == NULL) return;
-    if (!frontB->initalised()) return;
-
-/*
-	approximationA = new dominance::kdtree::kdtree(dimensions, 50000);
-	if (approximationA == NULL) return;
-	if (!approximationA->initalised()) return;
-
-    approximationB = new dominance::kdtree::kdtree(dimensions, 50000);
-	if (approximationB == NULL) return;
-	if (!approximationB->initalised()) return;
-*/
     schemas = new organisation::schemas(settings.params.width, settings.params.height, settings.params.depth, settings.size);
     if (schemas == NULL) return;
     if (!schemas->initalised()) return;
-
-    // ***
 
     intermediateA = new organisation::schema*[settings.clients];
     if (intermediateA == NULL) return;
@@ -78,8 +58,6 @@ void organisation::populations::population::reset(parameters &params)
         if(!intermediateC[i]->initalised()) return;
     }
 
-    // ***
-
     programs = new parallel::program(*settings.dev, settings.params, settings.clients);
     if (programs == NULL) return;
     if (!programs->initalised()) return;
@@ -110,17 +88,12 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     region rset = { 0, (settings.size / 2) - 1 };
     region rget = { (settings.size / 2), settings.size - 1 };
 
-    //dominance::kdtree::kdtree *tset = approximationA;
-    //dominance::kdtree::kdtree *tget = approximationB;
-    organisation::parallel::front *tset = frontA;
-    organisation::parallel::front *tget = frontB;
-
-    pull(intermediateA, rset, tset);
+    pull(intermediateA, rset);
 
     do
     {
-        auto r1 = std::async(&organisation::populations::population::push, this, set, rset, tset);
-        auto r2 = std::async(&organisation::populations::population::pull, this, get, rget, tget);
+        auto r1 = std::async(&organisation::populations::population::push, this, set, rset);
+        auto r2 = std::async(&organisation::populations::population::pull, this, get, rget);
         auto r3 = std::async(&organisation::populations::population::execute, this, run, expected);
 
         r1.wait();
@@ -152,10 +125,6 @@ organisation::schema organisation::populations::population::go(std::vector<std::
         region t2 = rset;
         rset = rget;
         rget = t2;
-
-        organisation::parallel::front *t3 = tset;
-        tset = tget;
-        tget = t3;
 
         ++count;
 
@@ -249,7 +218,7 @@ organisation::populations::results organisation::populations::population::execut
     return result;
 }
 
-bool organisation::populations::population::get(schema &destination, region r, organisation::parallel::front *front)
+bool organisation::populations::population::get(schema &destination, region r)
 {
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)settings.size) / 100.0f) * mutate_rate_in_percent;
@@ -258,7 +227,7 @@ bool organisation::populations::population::get(schema &destination, region r, o
 
     if(((float)t) <= mutation) 
     {
-        schema *s1 = best(r, front);
+        schema *s1 = best(r);
         if(s1 == NULL) return false;
 
         destination.copy(*s1);
@@ -266,9 +235,9 @@ bool organisation::populations::population::get(schema &destination, region r, o
     }
     else
     {
-        schema *s1 = best(r, front);
+        schema *s1 = best(r);
         if(s1 == NULL) return false;
-        schema *s2 = best(r, front);
+        schema *s2 = best(r);
         if(s2 == NULL) return false;
                      
         s1->cross(&destination, s2);
@@ -277,120 +246,17 @@ bool organisation::populations::population::get(schema &destination, region r, o
     return true;
 }
 
-bool organisation::populations::population::set(schema &source, region r, organisation::parallel::front *front)
+bool organisation::populations::population::set(schema &source, region r)
 {    
-    schema *destination = worst(r, front);
+    schema *destination = worst(r);
     if(destination == NULL) return false;
 
-/*
-	if(source.sum() < destination->sum()) return false;
-
-    std::uniform_real_distribution<float> dist{ 0.0f, 1.0f };
-    bool result = false;
-   
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-
-	temp1.set(0L);
-	temp2.set(0L);
-
-    destination->get(temp1, minimum, maximum);
-    source.get(temp2, minimum, maximum);
-
-	if(!temp1.issame(minimum)) 
-	{
-		if(tree->exists(temp2))
-		{
-			tree->remove(temp1);
-		}
-	}
-	if(!temp2.issame(minimum)) 
-    {
-        tree->insert(&temp2);
-        result = true;
-    }
-*/
     destination->copy(source);
 
     return true;
-	//return result;
 }
 
-/*
-organisation::schema *organisation::populations::population::best(region r, organisation::parallel::front *front)
-{    
-    const int escape = 10;
-
-    std::uniform_int_distribution<int> rand{ 0, settings.fronts - 1 };
-
-    int counter = 0;
-    int client = 0;
-    bool is_front = false;
-    do
-    {
-        client = rand(generator);
-        is_front = front->is_front(client);
-        ++counter;
-    }while((!is_front)&&(counter < escape));
-
-    return front->get(client);
-}
-*/
-
-organisation::schema *organisation::populations::population::best(region r, organisation::parallel::front *front)
-{
-    const int samples = 10;
-
-    std::uniform_int_distribution<int> rand{ 0, settings.fronts - 1 };
-
-    int competition;
-
-    int best = rand(generator);    
-    int rank = front->rank(best);
-	//float score = 0.0f;
-    //organisation::schema *b = front->get(best);
-    //if(b != NULL) score = b->sum();
-
-	for (int i = 0; i < samples; ++i)
-	{
-		competition = rand(generator);
-
-        int r1 = front->rank(competition);
-        if((r1 < rank)&&(r1 > -1))
-        {
-            best = competition;
-            rank = r1;
-        }
-
-        //float t2 = 0.0f;
-        //organisation::schema *s1 = front->get(competition);
-        //if(s1 != NULL)
-        //{
-            //t2 = s1->sum();
-        //}
-        //else std::cout << "NULL " << competition << "\r\n";
-
-/*
-        if(!front->is_front(best)&&front->is_front(competition))
-        {
-            best = competition;
-            score = t2;
-        }
-        else if(!front->is_front(best)&&!front->is_front(competition))
-        {
-            if(t2 > score)
-            {
-                best = competition;
-                score = t2;
-            }
-        }
-        */
-    }
-    
-    return front->get(best);
-}
-
-/*
-organisation::schema *organisation::populations::population::best(region r, organisation::parallel::front *front)
+organisation::schema *organisation::populations::population::best(region r)
 {
     const int samples = 10;
 
@@ -406,71 +272,17 @@ organisation::schema *organisation::populations::population::best(region r, orga
     int competition;
 
     int best = rand(generator);    
-	float score = schemas->data[best]->sum();
+	//float score = schemas->data[best]->sum();
+    float score = schemas->get(best)->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
 
-        schemas->data[best]->get(temp1, minimum, maximum);
-        schemas->data[competition]->get(temp2, minimum, maximum);
+        schemas->get(best)->get(temp1, minimum, maximum);
+        schemas->get(competition)->get(temp2, minimum, maximum);
 
-		float t2 = schemas->data[competition]->sum();
-
-		if(tree->exists(temp1))
-		{
-			if(tree->inside(temp1, &origin, &temp2))
-			{
-				score = t2;
-			}
-			else
-			{
-				best = competition;
-				score = t2;
-			}
-            //std::cout << "goign t\r\n";
-		}
-        else if(t2 > score)
-		{
-			best = competition;
-			score = t2;
-		}
-	}
-
-    return schemas->data[best];    
-}
-*/
-
-/*
-organisation::schema *organisation::populations::population::best(region r, organisation::parallel::front *front)
-{
-    // ***
-    // this one
-    // ***
-    const int samples = 10;
-
-	std::uniform_int_distribution<int> rand{ r.start, r.end };
-
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
-
-	temp1.set(0L);
-	temp2.set(0L);
-	origin.set(0L);
-
-    int competition;
-
-    int best = rand(generator);    
-	float score = schemas->data[best]->sum();
-
-	for (int i = 0; i < samples; ++i)
-	{
-		competition = rand(generator);
-
-        schemas->data[best]->get(temp1, minimum, maximum);
-        schemas->data[competition]->get(temp2, minimum, maximum);
-
-		float t2 = schemas->data[competition]->sum();
+		float t2 = schemas->get(competition)->sum();
 
         if(temp2.dominates(temp1))
         {
@@ -479,197 +291,55 @@ organisation::schema *organisation::populations::population::best(region r, orga
         }         
 	}
 
-    return schemas->data[best];    
+    return schemas->get(best);
 }
-*/
-/*
-organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
+
+organisation::schema *organisation::populations::population::worst(region r)
 {
-    const int escape = 10;
+    const int samples = 10;
 
-    std::uniform_int_distribution<int> rand{ 0, settings.fronts - 1 };
+	std::uniform_int_distribution<int> rand{ r.start, r.end };
 
-    int counter = 0;
-    int client = 0;
-    bool is_front = false;
-    do
-    {
-        client = rand(generator);
-        is_front = front->is_front(client);
-        ++counter;
-    }while((is_front)&&(counter < escape));
+	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
+	dominance::kdtree::kdpoint origin(dimensions);
 
-    return front->get(client);
-}
-*/
-
-organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
-{
-     const int samples = 10;
-
-    std::uniform_int_distribution<int> rand{ 0, settings.fronts - 1 };
+	temp1.set(0L);
+	temp2.set(0L);
+	origin.set(0L);
 
     int competition;
+    int worst = rand(generator);
 
-    int worst = rand(generator);    
-    int rank = front->rank(worst);
-	//float score = 0.0f;
-    //organisation::schema *b = front->get(worst);
-    //if(b != NULL) score = b->sum();
+	float score = schemas->get(worst)->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
 
-        //float t2 = 0.0f;
-        //organisation::schema *s1 = front->get(competition);
-        //if(s1 != NULL) t2 = s1->sum();
+        schemas->get(worst)->get(temp1, minimum, maximum);
+        schemas->get(competition)->get(temp2, minimum, maximum);
 
-        int r1 = front->rank(competition);
-        //if(r1 != 0) std::cout << "not zero!\r\n";
-        if((r1 > rank)&&(r1 > -1))
+		float t2 = schemas->get(competition)->sum();
+
+        if(temp1.dominates(temp2))
         {
-            worst = competition;
-            rank = r1;
-        }
-        /*
-        if(front->is_front(worst)&&!front->is_front(competition))
-        {
-            worst = competition;
+            worst = competition;             
             score = t2;
         }
-        else if(front->is_front(worst)&&front->is_front(competition))
-        {
-            if(t2 > score)
-            {
-                worst = competition;
-                score = t2;
-            }
-        }
-        */
-    }
-    
-    return front->get(worst);
-}
-
-/*
-organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
-{
-    const int samples = 10;
-
-	std::uniform_int_distribution<int> rand{ r.start, r.end };
-
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
-
-	temp1.set(0L);
-	temp2.set(0L);
-	origin.set(0L);
-
-    int competition;
-    int worst = rand(generator);
-
-	float score = schemas->data[worst]->sum();
-
-	for (int i = 0; i < samples; ++i)
-	{
-		competition = rand(generator);
-
-        schemas->data[worst]->get(temp1, minimum, maximum);
-        schemas->data[competition]->get(temp2, minimum, maximum);
-
-		float t2 = schemas->data[competition]->sum();
-
-		if(tree->exists(temp2))
-		{
-			if(tree->inside(temp2, &origin, &temp1))
-			{
-				score = t2;
-			}
-			else 
-			{
-                worst = competition;             
-				score = t2;
-			}
-		}
-		else if(t2 < score)
-		{
-            worst = competition;
-			score = t2;
-		}
 	}
 
-    return schemas->data[worst];
+    return schemas->get(worst);
 }
-*/
-/*
-organisation::schema *organisation::populations::population::worst(region r, organisation::parallel::front *front)
-{
-    // ****
-    // this one
-    // ****
-    const int samples = 10;
 
-	std::uniform_int_distribution<int> rand{ r.start, r.end };
-
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
-
-	temp1.set(0L);
-	temp2.set(0L);
-	origin.set(0L);
-
-    int competition;
-    int worst = rand(generator);
-
-	float score = schemas->data[worst]->sum();
-
-	for (int i = 0; i < samples; ++i)
-	{
-		competition = rand(generator);
-
-        schemas->data[worst]->get(temp1, minimum, maximum);
-        schemas->data[competition]->get(temp2, minimum, maximum);
-
-		float t2 = schemas->data[competition]->sum();
-
-		//if(tree->exists(temp2))
-		//{
-			//if(tree->inside(temp2, &origin, &temp1))
-			//{
-			//	score = t2;
-			//}
-			if(temp1.dominates(temp2))
-			{
-                worst = competition;             
-				score = t2;
-			}
-		//}
-		//else if(t2 < score)
-		//{
-            //worst = competition;
-			//score = t2;
-		//}
-	}
-
-    return schemas->data[worst];
-}
-*/
-
-void organisation::populations::population::pull(organisation::schema **buffer, region r, organisation::parallel::front *front)
+void organisation::populations::population::pull(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
-
-    pick(r, front);
-
-    std::cout << "pull " << front->front_count() << " " << front->rank_front_count() << "\r\n";
-    //front->run(settings.q);
 
     //CALLGRIND_START_INSTRUMENTATION;
     //CALLGRIND_TOGGLE_COLLECT;
     for(int i = 0; i < settings.clients; ++i)
     {
-        get(*buffer[i], r, front);
+        get(*buffer[i], r);
     }    
     //CALLGRIND_TOGGLE_COLLECT;
     //CALLGRIND_STOP_INSTRUMENTATION;
@@ -679,79 +349,22 @@ void organisation::populations::population::pull(organisation::schema **buffer, 
     std::cout << "pull " << time_span.count() << "\r\n";    
 }
 
-void organisation::populations::population::push(organisation::schema **buffer, region r, organisation::parallel::front *front)
+void organisation::populations::population::push(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();
-
-    pick(r, front);
-    
-    std::cout << "push " << front->front_count() << " " << front->rank_front_count() << "\r\n";
     
     for(int i = 0; i < settings.clients; ++i)
     {
-        set(*buffer[i], r, front);
+        set(*buffer[i], r);
     }
-/*
-    tree->clear();
 
-    int length = r.end - r.start;
-    if(settings.clients < length) length = settings.clients;
-
-    dominance::kdtree::kdpoint temp1(dimensions);
-    dominance::kdtree::kdpoint temp2(dimensions);
-
-    temp2.set(0L);
-
-    for(int i = 0; i < length; ++i)
-    {
-        schemas->data[i + r.start]->copy(*buffer[i]);
-        
-        temp1.set(0L);
-    
-        buffer[i]->get(temp1, minimum, maximum);
-
-        if(!temp1.equals(temp2))
-        {
-            tree->insert(&temp1);
-        }
-        //set(*buffer[i], r);
-    } 
-*/
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
     std::cout << "push " << time_span.count() << "\r\n";    
 }
 
-void organisation::populations::population::pick(region r, organisation::parallel::front *destination)
-{
-    std::uniform_int_distribution<int> rand{ r.start, r.end };
-
-    if(settings.fronts != (settings.size / 2))
-    {
-        for(int i = 0; i < settings.fronts; ++i)
-        {
-            int index = rand(generator);
-            destination->set(schemas->data[index], i);
-        }
-    }
-    else
-    {
-        int index = 0;
-        for(int i = r.start; i <= r.end; ++i)
-        {         
-            destination->set(schemas->data[i], index++);
-        }
-    }
-
-    destination->extra(settings.q);
-}
-
 void organisation::populations::population::makeNull() 
 { 
-    //approximationA = NULL;
-    //approximationB = NULL;
-    frontA = NULL;
-    frontB = NULL;
     schemas = NULL;
     intermediateA = NULL;
     intermediateB = NULL;
@@ -790,10 +403,5 @@ void organisation::populations::population::cleanup()
         delete[] intermediateA;
     }
  
-    if(schemas != NULL) delete schemas;
-
-    if(frontB != NULL) delete frontB;
-    if(frontA != NULL) delete frontA;
-//    if(approximationB != NULL) delete approximationB;    
-//    if(approximationA != NULL) delete approximationA;    
+    if(schemas != NULL) delete schemas;    
 }

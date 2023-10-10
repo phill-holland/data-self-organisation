@@ -1,30 +1,52 @@
 #include "schemas.h"
 #include <iostream>
+#include <functional>
 
 void organisation::schemas::reset(int width, int height, int depth, int size)
 {
     init = false; cleanup();
     this->length = size;
     
-    data = new organisation::schema*[size];
-    if(data == NULL) return;
+    data.reserve(size);
+    //data = new organisation::schema*[size];
+    //if(data == NULL) return;
 
+    /*for(std::vector<schema*>::iterator it = data.begin(); it < data.end(); ++it)
+    {
+        *it = NULL;
+    }*/
     for(int i = 0; i < size; ++i) { data[i] = NULL; }
 
     for(int i = 0; i < size; ++i) 
+    //for(std::vector<schema*>::iterator it = data.begin(); it < data.end(); ++it)
     { 
         data[i] = new organisation::schema(width, height, depth);
         if(data[i] == NULL) return;
+
+       // *it = new organisation::schema(width, height, depth);
+       // if(*it == NULL) return;
     }
 
-    locks = new std::atomic<int>[size];
-    if(locks == NULL) return;
+    //locks = new std::atomic<int>[size];
+    //if(locks == NULL) return;
 
-    for(int i = 0; i < size; ++i) { locks[i] = 0; }
+    //for(int i = 0; i < size; ++i) { locks[i] = 0; }
 
     init = true;
 }
 
+bool organisation::schemas::clear()
+{
+    for(int i = 0; i < length; ++i)
+    //for(std::vector<schema*>::iterator it = data.begin(); it < data.end(); ++it)
+    {
+        //(*it)->clear();
+        data[i]->clear();
+    }
+
+    return true;
+}
+/*
 bool organisation::schemas::clear()
 {
     for(int i = 0; i < length; ++i)
@@ -43,7 +65,8 @@ bool organisation::schemas::clear()
 
     return true;
 }
-
+*/
+/*
 organisation::schema *organisation::schemas::lock(int index)
 {
     if((index < 0)||(index >= length)) return NULL;
@@ -77,8 +100,9 @@ bool organisation::schemas::unlock(int index)
 
     return false;
 }
+*/
 
-
+/*
 bool organisation::schemas::get(schema &destination, int index)
 {
     if((index < 0)||(index >= length)) return false;
@@ -140,17 +164,46 @@ bool organisation::schemas::generate(organisation::data &source)
 
     return true;
 }
+*/
+
+bool organisation::schemas::generate(organisation::data &source)
+{
+    for(int i = 0; i < length; ++i)
+    //for(std::vector<schema*>::iterator it = data.begin(); it < data.end(); ++it)
+    {
+        //(*it)->generate(source);
+        data[i]->generate(source);
+    }
+
+    return true;
+}
+
+void organisation::schemas::sort(int dimension)
+{    
+    auto compare = [&,dimension](schema *a, schema *b) 
+	{
+        //float t1 = a->get()[dimension];
+        //float t2 = b->get()[dimension];
+
+        float t1 = a->get(dimension);
+        float t2 = b->get(dimension);
+
+        return t1 < t2;
+    };
+
+    std::sort(data.begin(), data.end(), compare);
+}
 
 void organisation::schemas::makeNull() 
 { 
-    data = NULL;
-    locks = NULL;
+    //data = NULL;
+    //locks = NULL;
 }
 
 void organisation::schemas::cleanup() 
 { 
-    if(locks != NULL) delete[] locks;
-    
+    //if(locks != NULL) delete[] locks;
+    /*
     if(data != NULL)
     {
         for(int i = length - 1; i >= 0; i--)
@@ -160,4 +213,5 @@ void organisation::schemas::cleanup()
 
         delete[] data;
     }
+    */
 }
