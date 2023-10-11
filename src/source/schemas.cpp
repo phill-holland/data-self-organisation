@@ -1,6 +1,7 @@
 #include "schemas.h"
 #include <iostream>
 #include <functional>
+#include <limits>
 
 void organisation::schemas::reset(int width, int height, int depth, int size)
 {
@@ -8,6 +9,8 @@ void organisation::schemas::reset(int width, int height, int depth, int size)
     this->length = size;
     
     data.reserve(size);
+    distances.reserve(size);
+
     //data = new organisation::schema*[size];
     //if(data == NULL) return;
 
@@ -192,6 +195,40 @@ void organisation::schemas::sort(int dimension)
     };
 
     std::sort(data.begin(), data.end(), compare);
+}
+
+void organisation::schemas::crowded()
+{
+    const int dimensions = 13;
+
+    for(int i = 0; i < length; ++i)   
+    {
+        distances[i] = 0.0f;
+    }
+
+    for(int d = 0; d < dimensions; ++d)
+    {
+        sort(d);
+
+        distances[0] = std::numeric_limits<float>::infinity();
+        distances[length - 1] = std::numeric_limits<float>::infinity();
+
+        float min = 0.0f;
+        float max = 0.0f;
+
+        for(int j = 0; j < length; ++j)
+        {
+            float temp = data[j]->get(d);
+
+            if(temp < min) min = temp;
+            if(temp > max) max = temp;
+        }
+
+        for(int j = 1; j < length - 1; ++j)
+        {
+            distances[j] = distances[j] + (data[j + 1]->get(d) - data[j - 1]->get(d)) / (max - min);
+        }
+    }
 }
 
 void organisation::schemas::makeNull() 

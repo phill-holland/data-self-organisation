@@ -14,6 +14,8 @@ namespace organisation
     //public:
         //schema **data;
         std::vector<schema*> data;
+        std::vector<float> distances;
+        //float *distances;
 
     private:
         //std::atomic<int> *locks;
@@ -47,6 +49,8 @@ namespace organisation
 
         void sort(int dimension);
         
+        void crowded();
+
     protected:
         void makeNull();
         void cleanup();
