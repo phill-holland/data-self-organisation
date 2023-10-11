@@ -49,7 +49,7 @@ namespace organisation
 
         void sort(int dimension);
         
-        void crowded();
+        void crowded(int dimensions);
 
     protected:
         void makeNull();

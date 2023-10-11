@@ -8,8 +8,11 @@ void organisation::schemas::reset(int width, int height, int depth, int size)
     init = false; cleanup();
     this->length = size;
     
-    data.reserve(size);
-    distances.reserve(size);
+    //data.reserve(size);
+    //distances.reserve(size);
+
+data.resize(size);
+distances.resize(size);
 
     //data = new organisation::schema*[size];
     //if(data == NULL) return;
@@ -191,16 +194,15 @@ void organisation::schemas::sort(int dimension)
         float t1 = a->get(dimension);
         float t2 = b->get(dimension);
 
+//std::cout << "t1 " << t1 << " t2 " << t2 << "\r\n";
         return t1 < t2;
     };
 
     std::sort(data.begin(), data.end(), compare);
 }
 
-void organisation::schemas::crowded()
+void organisation::schemas::crowded(int dimensions)
 {
-    const int dimensions = 13;
-
     for(int i = 0; i < length; ++i)   
     {
         distances[i] = 0.0f;
@@ -213,8 +215,8 @@ void organisation::schemas::crowded()
         distances[0] = std::numeric_limits<float>::infinity();
         distances[length - 1] = std::numeric_limits<float>::infinity();
 
-        float min = 0.0f;
-        float max = 0.0f;
+        float min = std::numeric_limits<float>::max();
+        float max = std::numeric_limits<float>::min();
 
         for(int j = 0; j < length; ++j)
         {
@@ -230,6 +232,8 @@ void organisation::schemas::crowded()
         }
     }
 }
+
+// https://medium.com/@rossleecooloh/optimization-algorithm-nsga-ii-and-python-package-deap-fca0be6b2ffc
 
 void organisation::schemas::makeNull() 
 { 

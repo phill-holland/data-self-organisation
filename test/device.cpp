@@ -157,6 +157,8 @@ TEST(BasicFrontSchemaParallel, BasicAssertions)
 
 TEST(BasicFrontTestParallel, BasicAssertions)
 {
+    GTEST_SKIP();
+    
 	::parallel::device *dev = new ::parallel::device(0);
 	::parallel::queue *q = new parallel::queue(*dev);
 

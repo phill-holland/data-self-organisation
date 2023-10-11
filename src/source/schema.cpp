@@ -63,7 +63,7 @@ float organisation::schema::get(int dimension)
     int temp = dimension;
     int index = 0;
 
-    while(temp > scores[index].size())
+    while(temp >= scores[index].size())
     {
         temp -= scores[index].size();
         ++index;
