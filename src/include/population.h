@@ -20,9 +20,6 @@ namespace organisation
     {        
         class population
         {
-            friend class generator;
-            friend class collector;
-
             static const int minimum = 100, maximum = 10000;
 
             static std::mt19937_64 generator;

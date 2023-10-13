@@ -50,11 +50,6 @@ namespace organisation
             int rank_front_count();
             
             void run(::parallel::queue *q);
-            void run2(::parallel::queue *q);
-            void run3(::parallel::queue *q);
-            void run4(::parallel::queue *q);
-
-            void extra(::parallel::queue *q);
 
         public:
             void outputarb(int *source, int length);

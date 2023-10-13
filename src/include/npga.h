@@ -11,26 +11,25 @@
 #include <random>
 #include <atomic>
 
-#ifndef _ORGANISATION_SPEA
-#define _ORGANISATION_SPEA
+#ifndef _ORGANISATION_NPGA
+#define _ORGANISATION_NPGA
 
 namespace organisation
 {
     namespace populations
     {                
-        class spea
+        class npga
         {
-            friend class generator;
-            friend class collector;
-
             static const int minimum = 100, maximum = 10000;
 
             static std::mt19937_64 generator;
 
-            organisation::parallel::front *front;
+            organisation::parallel::front *frontA, *frontB;
 
-            organisation::schemas *schemas, *archive;            
+            organisation::schema **schemas;
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
+
+            float *distances;
 
             parallel::program *programs;
 
@@ -41,8 +40,8 @@ namespace organisation
             bool init;
 
         public:
-            spea(parameters &params) { makeNull(); reset(params); }
-            ~spea() { cleanup(); }
+            npga(parameters &params) { makeNull(); reset(params); }
+            ~npga() { cleanup(); }
 
             bool initalised() { return init; }
             void reset(parameters &params);
@@ -51,7 +50,7 @@ namespace organisation
                     
             organisation::schema go(std::vector<std::string> expected, int &count, int iterations = 0);
 
-        void generate();
+            void generate();
 
         protected:
             bool get(schema &destination, region r);
@@ -67,7 +66,10 @@ namespace organisation
 
         protected:
             void pick(region r, organisation::parallel::front *destination);
-            void archiver();
+
+        protected:
+            void sort(int dimension);   
+            void crowded();
 
         protected:
             results execute(organisation::schema **buffer, std::vector<std::string> expected);

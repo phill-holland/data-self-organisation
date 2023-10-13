@@ -191,7 +191,7 @@ TEST(BasicFrontTestParallel, BasicAssertions)
         f.set(points[i],i);
     }
 
-    f.extra(q);
+    f.run(q);
 
     for(int i = 0; i < count; ++i)
     {

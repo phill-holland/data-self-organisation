@@ -1,4 +1,4 @@
-#include "spea.h"
+#include "npga.h"
 #include "general.h"
 #include <iostream>
 #include <fcntl.h>
@@ -6,11 +6,10 @@
 #include <algorithm>
 #include <signal.h>
 #include <chrono>
-#include <valgrind/callgrind.h>
 
-std::mt19937_64 organisation::populations::spea::generator(std::random_device{}());
+std::mt19937_64 organisation::populations::npga::generator(std::random_device{}());
 
-void organisation::populations::spea::reset(parameters &params)
+void organisation::populations::npga::reset(parameters &params)
 {
     init = false; cleanup();
 
@@ -24,17 +23,23 @@ void organisation::populations::spea::reset(parameters &params)
         dimensions += (t.size() * 2) + 1;
     }
 
-    front = new organisation::parallel::front(*settings.dev, dimensions, settings.size);
-    if (front == NULL) return;
-    if (!front->initalised()) return;
+    frontA = new organisation::parallel::front(*settings.dev, dimensions, settings.size);
+    if (frontA == NULL) return;
+    if (!frontA->initalised()) return;
 
-    schemas = new organisation::schemas(settings.params.width, settings.params.height, settings.params.depth, settings.size);
-    if (schemas == NULL) return;
-    if (!schemas->initalised()) return;
+    frontB = new organisation::parallel::front(*settings.dev, dimensions, settings.size);
+    if (frontB == NULL) return;
+    if (!frontB->initalised()) return;
 
-    archive = new organisation::schemas(settings.params.width, settings.params.height, settings.params.depth, settings.size);
-    if (archive == NULL) return;
-    if (!archive->initalised()) return;
+    schemas = new organisation::schema*[settings.size];
+    if(schemas == NULL) return;
+    for(int i = 0; i < settings.size; ++i) schemas[i] = NULL;
+    for(int i = 0; i < settings.size; ++i)
+    {
+        schemas[i] = new organisation::schema(settings.params.width, settings.params.height, settings.params.depth);
+        if(schemas[i] == NULL) return;
+        if(!schemas[i]->initalised()) return;
+    }
 
     // ***
 
@@ -68,6 +73,8 @@ void organisation::populations::spea::reset(parameters &params)
         if(!intermediateC[i]->initalised()) return;
     }
 
+    distances = new float[settings.size];
+    if(distances == NULL) return;
     // ***
 
     programs = new parallel::program(*settings.dev, settings.params, settings.clients);
@@ -77,17 +84,23 @@ void organisation::populations::spea::reset(parameters &params)
     init = true;
 }
 
-void organisation::populations::spea::clear()
+void organisation::populations::npga::clear()
 {
-    schemas->clear();
+    for(int i = 0; i < settings.size; ++i)
+    {
+        schemas[i]->clear();
+    }
 }
 
-void organisation::populations::spea::generate()
+void organisation::populations::npga::generate()
 {
-    schemas->generate(settings.mappings);
+    for(int i = 0; i < settings.size; ++i)
+    {
+        schemas[i]->generate(settings.mappings);
+    }
 }
 
-organisation::schema organisation::populations::spea::go(std::vector<std::string> expected, int &count, int iterations)
+organisation::schema organisation::populations::npga::go(std::vector<std::string> expected, int &count, int iterations)
 {    
     float highest = 0.0f;
     bool finished = false;
@@ -104,9 +117,9 @@ organisation::schema organisation::populations::spea::go(std::vector<std::string
 
     do
     {
-        auto r1 = std::async(&organisation::populations::spea::push, this, set, rset);
-        auto r2 = std::async(&organisation::populations::spea::pull, this, get, rget);
-        auto r3 = std::async(&organisation::populations::spea::execute, this, run, expected);
+        auto r1 = std::async(&organisation::populations::npga::push, this, set, rset);
+        auto r2 = std::async(&organisation::populations::npga::pull, this, get, rget);
+        auto r3 = std::async(&organisation::populations::npga::execute, this, run, expected);
 
         r1.wait();
         r2.wait();
@@ -145,7 +158,7 @@ organisation::schema organisation::populations::spea::go(std::vector<std::string
     return res;
 }
 
-organisation::populations::results organisation::populations::spea::execute(organisation::schema **buffer, std::vector<std::string> expected)
+organisation::populations::results organisation::populations::npga::execute(organisation::schema **buffer, std::vector<std::string> expected)
 {  
     auto combine = [](std::vector<std::string> expected, std::vector<std::string> output)
     {
@@ -229,7 +242,7 @@ organisation::populations::results organisation::populations::spea::execute(orga
     return result;
 }
 
-bool organisation::populations::spea::get(schema &destination, region r)
+bool organisation::populations::npga::get(schema &destination, region r)
 {
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)settings.size) / 100.0f) * mutate_rate_in_percent;
@@ -257,7 +270,7 @@ bool organisation::populations::spea::get(schema &destination, region r)
     return true;
 }
 
-bool organisation::populations::spea::set(schema &source, region r)
+bool organisation::populations::npga::set(schema &source, region r)
 {    
     schema *destination = worst(r);
     if(destination == NULL) return false;
@@ -267,10 +280,8 @@ bool organisation::populations::spea::set(schema &source, region r)
     return true;
 }
 
-organisation::schema *organisation::populations::spea::best(region r)
+organisation::schema *organisation::populations::npga::best(region r)
 {
-    return NULL;
-    /*
     const int samples = 10;
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
@@ -285,16 +296,16 @@ organisation::schema *organisation::populations::spea::best(region r)
     int competition;
 
     int best = rand(generator);    
-	float score = schemas->data[best]->sum();
+	float score = schemas[best]->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
 
-        schemas->data[best]->get(temp1, minimum, maximum);
-        schemas->data[competition]->get(temp2, minimum, maximum);
+        schemas[best]->get(temp1, minimum, maximum);
+        schemas[competition]->get(temp2, minimum, maximum);
 
-		float t2 = schemas->data[competition]->sum();
+		float t2 = schemas[competition]->sum();
 
         if(temp2.dominates(temp1))
         {
@@ -303,14 +314,11 @@ organisation::schema *organisation::populations::spea::best(region r)
         }         
 	}
 
-    return schemas->data[best];  
-    */  
+    return schemas[best];      
 }
 
-organisation::schema *organisation::populations::spea::worst(region r)
+organisation::schema *organisation::populations::npga::worst(region r)
 {
-    return NULL;
-    /*
     const int samples = 10;
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
@@ -325,16 +333,16 @@ organisation::schema *organisation::populations::spea::worst(region r)
     int competition;
     int worst = rand(generator);
 
-	float score = schemas->data[worst]->sum();
+	float score = schemas[worst]->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
 
-        schemas->data[worst]->get(temp1, minimum, maximum);
-        schemas->data[competition]->get(temp2, minimum, maximum);
+        schemas[worst]->get(temp1, minimum, maximum);
+        schemas[competition]->get(temp2, minimum, maximum);
 
-		float t2 = schemas->data[competition]->sum();
+		float t2 = schemas[competition]->sum();
 
         if(temp1.dominates(temp2))
         {
@@ -343,11 +351,10 @@ organisation::schema *organisation::populations::spea::worst(region r)
         }
 	}
 
-    return schemas->data[worst];
-    */
+    return schemas[worst];
 }
 
-void organisation::populations::spea::pull(organisation::schema **buffer, region r)
+void organisation::populations::npga::pull(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
 
@@ -361,7 +368,7 @@ void organisation::populations::spea::pull(organisation::schema **buffer, region
     std::cout << "pull " << time_span.count() << "\r\n";    
 }
 
-void organisation::populations::spea::push(organisation::schema **buffer, region r)
+void organisation::populations::npga::push(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();
         
@@ -376,7 +383,7 @@ void organisation::populations::spea::push(organisation::schema **buffer, region
 }
 
 
-void organisation::populations::spea::pick(region r, organisation::parallel::front *destination)
+void organisation::populations::npga::pick(region r, organisation::parallel::front *destination)
 {
     /*
     std::uniform_int_distribution<int> rand{ r.start, r.end };
@@ -402,67 +409,69 @@ void organisation::populations::spea::pick(region r, organisation::parallel::fro
     */
 }
 
-void organisation::populations::spea::archiver()
-{
-    /*
-    int archive_endptr = 0;
+void organisation::populations::npga::sort(int dimension)
+{    
+    auto compare = [&,dimension](schema *a, schema *b) 
+	{
+        float t1 = a->get(dimension);
+        float t2 = b->get(dimension);
 
-    for(int i = 0; i < settings.size; ++i)
-    {
-        front->set(schemas->data[i], i);
-    }
+        return t1 < t2;
+    };
 
-    front->extra(settings.q);
-
-    for(int i = 0; i < settings.size; ++i)
-    {
-        if(front->is_front(i))
-        {
-            if(archive_endptr < settings.size)
-            {
-                // need to copy cost over (from front!)
-                archive->data[archive_endptr++]->copy(schemas->data[i]);
-            }
-        }
-    }
-
-    // ***
-
-    front->clear();
-
-    for(int i = 0; i < archive_endptr; ++i)
-    {
-        front->set(archive->data[i], i);
-    }
-
-    front->extra(settings.q);
-
-    for(int i = 0; i < archive_endptr; ++i)
-    {
-        if(!front->is_front(i))
-        {
-            // remove from archive
-            // copy to another 'tempArchive
-        }
-    }
-    */
+    std::sort(schemas, schemas + settings.size, compare);
 }
 
-void organisation::populations::spea::makeNull() 
+void organisation::populations::npga::crowded()
+{
+    for(int i = 0; i < settings.size; ++i)   
+    {
+        distances[i] = 0.0f;
+    }
+
+    for(int d = 0; d < dimensions; ++d)
+    {
+        sort(d);
+
+        distances[0] = std::numeric_limits<float>::infinity();
+        distances[settings.size - 1] = std::numeric_limits<float>::infinity();
+
+        float min = std::numeric_limits<float>::max();
+        float max = std::numeric_limits<float>::min();
+
+        for(int j = 0; j < settings.size; ++j)
+        {
+            float temp = schemas[j]->get(d);
+
+            if(temp < min) min = temp;
+            if(temp > max) max = temp;
+        }
+
+        for(int j = 1; j < settings.size - 1; ++j)
+        {
+            distances[j] = distances[j] + (schemas[j + 1]->get(d) - schemas[j - 1]->get(d)) / (max - min);
+        }
+    }
+}
+
+void organisation::populations::npga::makeNull() 
 { 
-    front = NULL;
+    frontA = NULL;
+    frontB = NULL;
     schemas = NULL;
-    archive = NULL;
     intermediateA = NULL;
     intermediateB = NULL;
     intermediateC = NULL;
+    distances = NULL;
     programs = NULL;
 }
 
-void organisation::populations::spea::cleanup() 
+void organisation::populations::npga::cleanup() 
 { 
     if(programs != NULL) delete programs;
     
+    if(distances != NULL) delete[] distances;
+
     if(intermediateC != NULL)
     {
         for(int i = settings.clients - 1; i >= 0; --i)
@@ -490,8 +499,15 @@ void organisation::populations::spea::cleanup()
         delete[] intermediateA;
     }
  
-    if(archive != NULL) delete archive;
-    if(schemas != NULL) delete schemas;
+    if(schemas != NULL) 
+    {
+        for(int i = settings.size - 1; i >= 0; --i)
+        {
+            if(schemas[i] != NULL) delete schemas[i];
+        }
+        delete[] schemas;
+    }
 
-    if(front != NULL) delete front;
+    if(frontB != NULL) delete frontB;
+    if(frontA != NULL) delete frontA;
 }
