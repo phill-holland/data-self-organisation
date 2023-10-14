@@ -29,7 +29,7 @@ namespace organisation
             organisation::schema **schemas;
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
 
-            float *distances;
+            float *distancesA, *distancesB;
 
             parallel::program *programs;
 
@@ -53,23 +53,23 @@ namespace organisation
             void generate();
 
         protected:
-            bool get(schema &destination, region r);
+            bool get(schema &destination, region r, organisation::parallel::front *front, float *distances);
             bool set(schema &source, region r);
             
         protected:
-            schema *best(region r);
+            schema *best(region r, organisation::parallel::front *destination, float *distances);
             schema *worst(region r);
 
         protected:
-            void pull(organisation::schema **buffer, region r);
+            void pull(organisation::schema **buffer, region r, organisation::parallel::front *destination, float *distances);
             void push(organisation::schema **buffer, region r);
 
         protected:
-            void pick(region r, organisation::parallel::front *destination);
+            void pick(region r, organisation::parallel::front *destination, float *distances);
 
         protected:
-            void sort(int dimension);   
-            void crowded();
+            void sort(region r, int dimension);   
+            void crowded(region r, float *distances);
 
         protected:
             results execute(organisation::schema **buffer, std::vector<std::string> expected);
