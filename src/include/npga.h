@@ -20,13 +20,13 @@ namespace organisation
     {                
         class npga
         {
-            static const int minimum = 100, maximum = 10000;
-
             static std::mt19937_64 generator;
 
             organisation::parallel::front *frontA, *frontB;
 
-            organisation::schema **schemas;
+            std::vector<organisation::schema*> schemas;
+            //std::vector<organisation::schema*> intermediateA, intermediateB, intermediateC;
+            //organisation::schema **schemas;
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
 
             float *distancesA, *distancesB;
@@ -53,15 +53,15 @@ namespace organisation
             void generate();
 
         protected:
-            bool get(schema &destination, region r, organisation::parallel::front *front, float *distances);
-            bool set(schema &source, region r);
+            bool get(schema &destination, organisation::parallel::front *front, float *distances);
+            bool set(schema &source, organisation::parallel::front *front, float *distances);
             
         protected:
-            schema *best(region r, organisation::parallel::front *destination, float *distances);
-            schema *worst(region r);
+            schema *best(organisation::parallel::front *front, float *distances);
+            schema *worst(organisation::parallel::front *front, float *distances);
 
         protected:
-            void pull(organisation::schema **buffer, region r, organisation::parallel::front *destination, float *distances);
+            void pull(organisation::schema **buffer, region r);
             void push(organisation::schema **buffer, region r);
 
         protected:

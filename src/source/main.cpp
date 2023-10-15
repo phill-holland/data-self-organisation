@@ -1,4 +1,5 @@
 #include "population.h"
+#include "npga.h"
 #include "data.h"
 #include "history.h"
 #include "general.h"
@@ -36,7 +37,7 @@ const int iterations = 1000;
 
 organisation::parallel::parameters get()
 {
-    const int width = 5, height = 5, depth = 5, in = 5, out = 26;//in = 15, out = 10;
+    const int width = 5, height = 5, depth = 5, in = 15, out = 10;
 
     organisation::parallel::parameters parameters(width, height, depth, in, out);
     parameters.epochs = expected.size();
@@ -58,7 +59,8 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
     settings.size = population;
     settings.fronts = fronts;
 
-    organisation::populations::population p(settings);
+    //organisation::populations::population p(settings);
+    organisation::populations::npga p(settings);
     
     int actual = 0;
 

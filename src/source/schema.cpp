@@ -65,7 +65,10 @@ float organisation::schema::get(int dimension)
 
     while(temp >= scores[index].size())
     {
-        temp -= scores[index].size();
+        int length = scores[index].size();
+        if(length == 0) return 0.0f;
+        
+        temp -= length;        
         ++index;
     }
 
