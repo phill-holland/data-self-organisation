@@ -118,9 +118,9 @@ void organisation::parallel::program::clear(::parallel::queue *q)
     msH.wait();
     msI.wait();
     
-    qt.memset(deviceInGates, -1, sizeof(int) * params.size() * params.in * clients);
-    qt.memset(deviceOutGates, -1, sizeof(int) * params.size() * params.in * params.out * clients);    
-    qt.memset(deviceMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * clients);    
+    //qt.memset(deviceInGates, -1, sizeof(int) * params.size() * params.in * clients).wait();
+    //qt.memset(deviceOutGates, -1, sizeof(int) * params.size() * params.in * params.out * clients).wait();    
+    //qt.memset(deviceMagnitudes, -1, sizeof(int) * params.size() * params.in * params.out * clients).wait();    
 }
 
 void organisation::parallel::program::run(::parallel::queue *q)

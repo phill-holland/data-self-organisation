@@ -31,9 +31,9 @@ void organisation::populations::npga::reset(parameters &params)
     if (frontB == NULL) return;
     if (!frontB->initalised()) return;
 
-    //schemas = new organisation::schema*[settings.size];
-    //if(schemas == NULL) return;
-    schemas.resize(settings.size);
+    schemas = new organisation::schema*[settings.size];
+    if(schemas == NULL) return;
+    //schemas.resize(settings.size);
     for(int i = 0; i < settings.size; ++i) schemas[i] = NULL;
     for(int i = 0; i < settings.size; ++i)
     {
@@ -197,12 +197,12 @@ organisation::populations::results organisation::populations::npga::execute(orga
         ++j;
     }
 
-    programs->clear(settings.q);
-    programs->copy(buffer, settings.clients, settings.q);
-    programs->set(positions, settings.q);
-    programs->run(settings.q);
+    programs->clear(&q1);//settings.q);
+    programs->copy(buffer, settings.clients, &q1);//settings.q);
+    programs->set(positions, &q1);////settings.q);
+    programs->run(&q1);//settings.q);
 
-    std::vector<organisation::parallel::output> values = programs->get(settings.mappings, settings.q);
+    std::vector<organisation::parallel::output> values = programs->get(settings.mappings, &q1);//settings.q);
         
     results result;
     std::vector<std::string> current;
@@ -359,7 +359,7 @@ void organisation::populations::npga::pull(organisation::schema **buffer, region
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
 
-    pick(r, frontA, distancesA);
+    pick(r, frontA, distancesA, &q2);
 
     for(int i = 0; i < settings.clients; ++i)
     {
@@ -374,13 +374,20 @@ void organisation::populations::npga::pull(organisation::schema **buffer, region
 void organisation::populations::npga::push(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();
-        
-    pick(r, frontB, distancesB);
 
     for(int i = 0; i < settings.clients; ++i)
     {
-        set(*buffer[i], frontB, distancesB);
+        schemas[i + r.start]->copy(*buffer[i]);
+        //buffer[i]->copy(*schemas[i + r.start]);
+        //buffer[i]
     }
+
+    //pick(r, frontB, distancesB, &q3);
+
+    //for(int i = 0; i < settings.clients; ++i)
+    //{
+        //set(*buffer[i], frontB, distancesB);
+    //}
 
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
@@ -388,7 +395,7 @@ void organisation::populations::npga::push(organisation::schema **buffer, region
 }
 
 
-void organisation::populations::npga::pick(region r, organisation::parallel::front *destination, float *distances)
+void organisation::populations::npga::pick(region r, organisation::parallel::front *destination, float *distances, ::parallel::queue *q)
 {
     if(settings.clients != (settings.size / 2)) return;
 
@@ -398,7 +405,7 @@ void organisation::populations::npga::pick(region r, organisation::parallel::fro
         destination->set(schemas[i], index++);
     }
 
-    destination->run(settings.q);
+    destination->run(q);//settings.q);
     crowded(r, distances);
 
     /*
@@ -435,7 +442,8 @@ void organisation::populations::npga::sort(region r, int dimension)
         return t1 < t2;
     };
 
-    std::sort(schemas.begin() + r.start, schemas.begin() + r.end, compare);
+    std::sort(schemas + r.start, schemas + r.end, compare);
+    //std::sort(schemas.begin() + r.start, schemas.begin() + r.end, compare);
     //std::sort(std::begin(schemas), std::end(schemas), compare);
 
     //int v[200];
@@ -478,7 +486,7 @@ void organisation::populations::npga::makeNull()
 { 
     frontA = NULL;
     frontB = NULL;
-    //schemas = NULL;
+    schemas = NULL;
     intermediateA = NULL;
     intermediateB = NULL;
     intermediateC = NULL;
@@ -521,14 +529,15 @@ void organisation::populations::npga::cleanup()
         delete[] intermediateA;
     }
  
-    //if(schemas != NULL) 
-    //{
-        for(int i = schemas.size() - 1; i >= 0; --i)
+    if(schemas != NULL) 
+    {
+        //for(int i = schemas.size() - 1; i >= 0; --i)
+        for(int i = settings.clients - 1; i >= 0; --i)
         {
             if(schemas[i] != NULL) delete schemas[i];
         }
-        //delete[] schemas;
-    //}
+        delete[] schemas;
+    }
 
     if(frontB != NULL) delete frontB;
     if(frontA != NULL) delete frontA;

@@ -3,6 +3,7 @@
 #include "data.h"
 #include "fifo.h"
 #include "schemas.h"
+#include "parallel/queue.hpp"
 #include "parallel/program.hpp"
 #include "parallel/front.hpp"
 #include "parameters.h"
@@ -24,14 +25,16 @@ namespace organisation
 
             organisation::parallel::front *frontA, *frontB;
 
-            std::vector<organisation::schema*> schemas;
+            //std::vector<organisation::schema*> schemas;
             //std::vector<organisation::schema*> intermediateA, intermediateB, intermediateC;
-            //organisation::schema **schemas;
+            organisation::schema **schemas;
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
 
             float *distancesA, *distancesB;
 
             parallel::program *programs;
+
+            ::parallel::queue q1,q2,q3;
 
             int dimensions;
 
@@ -40,7 +43,7 @@ namespace organisation
             bool init;
 
         public:
-            npga(parameters &params) { makeNull(); reset(params); }
+            npga(parameters &params) : q1(*params.dev) , q2(*params.dev) , q3(*params.dev) { makeNull(); reset(params); }
             ~npga() { cleanup(); }
 
             bool initalised() { return init; }
@@ -65,7 +68,7 @@ namespace organisation
             void push(organisation::schema **buffer, region r);
 
         protected:
-            void pick(region r, organisation::parallel::front *destination, float *distances);
+            void pick(region r, organisation::parallel::front *destination, float *distances, ::parallel::queue *q);
 
         protected:
             void sort(region r, int dimension);   
