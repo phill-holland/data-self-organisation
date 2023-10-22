@@ -80,6 +80,8 @@ void organisation::populations::npga::reset(parameters &params)
     distancesB = new float[settings.clients];
     if(distancesB == NULL) return;
 
+    sequences = new int[settings.size];
+    if(sequences == NULL) return;
     // ***
 
     programs = new parallel::program(*settings.dev, settings.params, settings.clients);
@@ -434,6 +436,7 @@ void organisation::populations::npga::pick(region r, organisation::parallel::fro
 
 void organisation::populations::npga::sort(region r, int dimension)
 {    
+    /*
     auto compare = [&,dimension](schema *a, schema *b) 
 	{
         float t1 = a->get(dimension);
@@ -443,15 +446,28 @@ void organisation::populations::npga::sort(region r, int dimension)
     };
 
     std::sort(schemas + r.start, schemas + r.end, compare);
-    //std::sort(schemas.begin() + r.start, schemas.begin() + r.end, compare);
-    //std::sort(std::begin(schemas), std::end(schemas), compare);
+    */
 
-    //int v[200];
-    //std::sort(std::begin(v), std::end(v));
+    auto compare = [&,dimension,this](int a, int b)
+	{
+        float t1 = this->schemas[a]->get(dimension);
+        float t2 = this->schemas[b]->get(dimension);
+
+        return t1 < t2;
+    };
+
+    for(int i = r.start; i < r.end; ++i) sequences[i] = i;
+
+    std::sort(sequences + r.start, sequences + r.end, compare);
 }
 
 void organisation::populations::npga::crowded(region r, float *distances)
 {
+    auto pull = [&,this](int i)
+    {
+        return this->schemas[this->sequences[i]];
+    };
+
     for(int i = 0; i < settings.clients; ++i)   
     {
         distances[i] = 0.0f;
@@ -475,9 +491,12 @@ void organisation::populations::npga::crowded(region r, float *distances)
             if(temp > max) max = temp;
         }
 
+        float delta = 1.0f / (max - min);
+
         for(int j = r.start + 1; j <= r.end - 1; ++j)
         {
-            distances[j] = distances[j] + (schemas[j + 1]->get(d) - schemas[j - 1]->get(d)) / (max - min);
+            //distances[j] += (schemas[j + 1]->get(d) - schemas[j - 1]->get(d)) * delta;
+            distances[j] += (pull(j + 1)->get(d) - pull(j - 1)->get(d)) * delta;
         }
     }
 }
@@ -492,6 +511,7 @@ void organisation::populations::npga::makeNull()
     intermediateC = NULL;
     distancesA = NULL;
     distancesB = NULL;
+    sequences = NULL;
     programs = NULL;
 }
 
@@ -499,6 +519,8 @@ void organisation::populations::npga::cleanup()
 { 
     if(programs != NULL) delete programs;
     
+    if(sequences != NULL) delete sequences;
+
     if(distancesB != NULL) delete[] distancesB;
     if(distancesA != NULL) delete[] distancesA;
 

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <functional>
 #include <limits>
+#include <iostream>
 
 void organisation::schemas::reset(int width, int height, int depth, int size)
 {
@@ -13,6 +14,7 @@ void organisation::schemas::reset(int width, int height, int depth, int size)
 
 data.resize(size);
 distances.resize(size);
+sequences.resize(size);
 
     //data = new organisation::schema*[size];
     //if(data == NULL) return;
@@ -186,23 +188,38 @@ bool organisation::schemas::generate(organisation::data &source)
 
 void organisation::schemas::sort(int dimension)
 {    
+    /*
     auto compare = [&,dimension](schema *a, schema *b) 
 	{
-        //float t1 = a->get()[dimension];
-        //float t2 = b->get()[dimension];
-
         float t1 = a->get(dimension);
         float t2 = b->get(dimension);
 
-//std::cout << "t1 " << t1 << " t2 " << t2 << "\r\n";
         return t1 < t2;
     };
 
     std::sort(data.begin(), data.end(), compare);
+    */
+   
+    auto compare = [&,dimension,this](int a, int b)
+	{
+        float t1 = this->data[a]->get(dimension);
+        float t2 = this->data[b]->get(dimension);
+
+        return t1 < t2;
+    };
+
+    for(int i = 0; i < length; ++i) sequences[i] = i;
+
+    std::sort(sequences.begin(), sequences.end(), compare);
 }
 
 void organisation::schemas::crowded(int dimensions)
 {
+    auto pull = [&,this](int i)
+    {
+        return this->data[this->sequences[i]];
+    };
+
     for(int i = 0; i < length; ++i)   
     {
         distances[i] = 0.0f;
@@ -211,6 +228,12 @@ void organisation::schemas::crowded(int dimensions)
     for(int d = 0; d < dimensions; ++d)
     {
         sort(d);
+
+        for(int i = 0; i < length; ++i)
+        {
+            //std::cout << "obj " << d << " " << data[i]->get(0) << "," << data[i]->get(1) << "\r\n";
+            std::cout << "obj " << d << " " << pull(i)->get(0) << "," << pull(i)->get(1) << "\r\n";
+        }
 
         distances[0] = std::numeric_limits<float>::infinity();
         distances[length - 1] = std::numeric_limits<float>::infinity();
@@ -226,10 +249,18 @@ void organisation::schemas::crowded(int dimensions)
             if(temp > max) max = temp;
         }
 
+        float delta = 1.0f / (max - min);
+        delta = 1.0f;
         for(int j = 1; j < length - 1; ++j)
         {
-            distances[j] = distances[j] + (data[j + 1]->get(d) - data[j - 1]->get(d)) / (max - min);
+            //distances[j] = distances[j] + (data[j + 1]->get(d) - data[j - 1]->get(d)) / (max - min);
+            distances[j] += (pull(j + 1)->get(d) - pull(j - 1)->get(d)) * delta;//(max - min);
         }
+    }
+
+    for(int j = 0; j < length; ++j)
+    {
+        std::cout << distances[j] << "\r\n";
     }
 }
 

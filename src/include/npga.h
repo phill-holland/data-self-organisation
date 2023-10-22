@@ -25,13 +25,13 @@ namespace organisation
 
             organisation::parallel::front *frontA, *frontB;
 
-            //std::vector<organisation::schema*> schemas;
-            //std::vector<organisation::schema*> intermediateA, intermediateB, intermediateC;
             organisation::schema **schemas;
             organisation::schema **intermediateA, **intermediateB, **intermediateC;
 
             float *distancesA, *distancesB;
 
+            int *sequences;
+            
             parallel::program *programs;
 
             ::parallel::queue q1,q2,q3;

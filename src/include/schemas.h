@@ -14,8 +14,11 @@ namespace organisation
     //public:
         //schema **data;
         std::vector<schema*> data;
+
+    public:
         std::vector<float> distances;
         //float *distances;
+        std::vector<int> sequences;
 
     private:
         //std::atomic<int> *locks;

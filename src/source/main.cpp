@@ -29,7 +29,7 @@ of a bicycle built for two .
 std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
 const int rounds = 15;//15;
-const int population = 6000, clients = population / 2;//800;
+const int population = 1000, clients = population / 2;//800;
 //const int population = 4000, clients = 3500;
 const int fronts = 500;
 const int iterations = 1000;
