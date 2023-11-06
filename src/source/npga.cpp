@@ -376,21 +376,20 @@ void organisation::populations::npga::pull(organisation::schema **buffer, region
 void organisation::populations::npga::push(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();
-
+    
     for(int i = 0; i < settings.clients; ++i)
     {
         schemas[i + r.start]->copy(*buffer[i]);
-        //buffer[i]->copy(*schemas[i + r.start]);
-        //buffer[i]
     }
+    
+/*
+    pick(r, frontB, distancesB, &q3);
 
-    //pick(r, frontB, distancesB, &q3);
-
-    //for(int i = 0; i < settings.clients; ++i)
-    //{
-        //set(*buffer[i], frontB, distancesB);
-    //}
-
+    for(int i = 0; i < settings.clients; ++i)
+    {
+        set(*buffer[i], frontB, distancesB);
+    }
+*/
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
     std::cout << "push " << time_span.count() << "\r\n";    
@@ -456,7 +455,7 @@ void organisation::populations::npga::sort(region r, int dimension)
         return t1 < t2;
     };
 
-    for(int i = r.start; i < r.end; ++i) sequences[i] = i;
+    for(int i = r.start; i <= r.end; ++i) sequences[i] = i;
 
     std::sort(sequences + r.start, sequences + r.end, compare);
 }
