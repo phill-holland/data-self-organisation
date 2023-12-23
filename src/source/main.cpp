@@ -29,6 +29,7 @@ of a bicycle built for two .
 
 std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };
 
+const int device = 0;
 const int rounds = 15;
 const int population = 4000, clients = 3500;
 const int iterations = 1000;
@@ -44,7 +45,7 @@ organisation::parallel::parameters get()
 
 organisation::schema run(organisation::parallel::parameters parameters, organisation::data &mappings, std::vector<std::string> expected, int round = 0)
 {         
-	::parallel::device *dev = new ::parallel::device(0);
+	::parallel::device *dev = new ::parallel::device(device);
 	::parallel::queue *q = new parallel::queue(*dev);
     
     organisation::populations::parameters settings;

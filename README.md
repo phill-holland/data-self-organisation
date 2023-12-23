@@ -49,7 +49,7 @@ To run the program many times, and log the co-ordinates used for a successful ou
 
 # Problems
 
-- Genetic algorithm needs improvements, NPGA experimented with in another branch, but disappointing results (hence this may not get upgraded very much!)
+- Genetic algorithm needs improvements, NPGA experimented with in another branch, but disappointing results (hence this may not get updated very much!)
 
 - It get's slower and longer to find solutions the more "sentences" you configure it to look for
 
@@ -58,6 +58,8 @@ To run the program many times, and log the co-ordinates used for a successful ou
 - Project comes with VSCode pre-configured launch and build tasks
 
 # Requirements
+
+- Originally written on a Linux based operating system.
 
 - This project is written in C++ and Sycl and requires that the Intel OneApi SDK is installed.
 

@@ -23,7 +23,7 @@ void organisation::schema::generate(data &source)
     prog.generate(source);
 }
 
-bool organisation::schema::get(dominance::kdtree::kdpoint &destination, int minimum, int maximum)
+bool organisation::schema::get(kdpoint &destination, int minimum, int maximum)
 {
     int counter = 0;
 

@@ -261,8 +261,8 @@ organisation::schema *organisation::populations::population::best(region r)
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
 
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
+	kdpoint temp1(dimensions), temp2(dimensions);
+	kdpoint origin(dimensions);
 
 	temp1.set(0L);
 	temp2.set(0L);
@@ -298,8 +298,8 @@ organisation::schema *organisation::populations::population::worst(region r)
 
 	std::uniform_int_distribution<int> rand{ r.start, r.end };
 
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
+	kdpoint temp1(dimensions), temp2(dimensions);
+	kdpoint origin(dimensions);
 
 	temp1.set(0L);
 	temp2.set(0L);

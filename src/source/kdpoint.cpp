@@ -2,11 +2,9 @@
 #include <limits.h>
 #include <string>
 
-void dominance::kdtree::kdpoint::reset(long dimensions)
+void organisation::kdpoint::reset(long dimensions)
 {
     init = false; cleanup();
-
-    left = NULL; right = NULL;
 
     this->dimensions = dimensions;
 
@@ -26,10 +24,8 @@ void dominance::kdtree::kdpoint::reset(long dimensions)
     init = true;
 }
 
-void dominance::kdtree::kdpoint::clear()
+void organisation::kdpoint::clear()
 {
-    left = NULL; right = NULL;
-
     for(long i=0L; i < dimensions; ++i)
     {
         values[i] = 0L;
@@ -38,7 +34,7 @@ void dominance::kdtree::kdpoint::clear()
     }
 }
 
-void dominance::kdtree::kdpoint::set(long *points, unsigned long length)
+void organisation::kdpoint::set(long *points, unsigned long length)
 {
     long min = length;
     if(min == 0L) min = dimensions;
@@ -50,7 +46,7 @@ void dominance::kdtree::kdpoint::set(long *points, unsigned long length)
     }
 }
 
-bool dominance::kdtree::kdpoint::set(long value, unsigned long dimension)
+bool organisation::kdpoint::set(long value, unsigned long dimension)
 {
     if(dimension >= dimensions) return false;
     if(dimension < 0L) return false;
@@ -60,7 +56,7 @@ bool dominance::kdtree::kdpoint::set(long value, unsigned long dimension)
     return true;
 }
 
-void dominance::kdtree::kdpoint::set(long value)
+void organisation::kdpoint::set(long value)
 {
     for(long i = 0L; i < dimensions; ++i)
     {
@@ -70,7 +66,7 @@ void dominance::kdtree::kdpoint::set(long value)
     }
 }
 
-long dominance::kdtree::kdpoint::get(unsigned long dimension)
+long organisation::kdpoint::get(unsigned long dimension)
 {
     if(dimension >= dimensions) return -1L;
     if(dimension < 0L) return -1L;
@@ -78,7 +74,7 @@ long dominance::kdtree::kdpoint::get(unsigned long dimension)
     return values[dimension];
 }
 
-bool dominance::kdtree::kdpoint::dominates(const kdpoint &source)
+bool organisation::kdpoint::dominates(const kdpoint &source)
 {
     bool any = false;
     for (int i = 0; i < dimensions; ++i)
@@ -90,7 +86,7 @@ bool dominance::kdtree::kdpoint::dominates(const kdpoint &source)
     return any;
 }
 
-void dominance::kdtree::kdpoint::copy(const kdpoint &source)
+void organisation::kdpoint::copy(const kdpoint &source)
 {
     if (dimensions <= source.dimensions)
     {
@@ -109,7 +105,7 @@ void dominance::kdtree::kdpoint::copy(const kdpoint &source)
     }
 }
 
-bool dominance::kdtree::kdpoint::equals(const kdpoint &source)
+bool organisation::kdpoint::equals(const kdpoint &source)
 {
     if (dimensions < source.dimensions) return false;
     
@@ -124,7 +120,7 @@ bool dominance::kdtree::kdpoint::equals(const kdpoint &source)
     return true;
 }
 
-bool dominance::kdtree::kdpoint::inside(const kdpoint &min, const kdpoint &max)
+bool organisation::kdpoint::inside(const kdpoint &min, const kdpoint &max)
 {
     if(min.dimensions != dimensions) return false;
     if(max.dimensions != dimensions) return false;
@@ -138,7 +134,7 @@ bool dominance::kdtree::kdpoint::inside(const kdpoint &min, const kdpoint &max)
     return true;
 }
 
-bool dominance::kdtree::kdpoint::issame(long value)
+bool organisation::kdpoint::issame(long value)
 {
     for(long i=0L; i < dimensions; ++i)
     {
@@ -148,12 +144,12 @@ bool dominance::kdtree::kdpoint::issame(long value)
     return true;
 }
 
-void dominance::kdtree::kdpoint::makeNull()
+void organisation::kdpoint::makeNull()
 {
     
 }
 
-void dominance::kdtree::kdpoint::cleanup()
+void organisation::kdpoint::cleanup()
 {
 
 }

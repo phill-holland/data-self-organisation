@@ -130,8 +130,8 @@ TEST(BasicFrontTest, BasicAssertions)
     bool result[count];
     for(int i = 0; i < count; ++i) result[i] = true;
 
-    dominance::kdtree::kdpoint a(2);
-    dominance::kdtree::kdpoint b(2);
+    organisation::kdpoint a(2);
+    organisation::kdpoint b(2);
 
     for(int i = 0; i < count; ++i)
     {

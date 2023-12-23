@@ -1,59 +1,50 @@
 #include <vector>
 
-#ifndef _DOMINANCE_KDTREE_KDPOINT
-#define _DOMINANCE_KDTREE_KDPOINT
+#ifndef _ORGANISATION_KDPOINT
+#define _ORGANISATION_KDPOINT
 
-namespace dominance
+namespace organisation
 {
-    namespace kdtree
+    class kdpoint
     {
-        class kdtree;
+        bool init;
 
-        class kdpoint
-        {
-            friend class kdtree;
+        std::vector<long> values;    
+        std::vector<long> min, max;
 
-            bool init;
+        long dimensions;
+        
+    public:
+        long identity;
 
-            std::vector<long> values;    
-            std::vector<long> min, max;
+    public:
+        kdpoint(long dimensions) { makeNull(); reset(dimensions); }
+        ~kdpoint() { cleanup(); }
 
-            long dimensions;
+        bool initalised() { return init; }
+        void reset(long dimensions);
 
-            kdpoint *left, *right;
-            
-        public:
-            long identity;
+        void clear();
+        
+    public:
+        void set(long *points, unsigned long length = 0L);
+        bool set(long value, unsigned long dimension);
+        void set(long value);
 
-        public:
-            kdpoint(long dimensions) { makeNull(); reset(dimensions); }
-            ~kdpoint() { cleanup(); }
+        long get(unsigned long dimension);
 
-            bool initalised() { return init; }
-            void reset(long dimensions);
+        bool dominates(const kdpoint &source);
 
-            void clear();
-            
-        public:
-            void set(long *points, unsigned long length = 0L);
-            bool set(long value, unsigned long dimension);
-            void set(long value);
+    public:
+        void copy(const kdpoint &source);
+        bool equals(const kdpoint &source);
+        bool inside(const kdpoint &min, const kdpoint &max);
 
-            long get(unsigned long dimension);
-
-            bool dominates(const kdpoint &source);
-
-        public:
-            void copy(const kdpoint &source);
-            bool equals(const kdpoint &source);
-            bool inside(const kdpoint &min, const kdpoint &max);
-
-            bool issame(long value);
-            
-        protected:
-            void makeNull();
-            void cleanup();
-        };
+        bool issame(long value);
+        
+    protected:
+        void makeNull();
+        void cleanup();
     };
 };
 

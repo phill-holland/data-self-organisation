@@ -38,7 +38,7 @@ namespace organisation
     
         int count() { return prog.count(); }
 
-        bool get(dominance::kdtree::kdpoint &destination, int minimum, int maximum);
+        bool get(kdpoint &destination, int minimum, int maximum);
 
         std::vector<float> get();
         float get(int dimension);
