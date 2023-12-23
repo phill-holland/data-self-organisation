@@ -41,6 +41,8 @@ namespace dominance
 
             long get(unsigned long dimension);
 
+            bool dominates(const kdpoint &source);
+
         public:
             void copy(const kdpoint &source);
             bool equals(const kdpoint &source);

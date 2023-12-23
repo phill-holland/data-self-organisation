@@ -4,25 +4,9 @@
 
 std::mt19937_64 organisation::schema::generator(std::random_device{}());
 
-void organisation::schema::reset(std::vector<int> lengths)
+void organisation::schema::reset()
 {
     init = false; cleanup();
-
-    epochs = lengths.size();
-
-    scores = new score*[epochs];
-    if(scores == NULL) return;
-
-    for(int i = 0; i < epochs; ++i) scores[i] = NULL;
-
-    int counter = 0;
-    for(std::vector<int>::iterator it = lengths.begin(); it != lengths.end(); ++it)
-    {
-        scores[counter] = new score(*it);
-        if(scores[counter] == NULL) return;
-
-        ++counter;
-    }
 
     init = true;
 }
@@ -30,7 +14,7 @@ void organisation::schema::reset(std::vector<int> lengths)
 void organisation::schema::clear()
 {
     prog.clear();
-    for(int i = 0; i < epochs; ++i) scores[i]->clear();
+    scores.clear();
 }
 
 void organisation::schema::generate(data &source)
@@ -42,34 +26,90 @@ void organisation::schema::generate(data &source)
 bool organisation::schema::get(dominance::kdtree::kdpoint &destination, int minimum, int maximum)
 {
     int counter = 0;
-    for(int i = 0; i < epochs; ++i)
-    {
-        for(int j = 0; j < scores[i]->size(); ++j)
+
+    for(auto &it: scores)
+    {     
+        for(int j = 0; j < it.second.size(); ++j)
         {
-            float temp = scores[i]->get(j);
+            float temp = it.second.get(j);
             temp = (temp * ((float)maximum - minimum)) + minimum;
             if(!destination.set((long)temp, counter)) return false;
 
             ++counter;
         }        
-
-#warning prog count!
-        //destination.set(prog.count(), counter++);
     }
 
     return true;
 }
 
+std::vector<float> organisation::schema::get()
+{
+    std::vector<float> result;
+
+    for(auto &it: scores)
+    {     
+        for(int j = 0; j < it.second.size(); ++j)
+        {
+            float temp = it.second.get(j);
+            result.push_back(temp);
+        }        
+    }
+
+    return result;
+}
+
+float organisation::schema::get(int dimension)
+{
+    int temp = dimension;
+    int index = 0;
+
+    while(temp >= scores[index].size())
+    {
+        int length = scores[index].size();
+        if(length == 0) return 0.0f;
+        
+        temp -= length;        
+        ++index;
+    }
+
+    return scores[index].get(temp);
+}
+
 float organisation::schema::sum()
 {
     float result = 0.0f;
+    if(scores.size() <= 0) 
+        return 0.0f;
 
-    for(int i = 0; i < epochs; ++i)
+    for(auto &it: scores)
     {
-        result += scores[i]->sum();
+        result += it.second.sum();
     }
 
-    return result / ((float)epochs);
+    return result / ((float)scores.size());
+}
+
+void organisation::schema::compute(std::vector<std::tuple<std::string,std::string>> values)
+{
+    int i = 0;
+    bool penalty = false;
+    for(std::vector<std::tuple<std::string,std::string>>::iterator it = values.begin(); it != values.end(); ++it)
+    {
+        scores[i].compute(std::get<0>(*it),std::get<1>(*it));
+        ++i;
+
+        if(std::get<1>(*it).size() <= 0) penalty = true;
+    }
+
+    if(penalty)
+    {
+        int i = 0;
+        for(std::vector<std::tuple<std::string,std::string>>::iterator it = values.begin(); it != values.end(); ++it)
+        {
+            scores[i].clear();
+            ++i;
+        }
+    }
 }
 
 void organisation::schema::mutate(data &source)
@@ -78,16 +118,14 @@ void organisation::schema::mutate(data &source)
 }
 
 void organisation::schema::cross(schema *destination, schema *value)
-{    
+{   
     destination->prog.cross(prog, value->prog);
 }
 
 std::string organisation::schema::run(int epoch, std::string expected, data &source, history *destination)
 {		
-    if((epoch < 0) || (epoch >= epochs)) return std::string("");
-
     std::string output = prog.run(epoch, source, destination);
-    scores[epoch]->compute(expected, output);
+    scores[epoch].compute(expected, output);
     
     return output;
 }
@@ -95,30 +133,15 @@ std::string organisation::schema::run(int epoch, std::string expected, data &sou
 void organisation::schema::copy(const schema &source)
 {    
     prog.copy(source.prog);
-
-    int temp = epochs;
-    if(source.epochs < temp) temp = source.epochs;
-
-    for(int i = 0; i < temp; ++i)
-    {
-        scores[i]->copy(*source.scores[i]);    
-    }
+    scores = source.scores;
 }
 
 void organisation::schema::makeNull()
 {
-    scores = NULL;
+
 }
 
 void organisation::schema::cleanup()
 {
-    if(scores != NULL)
-    {
-        for(int i = epochs - 1; i >= 0; i--)
-        {
-            if(scores[i] != NULL) delete scores[i];
-        }
-
-        delete[] scores;
-    }
+    
 }

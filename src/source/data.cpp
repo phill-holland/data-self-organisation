@@ -1,8 +1,8 @@
 #include "data.h"
+#include <iostream>
 
-void organisation::data::reset(std::vector<std::string> &source)
+void organisation::data::add(std::vector<std::string> &source)
 {
-    max = 0;
     for(std::vector<std::string>::iterator it = source.begin(); it != source.end(); ++it) 
 	{
         if(forward.find(*it) == forward.end())
@@ -46,9 +46,31 @@ std::string organisation::data::get(std::vector<int> &source)
         result = map(*source.begin());
 
     for(std::vector<int>::iterator it = source.begin() + 1; it < source.end(); ++it)
-    {
-        result += std::string(" ") + map(*it);
+    {   
+        std::string temp = map(*it);
+        if(temp.size() == 0)
+        {
+            std::cout << "HMM " << (*it) << "\r\n";
+        }     
+        else result += std::string(" ") + temp;//map(*it);
     }
 
     return result;
+}
+
+void organisation::data::copy(const data &source)
+{
+    clear();
+
+    for(auto &f: source.forward)
+    {
+        forward[f.first] = f.second;
+    }
+
+    for(auto &r: source.reverse)
+    {
+        reverse[r.first] = r.second;
+    }
+
+    max = source.max;
 }

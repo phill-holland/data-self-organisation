@@ -12,27 +12,31 @@
 
 namespace organisation
 {    
+    namespace parallel
+    {
+        class program;
+    };
+    
     class program
-    {        
+    {      
+        friend class parallel::program;
+          
         static std::mt19937_64 generator;
 
-        cell *cells;
+        int _width, _height, _depth;
+
+        std::vector<cell> cells;
         int length;
 
         bool init;
-
+        
     public:
-        static const int WIDTH = 5;
-        static const int HEIGHT = 5;
-        static const int DEPTH = 5;
-
-    public:
-        program() { makeNull(); reset(); }
+        program(int w, int h, int d) { makeNull(); reset(w,h,d); }
         program(const program &source) { copy(source); }
         ~program() { cleanup(); }
 
-        bool intialised() { return init; }
-        void reset();
+        bool initalised() { return init; }
+        void reset(int w, int h, int d);
 
     public:
         void clear();
@@ -48,12 +52,20 @@ namespace organisation
 
         bool validate(data &source);
 
+        int width() { return _width; }
+        int height() { return _height; }
+        int depth() { return _depth; }
+        
     public:
         void copy(const program &source);
         bool equals(const program &source);
 
     public:
         void cross(program &a, program &b, int middle = -1);
+
+    public:
+        void save(std::string filename);
+        void load(std::string filename);
 
     protected:
         void makeNull();

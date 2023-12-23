@@ -1,4 +1,4 @@
-#include "population.h"
+#include "npga.h"
 #include "general.h"
 #include <iostream>
 #include <fcntl.h>
@@ -6,11 +6,10 @@
 #include <algorithm>
 #include <signal.h>
 #include <chrono>
-#include <valgrind/callgrind.h>
 
-std::mt19937_64 organisation::populations::population::generator(std::random_device{}());
+std::mt19937_64 organisation::populations::npga::generator(std::random_device{}());
 
-void organisation::populations::population::reset(parameters &params)
+void organisation::populations::npga::reset(parameters &params)
 {
     init = false; cleanup();
 
@@ -20,13 +19,30 @@ void organisation::populations::population::reset(parameters &params)
     std::vector<std::vector<std::string>> d;
     for(std::vector<std::string>::iterator it = settings.expected.begin(); it != settings.expected.end(); ++it)
     {
-        std::vector<std::string> t = split(*it);        
+        std::vector<std::string> t = split(*it);
         dimensions += (t.size() * 2) + 1;
     }
 
-    schemas = new organisation::schemas(settings.params.width, settings.params.height, settings.params.depth, settings.size);
-    if (schemas == NULL) return;
-    if (!schemas->initalised()) return;
+    frontA = new organisation::parallel::front(*settings.dev, dimensions, settings.clients);
+    if (frontA == NULL) return;
+    if (!frontA->initalised()) return;
+
+    frontB = new organisation::parallel::front(*settings.dev, dimensions, settings.clients);
+    if (frontB == NULL) return;
+    if (!frontB->initalised()) return;
+
+    schemas = new organisation::schema*[settings.size];
+    if(schemas == NULL) return;
+    //schemas.resize(settings.size);
+    for(int i = 0; i < settings.size; ++i) schemas[i] = NULL;
+    for(int i = 0; i < settings.size; ++i)
+    {
+        schemas[i] = new organisation::schema(settings.params.width, settings.params.height, settings.params.depth);
+        if(schemas[i] == NULL) return;
+        if(!schemas[i]->initalised()) return;
+    }
+
+    // ***
 
     intermediateA = new organisation::schema*[settings.clients];
     if (intermediateA == NULL) return;
@@ -58,6 +74,16 @@ void organisation::populations::population::reset(parameters &params)
         if(!intermediateC[i]->initalised()) return;
     }
 
+    distancesA = new float[settings.clients];
+    if(distancesA == NULL) return;
+
+    distancesB = new float[settings.clients];
+    if(distancesB == NULL) return;
+
+    sequences = new int[settings.size];
+    if(sequences == NULL) return;
+    // ***
+
     programs = new parallel::program(*settings.dev, settings.params, settings.clients);
     if (programs == NULL) return;
     if (!programs->initalised()) return;
@@ -65,17 +91,23 @@ void organisation::populations::population::reset(parameters &params)
     init = true;
 }
 
-void organisation::populations::population::clear()
+void organisation::populations::npga::clear()
 {
-    schemas->clear();
+    for(int i = 0; i < settings.size; ++i)
+    {
+        schemas[i]->clear();
+    }
 }
 
-void organisation::populations::population::generate()
+void organisation::populations::npga::generate()
 {
-    schemas->generate(settings.mappings);
+    for(int i = 0; i < settings.size; ++i)
+    {
+        schemas[i]->generate(settings.mappings);
+    }
 }
 
-organisation::schema organisation::populations::population::go(std::vector<std::string> expected, int &count, int iterations)
+organisation::schema organisation::populations::npga::go(std::vector<std::string> expected, int &count, int iterations)
 {    
     float highest = 0.0f;
     bool finished = false;
@@ -92,9 +124,9 @@ organisation::schema organisation::populations::population::go(std::vector<std::
 
     do
     {
-        auto r1 = std::async(&organisation::populations::population::push, this, set, rset);
-        auto r2 = std::async(&organisation::populations::population::pull, this, get, rget);
-        auto r3 = std::async(&organisation::populations::population::execute, this, run, expected);
+        auto r1 = std::async(&organisation::populations::npga::push, this, set, rset);
+        auto r2 = std::async(&organisation::populations::npga::pull, this, get, rget);
+        auto r3 = std::async(&organisation::populations::npga::execute, this, run, expected);
 
         r1.wait();
         r2.wait();
@@ -133,7 +165,7 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     return res;
 }
 
-organisation::populations::results organisation::populations::population::execute(organisation::schema **buffer, std::vector<std::string> expected)
+organisation::populations::results organisation::populations::npga::execute(organisation::schema **buffer, std::vector<std::string> expected)
 {  
     auto combine = [](std::vector<std::string> expected, std::vector<std::string> output)
     {
@@ -167,14 +199,13 @@ organisation::populations::results organisation::populations::population::execut
         ++j;
     }
 
-    programs->clear(settings.q);
-    programs->copy(buffer, settings.clients, settings.q);
-    programs->set(positions, settings.q);
-    programs->run(settings.q);
+    programs->clear(&q1);//settings.q);
+    programs->copy(buffer, settings.clients, &q1);//settings.q);
+    programs->set(positions, &q1);////settings.q);
+    programs->run(&q1);//settings.q);
 
-    std::vector<organisation::parallel::output> values = programs->get(settings.mappings, settings.q);
-    
-    
+    std::vector<organisation::parallel::output> values = programs->get(settings.mappings, &q1);//settings.q);
+        
     results result;
     std::vector<std::string> current;
 
@@ -218,7 +249,7 @@ organisation::populations::results organisation::populations::population::execut
     return result;
 }
 
-bool organisation::populations::population::get(schema &destination, region r)
+bool organisation::populations::npga::get(schema &destination, organisation::parallel::front *front, float *distances)
 {
     const float mutate_rate_in_percent = 20.0f;
     const float mutation = (((float)settings.size) / 100.0f) * mutate_rate_in_percent;
@@ -227,7 +258,7 @@ bool organisation::populations::population::get(schema &destination, region r)
 
     if(((float)t) <= mutation) 
     {
-        schema *s1 = best(r);
+        schema *s1 = best(front, distances);
         if(s1 == NULL) return false;
 
         destination.copy(*s1);
@@ -235,9 +266,9 @@ bool organisation::populations::population::get(schema &destination, region r)
     }
     else
     {
-        schema *s1 = best(r);
+        schema *s1 = best(front, distances);
         if(s1 == NULL) return false;
-        schema *s2 = best(r);
+        schema *s2 = best(front, distances);
         if(s2 == NULL) return false;
                      
         s1->cross(&destination, s2);
@@ -246,9 +277,9 @@ bool organisation::populations::population::get(schema &destination, region r)
     return true;
 }
 
-bool organisation::populations::population::set(schema &source, region r)
+bool organisation::populations::npga::set(schema &source, organisation::parallel::front *front, float *distances)
 {    
-    schema *destination = worst(r);
+    schema *destination = worst(front, distances);
     if(destination == NULL) return false;
 
     destination->copy(source);
@@ -256,126 +287,243 @@ bool organisation::populations::population::set(schema &source, region r)
     return true;
 }
 
-organisation::schema *organisation::populations::population::best(region r)
+organisation::schema *organisation::populations::npga::best(organisation::parallel::front *front, float *distances)
 {
+    auto select = [&,front,distances](int a, int b) 
+    {
+        int d1 = front->rank(a);
+        int d2 = front->rank(b);
+
+        if((d1 == 0) && (d2 > 0)) return a;
+
+        float s1 = distances[a];
+        float s2 = distances[b];
+
+        if((d1 > 0) && (d2 > 0) && (s1 < s2)) return a;
+        if((d1 == 0) && (d2 == 0) && (s1 < s2)) return a;
+
+        return b;
+    };
+
     const int samples = 10;
 
-	std::uniform_int_distribution<int> rand{ r.start, r.end };
-
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
-
-	temp1.set(0L);
-	temp2.set(0L);
-	origin.set(0L);
+	std::uniform_int_distribution<int> rand{ 0, settings.clients - 1 };
 
     int competition;
 
     int best = rand(generator);    
-	//float score = schemas->data[best]->sum();
-    float score = schemas->get(best)->sum();
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
-
-        schemas->get(best)->get(temp1, minimum, maximum);
-        schemas->get(competition)->get(temp2, minimum, maximum);
-
-		float t2 = schemas->get(competition)->sum();
-
-        if(temp2.dominates(temp1))
-        {
-            best = competition;
-            score = t2;
-        }         
+        best = select(best, competition);
 	}
 
-    return schemas->get(best);
+    return front->get(best);
 }
 
-organisation::schema *organisation::populations::population::worst(region r)
+organisation::schema *organisation::populations::npga::worst(organisation::parallel::front *front, float *distances)
 {
+        auto select = [&,front,distances](int a, int b) 
+    {
+        int d1 = front->rank(a);
+        int d2 = front->rank(b);
+
+        if((d1 == 0) && (d2 > 0)) return b;
+
+        float s1 = distances[a];
+        float s2 = distances[b];
+
+        if((d1 > 0) && (d2 > 0) && (s1 < s2)) return b;
+        if((d1 == 0) && (d2 == 0) && (s1 < s2)) return b;
+
+        return a;
+    };
+
     const int samples = 10;
 
-	std::uniform_int_distribution<int> rand{ r.start, r.end };
-
-	dominance::kdtree::kdpoint temp1(dimensions), temp2(dimensions);
-	dominance::kdtree::kdpoint origin(dimensions);
-
-	temp1.set(0L);
-	temp2.set(0L);
-	origin.set(0L);
+	std::uniform_int_distribution<int> rand{ 0, settings.clients - 1 };
 
     int competition;
-    int worst = rand(generator);
 
-	float score = schemas->get(worst)->sum();
+    int worst = rand(generator);    
 
 	for (int i = 0; i < samples; ++i)
 	{
 		competition = rand(generator);
-
-        schemas->get(worst)->get(temp1, minimum, maximum);
-        schemas->get(competition)->get(temp2, minimum, maximum);
-
-		float t2 = schemas->get(competition)->sum();
-
-        if(temp1.dominates(temp2))
-        {
-            worst = competition;             
-            score = t2;
-        }
+        worst = select(worst, competition);
 	}
 
-    return schemas->get(worst);
+    return front->get(worst);    
 }
 
-void organisation::populations::population::pull(organisation::schema **buffer, region r)
+void organisation::populations::npga::pull(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();   
 
-    //CALLGRIND_START_INSTRUMENTATION;
-    //CALLGRIND_TOGGLE_COLLECT;
+    pick(r, frontA, distancesA, &q2);
+
     for(int i = 0; i < settings.clients; ++i)
     {
-        get(*buffer[i], r);
+        get(*buffer[i], frontA, distancesA);
     }    
-    //CALLGRIND_TOGGLE_COLLECT;
-    //CALLGRIND_STOP_INSTRUMENTATION;
 
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
     std::cout << "pull " << time_span.count() << "\r\n";    
 }
 
-void organisation::populations::population::push(organisation::schema **buffer, region r)
+void organisation::populations::npga::push(organisation::schema **buffer, region r)
 {
     std::chrono::high_resolution_clock::time_point previous = std::chrono::high_resolution_clock::now();
-    
+
     for(int i = 0; i < settings.clients; ++i)
     {
-        set(*buffer[i], r);
+        schemas[i + r.start]->copy(*buffer[i]);
+        //buffer[i]->copy(*schemas[i + r.start]);
+        //buffer[i]
     }
+
+    //pick(r, frontB, distancesB, &q3);
+
+    //for(int i = 0; i < settings.clients; ++i)
+    //{
+        //set(*buffer[i], frontB, distancesB);
+    //}
 
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
     std::cout << "push " << time_span.count() << "\r\n";    
 }
 
-void organisation::populations::population::makeNull() 
+
+void organisation::populations::npga::pick(region r, organisation::parallel::front *destination, float *distances, ::parallel::queue *q)
+{
+    if(settings.clients != (settings.size / 2)) return;
+
+    int index = 0;
+    for(int i = r.start; i <= r.end; ++i)
+    {         
+        destination->set(schemas[i], index++);
+    }
+
+    destination->run(q);//settings.q);
+    crowded(r, distances);
+
+    /*
+    std::uniform_int_distribution<int> rand{ r.start, r.end };
+
+    if(settings.fronts != (settings.size / 2))
+    {
+        for(int i = 0; i < settings.fronts; ++i)
+        {
+            int index = rand(generator);
+            destination->set(schemas->data[index], i);
+        }
+    }
+    else
+    {
+        int index = 0;
+        for(int i = r.start; i <= r.end; ++i)
+        {         
+            destination->set(schemas->data[i], index++);
+        }
+    }
+
+    destination->extra(settings.q);
+    */
+}
+
+void organisation::populations::npga::sort(region r, int dimension)
+{    
+    /*
+    auto compare = [&,dimension](schema *a, schema *b) 
+	{
+        float t1 = a->get(dimension);
+        float t2 = b->get(dimension);
+
+        return t1 < t2;
+    };
+
+    std::sort(schemas + r.start, schemas + r.end, compare);
+    */
+
+    auto compare = [&,dimension,this](int a, int b)
+	{
+        float t1 = this->schemas[a]->get(dimension);
+        float t2 = this->schemas[b]->get(dimension);
+
+        return t1 < t2;
+    };
+
+    for(int i = r.start; i < r.end; ++i) sequences[i] = i;
+
+    std::sort(sequences + r.start, sequences + r.end, compare);
+}
+
+void organisation::populations::npga::crowded(region r, float *distances)
+{
+    auto pull = [&,this](int i)
+    {
+        return this->schemas[this->sequences[i]];
+    };
+
+    for(int i = 0; i < settings.clients; ++i)   
+    {
+        distances[i] = 0.0f;
+    }
+
+    for(int d = 0; d < dimensions; ++d)
+    {
+        sort(r, d);
+
+        distances[0] = std::numeric_limits<float>::infinity();
+        distances[settings.clients - 1] = std::numeric_limits<float>::infinity();
+
+        float min = std::numeric_limits<float>::max();
+        float max = std::numeric_limits<float>::min();
+
+        for(int j = r.start; j <= r.end; ++j)
+        {
+            float temp = schemas[j]->get(d);
+
+            if(temp < min) min = temp;
+            if(temp > max) max = temp;
+        }
+
+        float delta = 1.0f / (max - min);
+
+        for(int j = r.start + 1; j <= r.end - 1; ++j)
+        {
+            //distances[j] += (schemas[j + 1]->get(d) - schemas[j - 1]->get(d)) * delta;
+            distances[j] += (pull(j + 1)->get(d) - pull(j - 1)->get(d)) * delta;
+        }
+    }
+}
+
+void organisation::populations::npga::makeNull() 
 { 
+    frontA = NULL;
+    frontB = NULL;
     schemas = NULL;
     intermediateA = NULL;
     intermediateB = NULL;
     intermediateC = NULL;
+    distancesA = NULL;
+    distancesB = NULL;
+    sequences = NULL;
     programs = NULL;
 }
 
-void organisation::populations::population::cleanup() 
+void organisation::populations::npga::cleanup() 
 { 
     if(programs != NULL) delete programs;
     
+    if(sequences != NULL) delete sequences;
+
+    if(distancesB != NULL) delete[] distancesB;
+    if(distancesA != NULL) delete[] distancesA;
+
     if(intermediateC != NULL)
     {
         for(int i = settings.clients - 1; i >= 0; --i)
@@ -403,5 +551,16 @@ void organisation::populations::population::cleanup()
         delete[] intermediateA;
     }
  
-    if(schemas != NULL) delete schemas;    
+    if(schemas != NULL) 
+    {
+        //for(int i = schemas.size() - 1; i >= 0; --i)
+        for(int i = settings.clients - 1; i >= 0; --i)
+        {
+            if(schemas[i] != NULL) delete schemas[i];
+        }
+        delete[] schemas;
+    }
+
+    if(frontB != NULL) delete frontB;
+    if(frontA != NULL) delete frontA;
 }

@@ -13,23 +13,26 @@ namespace organisation
     class in
     {
         static std::mt19937_64 generator;
-        std::unordered_map<int, organisation::gates> gates;
+        //std::unordered_map<int, organisation::gates> gates;
+        
+        organisation::gates gates[organisation::gates::IN];
+
+        int write;
 
     public:
-        void clear()
-        {
-            gates.clear();
-        }
+        in() { write = 0; }
 
-        bool is_empty(int index)
-        {
-            if(gates.find(index) == gates.end()) return true;
-            return gates[index].is_empty();
-        }
-
+        void clear();
+        
+        bool is_empty(int index);
+        
+        void set(int in);
         void set(int in, int out, gate value);     
         gate get(int in, int out);
            
+        std::vector<int> pull();
+        std::vector<int> pull(int in);
+
         std::vector<organisation::vector> outputs(int index);
         
         void generate();
@@ -39,7 +42,8 @@ namespace organisation
         bool validate(int &in);
         
     public:
-        bool equals(const in &source);        
+        bool equals(const in &source);   
+        void copy(const in &source);     
     };
 };
 

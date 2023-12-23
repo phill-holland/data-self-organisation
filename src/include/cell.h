@@ -37,8 +37,16 @@ namespace organisation
 
         std::tuple<bool,bool> validate(int max);
 
-        bool equals(const cell &source);
+        std::vector<int> pull() { return routes.pull(); }
+        std::vector<int> pull(int in) { return routes.pull(in); }
 
+        gate get(int in, int out) { return routes.get(in, out); }
+        void set(int in, int out, gate value) { routes.set(in, out, value); }
+        void set(int in) { return routes.set(in); }
+        
+        bool equals(const cell &source);
+        void copy(const cell &source);
+        
     protected:
         int map(vector source);
     };

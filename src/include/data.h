@@ -15,17 +15,31 @@ namespace organisation
         int max;
 
     public:
+        data() { max = 0; } 
         data(std::vector<std::string> &source) { reset(source); }
+        data(const data &source) { copy(source); }
 
     public:
-        void reset(std::vector<std::string> &source);        
+        void reset(std::vector<std::string> &source) { clear(); add(source); }
+
+        void add(std::vector<std::string> &source);
+
+        void clear()
+        {
+            forward.clear();
+            reverse.clear();
+            max = 0;
+        }
 
         int maximum() { return max; }
         
         std::string map(int value);
         int map(std::string value);
         
-        std::string get(std::vector<int> &source);        
+        std::string get(std::vector<int> &source);  
+
+    public:
+        void copy(const data &source);      
     };
 };
 

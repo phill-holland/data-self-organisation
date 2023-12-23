@@ -42,6 +42,20 @@ void dominance::kdtree::kdtree::reset(long dimensions, long length)
     init = true;
 }
 
+void dominance::kdtree::kdtree::clear()
+{
+    root = NULL;
+    
+    unallocated.clear();
+    unallocated.reserve(length);
+
+    for (long i = length - 1L; i >= 0L; i--)
+    {
+        values[i]->clear();
+        unallocated.push_back(values[i]);
+    }
+}
+
 void dominance::kdtree::kdtree::insert(kdpoint *point)
 {
     std::stack<std::tuple<kdpoint**,kdpoint*,int>> stack;
