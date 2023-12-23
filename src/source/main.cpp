@@ -18,19 +18,19 @@
 
 using namespace std;
 
-std::string source = R"(daisy daisy give me your answer do .)";
-/*I'm half crazy for the love of you .)";
+std::string source = R"(daisy daisy give me your answer do .
+I'm half crazy for the love of you .)";/*
 it won't be a stylish marriage .)";
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
 )";*/
 
-std::vector<std::string> expected = { "daisy daisy give me your answer do ." };//, "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
+std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
 
 const int rounds = 15;//15;
-const int population = 1000, clients = population / 2;//800;
-//const int population = 4000, clients = 3500;
+//const int population = 3000, clients = population / 2;//800;
+const int population = 4000, clients = 3500;
 const int fronts = 500;
 const int iterations = 1000;
 
@@ -59,8 +59,8 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
     settings.size = population;
     settings.fronts = fronts;
 
-    //organisation::populations::population p(settings);
-    organisation::populations::npga p(settings);
+    organisation::populations::population p(settings);
+    //organisation::populations::npga p(settings);
     
     int actual = 0;
 

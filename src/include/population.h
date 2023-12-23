@@ -4,7 +4,6 @@
 #include "fifo.h"
 #include "schemas.h"
 #include "parallel/program.hpp"
-#include "parallel/front.hpp"
 #include "parameters.h"
 #include "region.h"
 #include "results.h"
