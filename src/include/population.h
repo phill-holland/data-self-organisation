@@ -1,5 +1,4 @@
 #include "schema.h"
-#include "kdtree.h"
 #include "data.h"
 #include "fifo.h"
 #include "schemas.h"

@@ -59,10 +59,6 @@ std::string organisation::program::run(int start, data &source, history *destina
     int y = (_height / 2);
     int z = (_depth / 2);
     
-    //int x = width - 1 - start;
-    //int y = height - 1;
-    //int z = depth - 1;
-
     const int MAX = 20;
 
     std::vector<std::tuple<vector,vector>> positions;
@@ -76,24 +72,19 @@ std::string organisation::program::run(int start, data &source, history *destina
         vector current = std::get<0>(temp);
         vector next = std::get<1>(temp);
 
-//std::cout << "cpu_current " << current.x << "," << current.y << "," << current.z << "\r\n";
-
         positions.pop_back();
 
         int index = (current.z * _width * _height) + (current.y * _width) + current.x;
         
         vector input = next.normalise().inverse();
-//std::cout << "inv " << input.x << " " << input.y << " " << input.z << " " << input.encode() << "\r\n";        
 
         if(cells[index].is_input(input))
         {
-            //std::cout << "INPUT!\r\n";
             if(destination != NULL) destination->push(current, cells[index].value);
 
             if(!cells[index].is_empty())
             {                
                 result.push_back(cells[index].value);
-                //std::cout << "value " << cells[index].value << "\r\n";
             }
             
             std::vector<vector> outputs = cells[index].outputs(input);
@@ -101,8 +92,7 @@ std::string organisation::program::run(int start, data &source, history *destina
             {
                 vector t = *ij;
                 vector position = { current.x + t.x, current.y + t.y, current.z + t.z };
-          //  std::cout << "out vector " << t.x << "," << t.y << "," << t.z << "\r\n";
-           // std::cout << "position " << position.x << "," << position.y << "," << position.z << "\r\n";
+
                 if((position.x >= 0)&&(position.y >= 0)&&(position.z >= 0))
                 {
                     if((position.x < _width)&&(position.y < _height)&&(position.z < _depth))
@@ -174,8 +164,6 @@ bool organisation::program::validate(data &source)
 
 void organisation::program::copy(const program &source)
 {
-    //reset(source.width, source.height, source.depth);
-    //cells = source.cells;
     cells.assign(source.cells.begin(), source.cells.end());
     _width = source._width;
     _height = source._height;
@@ -245,32 +233,11 @@ void organisation::program::save(std::string filename)
 
     if(output.is_open())
     {
-        //std::string buffer = get(source);
-        //output.write(buffer.c_str(), buffer.size());
-        /*
         for(int z = 0; z < _depth; ++z)
         {    
             std::string line;        
             for(int y = 0; y < _height; ++y)
             {                
-                for(int x = 0; x < _width; ++x)
-                {
-                    int index = (z * _width * _height) + (y * _width) + x;
-                    line += std::to_string(cells[index].value);
-                    if(x < _width - 1) line += ",";
-                }
-                line += "\r\n";                
-            }
-            line += "\r\n";                
-            output.write(line.c_str(), line.size());
-        }
-*/
-        for(int z = 0; z < _depth; ++z)
-        {    
-            std::string line;        
-            for(int y = 0; y < _height; ++y)
-            {                
-                //std::string line;
                 for(int x = 0; x < _width; ++x)
                 {
                     int index = (z * _width * _height) + (y * _width) + x;
@@ -285,8 +252,7 @@ void organisation::program::save(std::string filename)
 
                     std::vector<int> in_gates = cells[index].pull();
                     for(std::vector<int>::iterator it = in_gates.begin(); it != in_gates.end(); ++it)
-                    {
-                        //line += "G";
+                    {                     
                         line += "G " + std::to_string(*it);
                         line += " ";
                         
@@ -301,16 +267,11 @@ void organisation::program::save(std::string filename)
                         }
 
                         line += "\r\n";
-                        //if(it != in_gates.end() - 1) line += ",";
-
                     }
-                    //line += "]";
                     line += "\r\n";
-                    //line += std::to_string(cells[index].value) + ",";
-                }
-                //line += "\r\n";                
+                }              
             }
-            //line += "\r\n";                
+
             output.write(line.c_str(), line.size());
         }
 
@@ -352,8 +313,6 @@ void organisation::program::load(std::string filename)
                             }
                             ++index;                        
                         }
-
-                        //std::cout << "P " << x << " " << y << " " << z << "\r\n";
                     }
                 }
                 else if(type == "V")
@@ -362,8 +321,6 @@ void organisation::program::load(std::string filename)
                     while(stream >> word) words.push_back(word);
                     if(words.size() > 0)
                     {
-                        //std::cout << "V " << words[0] << "\r\n";
-
                         int index = (z * _width * _height) + (y * _width) + x;
                         cells[index].value = std::atoi(words[0].c_str());
                     }
@@ -376,12 +333,11 @@ void organisation::program::load(std::string filename)
                     if(words.size() >= 1)
                     {
                         int in_gate = std::atoi(words[0].c_str());
-                       // std::cout << "IN " << in_gate << "\r\n";
+                    
 
                         int index = (z * _width * _height) + (y * _width) + x;
                         cells[index].set(in_gate);
 
-                        //std::vector<int> out_gates;
                         if(words.size() >= 2)
                         {
                             std::stringstream ss(words[1]); 
@@ -405,14 +361,8 @@ void organisation::program::load(std::string filename)
 
                                     int index = (z * _width * _height) + (y * _width) + x;
                                     cells[index].set(in_gate, out_gate, organisation::gate(magnitude)); 
-                                    //std::cout << "OUT " << out_gate << " " << magnitude << "\r\n";
                                 }
-                                    //int temp = std::atoi(str.c_str());
-                                    //out_gates.push_back(temp);
-                                    //std::cout << temp << ",";
                             }
-
-                            //std::cout << "\r\n";
                         }
                     }
                 }
@@ -425,10 +375,10 @@ void organisation::program::load(std::string filename)
     
 void organisation::program::makeNull()
 {
-    //cells = NULL;
+    
 }
 
 void organisation::program::cleanup()
 {
-    //if (cells != NULL) delete[] cells;
+
 }

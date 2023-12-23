@@ -2,8 +2,6 @@
 
 This is a work in progress to investigate how a data storage solution may self organise into efficient data storage and retrieval system, with the aim of identifying data patterns of storage for abitary sentence structures (i.e. sequential data).
 
-***work in progress***
-
 # Method
 
 A three-dimensional data cube is generated, and is randomly filled with seed data, for example, we use the first verse of the song "Daisy Daisy";
@@ -46,6 +44,14 @@ To run the program many times, and log the co-ordinates used for a successful ou
 - Output from the CPU and GPU versions of the code are different (needs fixing!)
 
 - Performance for the "pull" portion of the code get's gradually worse as the generations get higher.
+
+- Generate graphs and cross reference outputs to confirm hypothesises
+
+# Problems
+
+- Genetic algorithm needs improvements, NPGA experimented with in another branch, but disappointing results (hence this may not get upgraded very much!)
+
+- It get's slower and longer to find solutions the more "sentences" you configure it to look for
 
 # Running (see requirements below)
 

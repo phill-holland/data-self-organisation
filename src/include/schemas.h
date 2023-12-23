@@ -11,20 +11,10 @@ namespace organisation
 {
     class schemas
     {
-    //public:
-        //schema **data;
         std::vector<schema*> data;
-
-    public:
-        std::vector<float> distances;
-        //float *distances;
-        std::vector<int> sequences;
-
+    
     private:
-        //std::atomic<int> *locks;
-
         int length;
-
         bool init;
         
     public:
@@ -42,17 +32,7 @@ namespace organisation
             return data[index];
         }
 
-        //bool get(schema &destination, int index);
-        //bool set(schema &source, int index);
-
-        //schema *lock(int index);
-        //bool unlock(int index);
-
         bool generate(organisation::data &source);
-
-        void sort(int dimension);
-        
-        void crowded(int dimensions);
 
     protected:
         void makeNull();
