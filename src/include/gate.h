@@ -44,7 +44,6 @@ namespace organisation
         int encoded;
 
     private:
-        //std::unordered_map<int, gate> data;
         gate data[OUT];
 
     public:

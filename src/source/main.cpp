@@ -1,5 +1,4 @@
 #include "population.h"
-#include "npga.h"
 #include "data.h"
 #include "history.h"
 #include "general.h"
@@ -14,26 +13,25 @@
 #include "parallel/queue.hpp"
 #include "parallel/program.hpp"
 
-#include "parallel/front.hpp"
-
 using namespace std;
 
 std::string source = R"(daisy daisy give me your answer do .
-I'm half crazy for the love of you .)";/*
-it won't be a stylish marriage .)";
+I'm half crazy for the love of you .)";
+/*
+std::string source = R"(daisy daisy give me your answer do .
+I'm half crazy for the love of you .
+it won't be a stylish marriage .
 I can't afford a carriage .
 but you'll look sweet upon the seat .
 of a bicycle built for two .
-)";*/
+)";
+*/
 
-std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };//, "it won't be a stylish marriage ." };
+std::vector<std::string> expected = { "daisy daisy give me your answer do .", "I'm half crazy for the love of you ." };
 
-const int rounds = 15;//15;
-//const int population = 3000, clients = population / 2;//800;
+const int rounds = 15;
 const int population = 4000, clients = 3500;
-const int fronts = 500;
 const int iterations = 1000;
-
 
 organisation::parallel::parameters get()
 {
@@ -57,11 +55,9 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
     settings.mappings = mappings;
     settings.clients = clients;
     settings.size = population;
-    settings.fronts = fronts;
-
-    organisation::populations::population p(settings);
-    //organisation::populations::npga p(settings);
     
+    organisation::populations::population p(settings);
+
     int actual = 0;
 
     p.clear();
@@ -78,26 +74,7 @@ organisation::schema run(organisation::parallel::parameters parameters, organisa
 
         best.prog.save(filename);
     }
-    /*
-    for(int i = 0; i < epochs; ++i)
-    {
-        organisation::history history;
-
-        std::string output = best.run(i, expected[i], settings.mappings, &history);
-        std::cout << "\r\n" << output << "\r\n";
-        std::cout << history.get(settings.mappings);
-
-        if(actual <= iterations) 
-        {
-            std::string filename("output/output");
-            filename += std::to_string(i);
-            filename += std::string(".csv");
-
-            history.append(filename, settings.mappings);
-        }
-    } 
-    */  
-
+    
     return best;
 }
 
@@ -168,15 +145,7 @@ int main(int argc, char *argv[])
     organisation::data mappings(strings);
     
     organisation::parallel::parameters parameters = get();
-    
-    //parameters.width = 1;
-    //parameters.height = 1;
-    //parameters.depth = 1;
-    //organisation::schema moo(parameters.width,parameters.height,parameters.depth);
-    //std::cout << "START\r\n";
-    //moo.generate(mappings);
-    //moo.prog.save("output/test.txt");
-    
+        
     for(int i = 0; i < rounds; ++i)
     {
         organisation::schema best = run(parameters, mappings, expected, i);

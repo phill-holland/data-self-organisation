@@ -13,7 +13,6 @@ namespace organisation
     class in
     {
         static std::mt19937_64 generator;
-        //std::unordered_map<int, organisation::gates> gates;
         
         organisation::gates gates[organisation::gates::IN];
 
