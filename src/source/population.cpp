@@ -87,7 +87,8 @@ organisation::schema organisation::populations::population::go(std::vector<std::
     region rset = { 0, (settings.size / 2) - 1 };
     region rget = { (settings.size / 2), settings.size - 1 };
 
-    pull(intermediateA, rset);
+    fill(intermediateA, rset);
+    pull(intermediateC, rset);
 
     do
     {
@@ -355,6 +356,16 @@ void organisation::populations::population::push(organisation::schema **buffer, 
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(now - previous);   
     std::cout << "push " << time_span.count() << "\r\n";    
+}
+
+
+void organisation::populations::population::fill(organisation::schema **destination, region r)
+{
+    int offset = 0;
+    for(int i = r.start; i <= r.end; ++i)
+    {
+        destination[offset++]->copy(*schemas->get(i));
+    }
 }
 
 void organisation::populations::population::makeNull() 
