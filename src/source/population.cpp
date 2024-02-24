@@ -362,10 +362,14 @@ void organisation::populations::population::push(organisation::schema **buffer, 
 void organisation::populations::population::fill(organisation::schema **destination, region r)
 {
     int offset = 0;
+    int length = settings.clients;
+
     for(int i = r.start; i <= r.end; ++i)
     {
-        destination[offset++]->copy(*schemas->get(i));
-    }
+        if(offset < length) 
+            destination[offset++]->copy(*schemas->get(i));
+        else break;
+    }    
 }
 
 void organisation::populations::population::makeNull() 
